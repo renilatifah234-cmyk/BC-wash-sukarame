@@ -138,7 +138,8 @@ export const services: Service[] = [
     price: 75000,
     description: "Layanan fogging untuk membunuh bakteri dan virus di dalam mobil",
     duration: 30,
-    supportsPickup: false, // Requires special equipment at location
+    supportsPickup: true,
+    pickupFee: 30000,
   },
   {
     id: "glass-spot-removal",
@@ -147,7 +148,8 @@ export const services: Service[] = [
     price: 75000,
     description: "Penghilangan noda membandel pada kaca mobil",
     duration: 45,
-    supportsPickup: false, // Requires special equipment at location
+    supportsPickup: true,
+    pickupFee: 25000,
   },
   // Motorcycle Services
   {
