@@ -4,8 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { CheckCircle, MapPin, Calendar, Clock, Phone, Copy, Home } from "lucide-react"
-import { formatCurrency, generateBookingCode } from "@/lib/dummy-data"
+import { CheckCircle, MapPin, Calendar, Clock, Phone, Copy, Home, Car, Star } from "lucide-react"
+import { formatCurrency, generateBookingCode, calculateLoyaltyPoints } from "@/lib/dummy-data"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
 import type { BookingData } from "@/app/booking/page"
@@ -43,6 +43,10 @@ export function BookingConfirmation({ bookingData, onNewBooking }: BookingConfir
 
   const bookingDate = new Date(bookingData.date)
   const formattedDate = format(bookingDate, "EEEE, dd MMMM yyyy", { locale: id })
+
+  const loyaltyPointsEarned = calculateLoyaltyPoints(
+    bookingData.service.price + (bookingData.isPickupService ? bookingData.service.pickupFee || 0 : 0),
+  )
 
   return (
     <div className="space-y-6">
@@ -93,7 +97,11 @@ export function BookingConfirmation({ bookingData, onNewBooking }: BookingConfir
               )}
             </div>
             <div className="text-right">
-              <p className="text-2xl font-bold text-primary">{formatCurrency(bookingData.service.price)}</p>
+              <p className="text-2xl font-bold text-primary">
+                {formatCurrency(
+                  bookingData.service.price + (bookingData.isPickupService ? bookingData.service.pickupFee || 0 : 0),
+                )}
+              </p>
               <p className="text-sm text-muted-foreground">~{bookingData.service.duration} menit</p>
             </div>
           </div>
@@ -123,6 +131,13 @@ export function BookingConfirmation({ bookingData, onNewBooking }: BookingConfir
               <Phone className="w-5 h-5 text-muted-foreground" />
               <p>{bookingData.branch.phone}</p>
             </div>
+
+            {bookingData.vehiclePlateNumber && (
+              <div className="flex items-center gap-3">
+                <Car className="w-5 h-5 text-muted-foreground" />
+                <p className="font-mono">{bookingData.vehiclePlateNumber}</p>
+              </div>
+            )}
           </div>
 
           <Separator />
@@ -133,6 +148,32 @@ export function BookingConfirmation({ bookingData, onNewBooking }: BookingConfir
             <p className="text-sm">Telepon: {bookingData.customerPhone}</p>
             <p className="text-sm">Email: {bookingData.customerEmail}</p>
           </div>
+
+          {bookingData.isPickupService && (
+            <>
+              <Separator />
+              <div className="space-y-2">
+                <h4 className="font-semibold">Layanan Pickup:</h4>
+                <p className="text-sm">Alamat: {bookingData.pickupAddress}</p>
+                {bookingData.pickupNotes && <p className="text-sm">Catatan: {bookingData.pickupNotes}</p>}
+              </div>
+            </>
+          )}
+
+          {loyaltyPointsEarned > 0 && (
+            <>
+              <Separator />
+              <div className="flex items-center gap-3 p-3 bg-yellow-50 rounded-lg">
+                <Star className="w-5 h-5 text-yellow-500" />
+                <div>
+                  <p className="font-semibold text-yellow-800">Poin Loyalitas Earned!</p>
+                  <p className="text-sm text-yellow-700">
+                    Anda mendapatkan <span className="font-bold">+{loyaltyPointsEarned} poin</span> dari booking ini
+                  </p>
+                </div>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 

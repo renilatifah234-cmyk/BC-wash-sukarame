@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { LayoutDashboard, Calendar, BarChart3, Settings, LogOut, Car, Users } from "lucide-react"
+import { LayoutDashboard, Calendar, BarChart3, Settings, LogOut, Car, Users, Star } from "lucide-react"
 import Link from "next/link"
 
 interface AdminLayoutProps {
@@ -56,6 +56,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       title: "Pelanggan",
       url: "/admin/customers",
       icon: Users,
+    },
+    {
+      title: "Program Loyalitas",
+      url: "/admin/loyalty",
+      icon: Star,
     },
     {
       title: "Laporan",
