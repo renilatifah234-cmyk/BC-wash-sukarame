@@ -210,12 +210,12 @@ export const branches: Branch[] = [
   {
     id: "sukarame-main",
     name: "BC Wash Sukarame Utama",
-    address: "Jl. Soekarno Hatta No. 123, Sukarame, Bandar Lampung",
-    phone: "0721-123456",
+    address: "Jl. Jend. Sudirman No. 1, Kranji, Bekasi Barat",
+    phone: "021-123456",
     bankAccount: {
       bank: "BCA",
-      accountNumber: "1234567890",
-      accountName: "BC Wash Sukarame",
+      accountNumber: "4061524783",
+      accountName: "Muhamad Akbar Afriansyah",
     },
     operatingHours: {
       open: "08:00",
@@ -223,7 +223,7 @@ export const branches: Branch[] = [
     },
     pickupCoverageRadius: 10,
     status: "active",
-    manager: "Budi Santoso",
+    manager: "Muhamad Akbar Afriansyah",
     staffCount: 8,
     createdAt: "2023-01-15T08:00:00Z",
     updatedAt: "2024-01-10T10:30:00Z",
@@ -231,12 +231,12 @@ export const branches: Branch[] = [
   {
     id: "sukarame-branch2",
     name: "BC Wash Sukarame Cabang 2",
-    address: "Jl. Teuku Umar No. 456, Sukarame, Bandar Lampung",
-    phone: "0721-654321",
+    address: "Jl. Pulo Ribung Raya No. 100, Pekayon Jaya, Bekasi Selatan",
+    phone: "021-654321",
     bankAccount: {
-      bank: "Mandiri",
-      accountNumber: "0987654321",
-      accountName: "BC Wash Sukarame Cab 2",
+      bank: "BRI",
+      accountNumber: "084101037308530",
+      accountName: "Muhamad Akbar Afriansyah",
     },
     operatingHours: {
       open: "08:00",
@@ -244,7 +244,7 @@ export const branches: Branch[] = [
     },
     pickupCoverageRadius: 8,
     status: "active",
-    manager: "Sari Indah",
+    manager: "Muhamad Akbar Afriansyah",
     staffCount: 6,
     createdAt: "2023-06-20T09:00:00Z",
     updatedAt: "2024-01-08T14:15:00Z",
@@ -252,8 +252,8 @@ export const branches: Branch[] = [
   {
     id: "sukarame-branch3",
     name: "BC Wash Sukarame Cabang 3",
-    address: "Jl. Kartini No. 789, Sukarame, Bandar Lampung",
-    phone: "0721-111222",
+    address: "Jl. Cut Mutia No. 50, Margahayu, Bekasi Timur",
+    phone: "021-111222",
     bankAccount: {
       bank: "BRI",
       accountNumber: "1122334455",
@@ -265,7 +265,7 @@ export const branches: Branch[] = [
     },
     pickupCoverageRadius: 12,
     status: "inactive",
-    manager: "Andi Wijaya",
+    manager: "Akbar",
     staffCount: 4,
     createdAt: "2023-11-01T10:00:00Z",
     updatedAt: "2024-01-05T16:20:00Z",
