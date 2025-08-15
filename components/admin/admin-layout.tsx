@@ -56,6 +56,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       title: "Pelanggan",
       url: "/admin/customers",
       icon: Users,
+      disabled: true,
     },
     {
       title: "Program Loyalitas",
@@ -96,11 +97,23 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               <SidebarMenu>
                 {menuItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={pathname === item.url}>
-                      <Link href={item.url} className="flex items-center gap-2">
-                        <item.icon className="w-4 h-4" />
-                        <span>{item.title}</span>
-                      </Link>
+                    <SidebarMenuButton
+                      asChild={!item.disabled}
+                      isActive={pathname === item.url}
+                      disabled={item.disabled}
+                      className={item.disabled ? "opacity-50 cursor-not-allowed" : ""}
+                    >
+                      {item.disabled ? (
+                        <div className="flex items-center gap-2">
+                          <item.icon className="w-4 h-4" />
+                          <span>{item.title}</span>
+                        </div>
+                      ) : (
+                        <Link href={item.url} className="flex items-center gap-2">
+                          <item.icon className="w-4 h-4" />
+                          <span>{item.title}</span>
+                        </Link>
+                      )}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
