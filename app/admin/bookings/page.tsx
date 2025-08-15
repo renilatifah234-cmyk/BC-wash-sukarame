@@ -6,6 +6,9 @@ import { AdminLayout } from "@/components/admin/admin-layout"
 import { BookingList } from "@/components/admin/booking-list"
 import { BookingFilters } from "@/components/admin/booking-filters"
 import { BookingStats } from "@/components/admin/booking-stats"
+import { Button } from "@/components/ui/button"
+import { Plus } from "lucide-react"
+import Link from "next/link"
 
 export default function AdminBookingsPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -33,9 +36,17 @@ export default function AdminBookingsPage() {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="font-serif text-2xl md:text-3xl font-bold text-foreground">Kelola Booking</h1>
-          <p className="text-muted-foreground mt-1">Kelola dan pantau semua booking pelanggan</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="font-serif text-2xl md:text-3xl font-bold text-foreground">Kelola Booking</h1>
+            <p className="text-muted-foreground mt-1">Kelola dan pantau semua booking pelanggan</p>
+          </div>
+          <Button asChild>
+            <Link href="/admin/bookings/create" className="flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              Buat Booking Manual
+            </Link>
+          </Button>
         </div>
 
         <BookingStats />
