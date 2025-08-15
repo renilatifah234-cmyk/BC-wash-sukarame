@@ -6,6 +6,8 @@ export interface Service {
   description: string
   duration: number // in minutes
   features?: string[]
+  supportsPickup?: boolean
+  pickupFee?: number
 }
 
 export interface Branch {
@@ -22,6 +24,7 @@ export interface Branch {
     open: string
     close: string
   }
+  pickupCoverageRadius?: number // in km
 }
 
 export interface Booking {
@@ -39,6 +42,23 @@ export interface Booking {
   paymentProof?: string
   createdAt: string
   updatedAt: string
+  isPickupService?: boolean
+  pickupAddress?: string
+  pickupNotes?: string
+  vehiclePlateNumber?: string
+  loyaltyPointsEarned?: number
+  loyaltyPointsUsed?: number
+}
+
+export interface Customer {
+  id: string
+  name: string
+  phone: string
+  email: string
+  vehiclePlateNumbers: string[]
+  totalLoyaltyPoints: number
+  totalBookings: number
+  joinDate: string
 }
 
 export interface ReceiptData {
@@ -65,6 +85,8 @@ export const services: Service[] = [
     price: 35000,
     description: "Cuci mobil kecil dengan metode manual tanpa hidrolik",
     duration: 45,
+    supportsPickup: true,
+    pickupFee: 15000,
   },
   {
     id: "car-large-regular",
@@ -73,6 +95,8 @@ export const services: Service[] = [
     price: 40000,
     description: "Cuci mobil sedang hingga besar dengan metode manual tanpa hidrolik",
     duration: 60,
+    supportsPickup: true,
+    pickupFee: 20000,
   },
   {
     id: "car-steam-quick",
@@ -81,6 +105,8 @@ export const services: Service[] = [
     price: 30000,
     description: "Cuci cepat menggunakan steam untuk hasil yang bersih",
     duration: 30,
+    supportsPickup: true,
+    pickupFee: 15000,
   },
   // Car Premium Services
   {
@@ -91,6 +117,8 @@ export const services: Service[] = [
     description: "Cuci mobil kecil dengan sistem hidrolik profesional",
     duration: 60,
     features: ["Gratis 1 Minuman"],
+    supportsPickup: true,
+    pickupFee: 20000,
   },
   {
     id: "car-large-premium",
@@ -100,6 +128,8 @@ export const services: Service[] = [
     description: "Cuci mobil sedang hingga besar dengan sistem hidrolik profesional",
     duration: 75,
     features: ["Gratis 1 Minuman"],
+    supportsPickup: true,
+    pickupFee: 25000,
   },
   {
     id: "anti-bacterial",
@@ -108,6 +138,7 @@ export const services: Service[] = [
     price: 75000,
     description: "Layanan fogging untuk membunuh bakteri dan virus di dalam mobil",
     duration: 30,
+    supportsPickup: false, // Requires special equipment at location
   },
   {
     id: "glass-spot-removal",
@@ -116,6 +147,7 @@ export const services: Service[] = [
     price: 75000,
     description: "Penghilangan noda membandel pada kaca mobil",
     duration: 45,
+    supportsPickup: false, // Requires special equipment at location
   },
   // Motorcycle Services
   {
@@ -125,6 +157,8 @@ export const services: Service[] = [
     price: 13000,
     description: "Cuci motor kecil menggunakan steam",
     duration: 20,
+    supportsPickup: true,
+    pickupFee: 10000,
   },
   {
     id: "motorcycle-medium",
@@ -133,6 +167,8 @@ export const services: Service[] = [
     price: 15000,
     description: "Cuci motor sedang menggunakan steam",
     duration: 25,
+    supportsPickup: true,
+    pickupFee: 10000,
   },
   {
     id: "motorcycle-large",
@@ -141,6 +177,8 @@ export const services: Service[] = [
     price: 18000,
     description: "Cuci motor besar menggunakan steam",
     duration: 30,
+    supportsPickup: true,
+    pickupFee: 12000,
   },
 ]
 
@@ -159,6 +197,7 @@ export const branches: Branch[] = [
       open: "08:00",
       close: "18:00",
     },
+    pickupCoverageRadius: 10,
   },
   {
     id: "sukarame-branch2",
@@ -174,10 +213,33 @@ export const branches: Branch[] = [
       open: "08:00",
       close: "18:00",
     },
+    pickupCoverageRadius: 8,
   },
 ]
 
-// Sample bookings for demo
+export const sampleCustomers: Customer[] = [
+  {
+    id: "customer-001",
+    name: "Ahmad Rizki",
+    phone: "08123456789",
+    email: "ahmad.rizki@email.com",
+    vehiclePlateNumbers: ["B 1234 ABC", "B 5678 DEF"],
+    totalLoyaltyPoints: 150,
+    totalBookings: 8,
+    joinDate: "2023-06-15",
+  },
+  {
+    id: "customer-002",
+    name: "Sari Dewi",
+    phone: "08987654321",
+    email: "sari.dewi@email.com",
+    vehiclePlateNumbers: ["BE 9876 XYZ"],
+    totalLoyaltyPoints: 75,
+    totalBookings: 4,
+    joinDate: "2023-08-20",
+  },
+]
+
 export const sampleBookings: Booking[] = [
   {
     id: "booking-001",
@@ -193,6 +255,9 @@ export const sampleBookings: Booking[] = [
     status: "confirmed",
     createdAt: "2024-01-14T10:00:00Z",
     updatedAt: "2024-01-14T10:30:00Z",
+    isPickupService: false,
+    vehiclePlateNumber: "B 1234 ABC",
+    loyaltyPointsEarned: 20,
   },
   {
     id: "booking-002",
@@ -204,14 +269,18 @@ export const sampleBookings: Booking[] = [
     branchId: "sukarame-branch2",
     date: "2024-01-15",
     time: "14:00",
-    totalPrice: 15000,
+    totalPrice: 25000,
     status: "pending",
     createdAt: "2024-01-14T14:00:00Z",
     updatedAt: "2024-01-14T14:00:00Z",
+    isPickupService: true,
+    pickupAddress: "Jl. Raden Intan No. 789, Bandar Lampung",
+    pickupNotes: "Rumah cat hijau, pagar putih",
+    vehiclePlateNumber: "BE 9876 XYZ",
+    loyaltyPointsEarned: 10,
   },
 ]
 
-// Utility functions
 export const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat("id-ID", {
     style: "currency",
@@ -252,5 +321,21 @@ export const generateReceiptData = (bookingId: string): ReceiptData => {
     paymentMethod: "Transfer Bank",
     completedAt: new Date().toISOString(),
     staff: "Budi (Staff)",
+  }
+}
+
+export const calculateLoyaltyPoints = (amount: number): number => {
+  // 1 point for every 1000 IDR spent
+  return Math.floor(amount / 1000)
+}
+
+export const getCustomerByPhone = (phone: string): Customer | undefined => {
+  return sampleCustomers.find((customer) => customer.phone === phone)
+}
+
+export const addVehiclePlateToCustomer = (customerId: string, plateNumber: string): void => {
+  const customer = sampleCustomers.find((c) => c.id === customerId)
+  if (customer && !customer.vehiclePlateNumbers.includes(plateNumber)) {
+    customer.vehiclePlateNumbers.push(plateNumber)
   }
 }

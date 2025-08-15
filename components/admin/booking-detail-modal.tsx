@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ReceiptGenerator } from "@/components/admin/receipt-generator"
 import {
   MapPin,
   Calendar,
@@ -19,8 +20,11 @@ import {
   CheckCircle,
   XCircle,
   MessageSquare,
+  Receipt,
+  Car,
+  Star,
 } from "lucide-react"
-import { formatCurrency } from "@/lib/dummy-data"
+import { formatCurrency, generateReceiptData } from "@/lib/dummy-data"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
 
@@ -39,6 +43,11 @@ interface BookingDetailModalProps {
     status: "pending" | "confirmed" | "in-progress" | "completed" | "cancelled"
     createdAt: string
     paymentProof?: string
+    isPickupService?: boolean
+    pickupAddress?: string
+    pickupNotes?: string
+    vehiclePlateNumber?: string
+    loyaltyPointsEarned?: number
   } | null
   isOpen: boolean
   onClose: () => void
@@ -48,6 +57,7 @@ interface BookingDetailModalProps {
 export function BookingDetailModal({ booking, isOpen, onClose, onStatusChange }: BookingDetailModalProps) {
   const [newStatus, setNewStatus] = useState("")
   const [notes, setNotes] = useState("")
+  const [showReceipt, setShowReceipt] = useState(false)
 
   if (!booking) return null
 
@@ -104,7 +114,22 @@ export function BookingDetailModal({ booking, isOpen, onClose, onStatusChange }:
     window.open(`mailto:${booking.customerEmail}`)
   }
 
+  const handleGenerateReceipt = () => {
+    setShowReceipt(true)
+  }
+
   const statusOptions = getAvailableStatusOptions(booking.status)
+
+  if (showReceipt) {
+    const receiptData = generateReceiptData(booking.id)
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <ReceiptGenerator receiptData={receiptData} onClose={() => setShowReceipt(false)} />
+        </DialogContent>
+      </Dialog>
+    )
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -160,6 +185,24 @@ export function BookingDetailModal({ booking, isOpen, onClose, onStatusChange }:
                     <p className="text-sm text-muted-foreground">Email</p>
                   </div>
                 </div>
+                {booking.vehiclePlateNumber && (
+                  <div className="flex items-center gap-3">
+                    <Car className="w-4 h-4 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium font-mono">{booking.vehiclePlateNumber}</p>
+                      <p className="text-sm text-muted-foreground">Nomor Plat</p>
+                    </div>
+                  </div>
+                )}
+                {booking.loyaltyPointsEarned && (
+                  <div className="flex items-center gap-3">
+                    <Star className="w-4 h-4 text-yellow-500" />
+                    <div>
+                      <p className="font-medium">+{booking.loyaltyPointsEarned} poin</p>
+                      <p className="text-sm text-muted-foreground">Poin Loyalitas</p>
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="space-y-2">
                 <Button onClick={handleCallCustomer} className="w-full bg-transparent" variant="outline">
@@ -170,6 +213,12 @@ export function BookingDetailModal({ booking, isOpen, onClose, onStatusChange }:
                   <Mail className="w-4 h-4 mr-2" />
                   Kirim Email
                 </Button>
+                {booking.status === "completed" && (
+                  <Button onClick={handleGenerateReceipt} className="w-full bg-transparent" variant="outline">
+                    <Receipt className="w-4 h-4 mr-2" />
+                    Generate Struk
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -210,6 +259,30 @@ export function BookingDetailModal({ booking, isOpen, onClose, onStatusChange }:
               </div>
             </div>
           </div>
+
+          {booking.isPickupService && (
+            <>
+              <Separator />
+              <div className="space-y-4">
+                <h4 className="font-semibold flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  Layanan Pickup
+                </h4>
+                <div className="p-4 bg-muted/50 rounded-lg space-y-2">
+                  <div>
+                    <p className="font-medium">Alamat Pickup:</p>
+                    <p className="text-sm text-muted-foreground">{booking.pickupAddress}</p>
+                  </div>
+                  {booking.pickupNotes && (
+                    <div>
+                      <p className="font-medium">Catatan:</p>
+                      <p className="text-sm text-muted-foreground">{booking.pickupNotes}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Payment Proof */}
           {booking.paymentProof && (
