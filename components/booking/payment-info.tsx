@@ -125,11 +125,11 @@ export function PaymentInfo({ onNext, onPrev, bookingData }: PaymentInfoProps) {
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Bank:</span>
                 <div className="flex items-center gap-2">
-                  <span className="font-medium">{bookingData.branch.bank_account.bank}</span>
+                  <span className="font-medium">{bookingData.branch.bank_name}</span>
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => copyToClipboard(bookingData.branch!.bank_account.bank, "bank")}
+                    onClick={() => copyToClipboard(bookingData.branch!.bank_name, "bank")}
                     className="h-6 w-6 p-0"
                   >
                     {copiedField === "bank" ? (
@@ -144,11 +144,11 @@ export function PaymentInfo({ onNext, onPrev, bookingData }: PaymentInfoProps) {
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">No. Rekening:</span>
                 <div className="flex items-center gap-2">
-                  <span className="font-medium font-mono">{bookingData.branch.bank_account.account_number}</span>
+                  <span className="font-medium font-mono">{bookingData.branch.bank_account_number}</span>
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => copyToClipboard(bookingData.branch!.bank_account.account_number, "account")}
+                    onClick={() => copyToClipboard(bookingData.branch!.bank_account_number, "account")}
                     className="h-6 w-6 p-0"
                   >
                     {copiedField === "account" ? (
@@ -163,11 +163,11 @@ export function PaymentInfo({ onNext, onPrev, bookingData }: PaymentInfoProps) {
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Atas Nama:</span>
                 <div className="flex items-center gap-2">
-                  <span className="font-medium">{bookingData.branch.bank_account.account_name}</span>
+                  <span className="font-medium">{bookingData.branch.bank_account_name}</span>
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => copyToClipboard(bookingData.branch!.bank_account.account_name, "name")}
+                    onClick={() => copyToClipboard(bookingData.branch!.bank_account_name, "name")}
                     className="h-6 w-6 p-0"
                   >
                     {copiedField === "name" ? (
