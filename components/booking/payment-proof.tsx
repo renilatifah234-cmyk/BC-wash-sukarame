@@ -126,9 +126,11 @@ export function PaymentProof({ onNext, onPrev, onUpload, bookingData, updateBook
       // Upload payment proof if file is provided
       if (uploadedFile) {
         try {
-          await apiClient.uploadPaymentProof(booking.id, uploadedFile)
+          const uploadResult = await apiClient.uploadPaymentProof(booking.id, uploadedFile)
+          console.log("[v0] Payment proof uploaded successfully:", uploadResult.url)
         } catch (uploadError) {
-          console.error("Payment proof upload failed:", uploadError)
+          console.error("[v0] Payment proof upload failed:", uploadError)
+          showErrorToast(uploadError, "Gagal upload bukti pembayaran, namun booking tetap berhasil dibuat")
           // Continue anyway - booking is created, just payment proof upload failed
           // Admin can still process the booking manually
         }

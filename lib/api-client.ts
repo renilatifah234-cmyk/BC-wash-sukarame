@@ -391,6 +391,42 @@ class ApiClient {
       throw error
     }
   }
+
+  async uploadPaymentProof(bookingId: string, file: File): Promise<{ success: boolean; url?: string }> {
+    try {
+      // Import the storage function dynamically to avoid circular dependencies
+      const { uploadPaymentProof, validatePaymentProofFile } = await import("@/lib/supabase/storage")
+
+      // Validate file first
+      const validation = validatePaymentProofFile(file)
+      if (!validation.valid) {
+        throw new Error(validation.error || "Invalid file")
+      }
+
+      // Get booking to get booking code for filename
+      const { booking } = await this.getBooking(bookingId)
+
+      // Upload to storage
+      const uploadResult = await uploadPaymentProof(file, booking.booking_code)
+
+      if (!uploadResult.success || !uploadResult.url) {
+        throw new Error(uploadResult.error || "Upload failed")
+      }
+
+      // Update booking with payment proof URL
+      await this.updateBooking(bookingId, {
+        payment_proof: uploadResult.url,
+      })
+
+      return {
+        success: true,
+        url: uploadResult.url,
+      }
+    } catch (error) {
+      console.error("[v0] Failed to upload payment proof:", error)
+      throw error
+    }
+  }
 }
 
 export const apiClient = new ApiClient()
