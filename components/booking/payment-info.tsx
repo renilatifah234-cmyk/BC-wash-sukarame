@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { CreditCard, MapPin, Calendar, Clock, Copy, CheckCircle } from "lucide-react"
-import { formatCurrency } from "@/lib/dummy-data"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
 import type { BookingData } from "@/app/booking/page"
 import { useState } from "react"
+import { formatCurrency } from "@/lib/utils"
 
 interface PaymentInfoProps {
   onNext: () => void
@@ -36,6 +36,8 @@ export function PaymentInfo({ onNext, onPrev, bookingData }: PaymentInfoProps) {
 
   const bookingDate = new Date(bookingData.date)
   const formattedDate = format(bookingDate, "EEEE, dd MMMM yyyy", { locale: id })
+
+  const totalPrice = bookingData.service.price + (bookingData.isPickupService ? bookingData.service.pickup_fee || 0 : 0)
 
   return (
     <div className="space-y-6">
@@ -65,8 +67,9 @@ export function PaymentInfo({ onNext, onPrev, bookingData }: PaymentInfoProps) {
               )}
             </div>
             <div className="text-right">
-              <p className="text-2xl font-bold text-primary">{formatCurrency(bookingData.service.price)}</p>
+              <p className="text-2xl font-bold text-primary">{formatCurrency(totalPrice)}</p>
               <p className="text-sm text-muted-foreground">~{bookingData.service.duration} menit</p>
+              {bookingData.isPickupService && <p className="text-xs text-muted-foreground">Termasuk biaya pickup</p>}
             </div>
           </div>
 
@@ -90,6 +93,19 @@ export function PaymentInfo({ onNext, onPrev, bookingData }: PaymentInfoProps) {
               <Clock className="w-5 h-5 text-muted-foreground" />
               <p>{bookingData.time} WIB</p>
             </div>
+
+            {bookingData.isPickupService && bookingData.pickupAddress && (
+              <div className="flex items-start gap-3">
+                <MapPin className="w-5 h-5 text-muted-foreground mt-0.5" />
+                <div>
+                  <p className="font-medium">Alamat Pickup:</p>
+                  <p className="text-sm text-muted-foreground">{bookingData.pickupAddress}</p>
+                  {bookingData.pickupNotes && (
+                    <p className="text-xs text-muted-foreground">Catatan: {bookingData.pickupNotes}</p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -109,11 +125,11 @@ export function PaymentInfo({ onNext, onPrev, bookingData }: PaymentInfoProps) {
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Bank:</span>
                 <div className="flex items-center gap-2">
-                  <span className="font-medium">{bookingData.branch.bankAccount.bank}</span>
+                  <span className="font-medium">{bookingData.branch.bank_account.bank}</span>
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => copyToClipboard(bookingData.branch!.bankAccount.bank, "bank")}
+                    onClick={() => copyToClipboard(bookingData.branch!.bank_account.bank, "bank")}
                     className="h-6 w-6 p-0"
                   >
                     {copiedField === "bank" ? (
@@ -128,11 +144,11 @@ export function PaymentInfo({ onNext, onPrev, bookingData }: PaymentInfoProps) {
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">No. Rekening:</span>
                 <div className="flex items-center gap-2">
-                  <span className="font-medium font-mono">{bookingData.branch.bankAccount.accountNumber}</span>
+                  <span className="font-medium font-mono">{bookingData.branch.bank_account.account_number}</span>
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => copyToClipboard(bookingData.branch!.bankAccount.accountNumber, "account")}
+                    onClick={() => copyToClipboard(bookingData.branch!.bank_account.account_number, "account")}
                     className="h-6 w-6 p-0"
                   >
                     {copiedField === "account" ? (
@@ -147,11 +163,11 @@ export function PaymentInfo({ onNext, onPrev, bookingData }: PaymentInfoProps) {
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Atas Nama:</span>
                 <div className="flex items-center gap-2">
-                  <span className="font-medium">{bookingData.branch.bankAccount.accountName}</span>
+                  <span className="font-medium">{bookingData.branch.bank_account.account_name}</span>
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => copyToClipboard(bookingData.branch!.bankAccount.accountName, "name")}
+                    onClick={() => copyToClipboard(bookingData.branch!.bank_account.account_name, "name")}
                     className="h-6 w-6 p-0"
                   >
                     {copiedField === "name" ? (
@@ -168,11 +184,11 @@ export function PaymentInfo({ onNext, onPrev, bookingData }: PaymentInfoProps) {
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Jumlah Transfer:</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-xl font-bold text-primary">{formatCurrency(bookingData.service.price)}</span>
+                  <span className="text-xl font-bold text-primary">{formatCurrency(totalPrice)}</span>
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => copyToClipboard(bookingData.service!.price.toString(), "amount")}
+                    onClick={() => copyToClipboard(totalPrice.toString(), "amount")}
                     className="h-6 w-6 p-0"
                   >
                     {copiedField === "amount" ? (

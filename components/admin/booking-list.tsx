@@ -19,6 +19,8 @@ import { format } from "date-fns"
 import { id } from "date-fns/locale"
 import { apiClient } from "@/lib/api-client"
 import type { Booking, Service, Branch } from "@/lib/dummy-data"
+import { ErrorState } from "@/components/ui/error-state"
+import { showErrorToast, showSuccessToast } from "@/lib/error-utils"
 
 interface BookingWithDetails extends Booking {
   service?: Service
@@ -40,25 +42,25 @@ export function BookingList() {
   const fetchBookings = async () => {
     try {
       setLoading(true)
-      const [bookingsData, services, branches] = await Promise.all([
-        apiClient.getBookings(),
-        apiClient.getServices(),
-        apiClient.getBranches(),
-      ])
+      setError(null)
+
+      const { bookings: bookingsData } = await apiClient.getBookings()
+      const { services } = await apiClient.getServices()
+      const { branches } = await apiClient.getBranches()
 
       const enrichedBookings: BookingWithDetails[] = bookingsData.map((booking) => ({
         ...booking,
-        service: services.find((s) => s.id === booking.serviceId),
-        branch: branches.find((b) => b.id === booking.branchId),
+        service: services.find((s) => s.id === booking.service_id),
+        branch: branches.find((b) => b.id === booking.branch_id),
       }))
 
-      // Sort by creation date, newest first
-      enrichedBookings.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      enrichedBookings.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
       setBookings(enrichedBookings)
     } catch (err) {
       console.error("[v0] Error fetching bookings:", err)
       setError("Gagal memuat data booking")
+      showErrorToast(err, "Gagal Memuat Data")
     } finally {
       setLoading(false)
     }
@@ -92,21 +94,15 @@ export function BookingList() {
   const handleStatusChange = async (bookingId: string, newStatus: string) => {
     try {
       setUpdatingStatus(bookingId)
-      await apiClient.updateBooking(bookingId, { status: newStatus as any })
 
-      // Update local state
-      setBookings((prev) =>
-        prev.map((booking) =>
-          booking.id === bookingId
-            ? { ...booking, status: newStatus as any, updatedAt: new Date().toISOString() }
-            : booking,
-        ),
-      )
+      const { booking } = await apiClient.updateBooking(bookingId, { status: newStatus as any })
 
-      console.log("[v0] Successfully updated booking status:", bookingId, newStatus)
+      setBookings((prev) => prev.map((b) => (b.id === bookingId ? { ...b, ...booking } : b)))
+
+      showSuccessToast("Status Berhasil Diperbarui", `Booking ${booking.booking_code} telah diperbarui`)
     } catch (err) {
       console.error("[v0] Error updating booking status:", err)
-      // You could add a toast notification here
+      showErrorToast(err, "Gagal Memperbarui Status")
     } finally {
       setUpdatingStatus(null)
     }
@@ -147,10 +143,7 @@ export function BookingList() {
           <CardTitle className="font-serif text-xl">Daftar Booking</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8">
-            <p className="text-red-600 mb-4">{error}</p>
-            <Button onClick={fetchBookings}>Coba Lagi</Button>
-          </div>
+          <ErrorState title="Gagal Memuat Data Booking" message={error} onRetry={fetchBookings} />
         </CardContent>
       </Card>
     )
@@ -187,11 +180,11 @@ export function BookingList() {
                 ) : (
                   bookings.map((booking) => (
                     <TableRow key={booking.id}>
-                      <TableCell className="font-medium font-mono">{booking.bookingCode}</TableCell>
+                      <TableCell className="font-medium font-mono">{booking.booking_code}</TableCell>
                       <TableCell>
                         <div>
-                          <p className="font-medium">{booking.customerName}</p>
-                          <p className="text-sm text-muted-foreground">{booking.customerPhone}</p>
+                          <p className="font-medium">{booking.customer_name}</p>
+                          <p className="text-sm text-muted-foreground">{booking.customer_phone}</p>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -206,14 +199,14 @@ export function BookingList() {
                           <p className="text-sm text-muted-foreground">{booking.time} WIB</p>
                         </div>
                       </TableCell>
-                      <TableCell className="font-medium">{formatCurrency(booking.totalPrice)}</TableCell>
+                      <TableCell className="font-medium">{formatCurrency(booking.total_price)}</TableCell>
                       <TableCell>{getStatusBadge(booking.status)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleCallCustomer(booking.customerPhone)}
+                            onClick={() => handleCallCustomer(booking.customer_phone)}
                             className="h-8 w-8 p-0"
                           >
                             <Phone className="h-4 w-4" />

@@ -9,7 +9,7 @@ import { PaymentInfo } from "@/components/booking/payment-info"
 import { PaymentProof } from "@/components/booking/payment-proof"
 import { BookingConfirmation } from "@/components/booking/booking-confirmation"
 import { useSearchParams } from "next/navigation"
-import type { Service, Branch } from "@/lib/dummy-data"
+import type { Service, Branch } from "@/lib/api-client"
 
 export interface BookingData {
   service?: Service
@@ -21,6 +21,10 @@ export interface BookingData {
   customerEmail?: string
   paymentProof?: File
   bookingCode?: string
+  isPickupService?: boolean
+  pickupAddress?: string
+  pickupNotes?: string
+  vehiclePlateNumber?: string
 }
 
 export default function BookingPage() {
@@ -86,6 +90,7 @@ export default function BookingPage() {
             onPrev={prevStep}
             onUpload={(file) => updateBookingData({ paymentProof: file })}
             bookingData={bookingData}
+            updateBookingData={updateBookingData}
           />
         )
       case 6:

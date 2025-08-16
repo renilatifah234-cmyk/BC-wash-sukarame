@@ -30,20 +30,21 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { toast } from "@/hooks/use-toast"
 import { Plus, Edit, Trash2, Car, Bike, Crown, Clock, MapPin, DollarSign } from "lucide-react"
-import { apiClient } from "@/lib/api-client"
-import type { Service } from "@/lib/dummy-data"
+import { apiClient, type Service } from "@/lib/api-client"
+import { ErrorState } from "@/components/ui/error-state"
+import { showErrorToast, showSuccessToast } from "@/lib/error-utils"
+import { formatCurrency } from "@/lib/utils"
 
 interface ServiceFormData {
   name: string
-  category: Service["category"]
+  category: string
   price: number
   description: string
   duration: number
   features: string[]
-  supportsPickup: boolean
-  pickupFee: number
+  supports_pickup: boolean
+  pickup_fee: number
 }
 
 const initialFormData: ServiceFormData = {
@@ -53,8 +54,8 @@ const initialFormData: ServiceFormData = {
   description: "",
   duration: 30,
   features: [],
-  supportsPickup: false,
-  pickupFee: 0,
+  supports_pickup: false,
+  pickup_fee: 0,
 }
 
 export function ServiceManagement() {
@@ -76,25 +77,21 @@ export function ServiceManagement() {
   const fetchServices = async () => {
     try {
       setLoading(true)
-      const services = await apiClient.getServices()
+      setError(null)
+
+      const { services } = await apiClient.getServices()
       setServiceList(services)
     } catch (err) {
       console.error("[v0] Error fetching services:", err)
-      setError("Gagal memuat data layanan")
+      const errorMessage = "Gagal memuat data layanan"
+      setError(errorMessage)
+      showErrorToast(err, "Gagal Memuat Layanan")
     } finally {
       setLoading(false)
     }
   }
 
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(amount)
-  }
-
-  const getCategoryName = (category: Service["category"]) => {
+  const getCategoryName = (category: string) => {
     switch (category) {
       case "car-regular":
         return "Mobil Regular"
@@ -107,7 +104,7 @@ export function ServiceManagement() {
     }
   }
 
-  const getCategoryColor = (category: Service["category"]) => {
+  const getCategoryColor = (category: string) => {
     switch (category) {
       case "car-regular":
         return "bg-blue-100 text-blue-800"
@@ -120,7 +117,7 @@ export function ServiceManagement() {
     }
   }
 
-  const getCategoryIcon = (category: Service["category"]) => {
+  const getCategoryIcon = (category: string) => {
     switch (category) {
       case "car-regular":
         return Car
@@ -148,8 +145,8 @@ export function ServiceManagement() {
     if (formData.duration <= 0) {
       newErrors.duration = "Durasi harus lebih dari 0"
     }
-    if (formData.supportsPickup && formData.pickupFee < 0) {
-      newErrors.pickupFee = "Biaya pickup tidak boleh negatif"
+    if (formData.supports_pickup && formData.pickup_fee < 0) {
+      newErrors.pickup_fee = "Biaya pickup tidak boleh negatif"
     }
 
     setErrors(newErrors)
@@ -174,24 +171,17 @@ export function ServiceManagement() {
               .split(",")
               .map((f) => f.trim())
               .filter((f) => f)
-          : undefined,
+          : [],
       }
 
-      const newService = await apiClient.createService(serviceData)
+      const { service: newService } = await apiClient.createService(serviceData)
       setServiceList([...serviceList, newService])
       setIsCreateDialogOpen(false)
       resetForm()
-      toast({
-        title: "Layanan Berhasil Ditambahkan",
-        description: `Layanan "${newService.name}" telah ditambahkan ke sistem.`,
-      })
+      showSuccessToast("Layanan Berhasil Ditambahkan", `Layanan "${newService.name}" telah ditambahkan ke sistem.`)
     } catch (err) {
       console.error("[v0] Error creating service:", err)
-      toast({
-        title: "Gagal Menambahkan Layanan",
-        description: "Terjadi kesalahan saat menambahkan layanan. Silakan coba lagi.",
-        variant: "destructive",
-      })
+      showErrorToast(err, "Gagal Menambahkan Layanan")
     } finally {
       setIsSubmitting(false)
     }
@@ -206,8 +196,8 @@ export function ServiceManagement() {
       description: service.description,
       duration: service.duration,
       features: service.features || [],
-      supportsPickup: service.supportsPickup || false,
-      pickupFee: service.pickupFee || 0,
+      supports_pickup: service.supports_pickup || false,
+      pickup_fee: service.pickup_fee || 0,
     })
     setFeaturesInput(service.features?.join(", ") || "")
     setIsEditDialogOpen(true)
@@ -225,25 +215,18 @@ export function ServiceManagement() {
               .split(",")
               .map((f) => f.trim())
               .filter((f) => f)
-          : undefined,
+          : [],
       }
 
-      const updatedService = await apiClient.updateService(editingService.id, serviceData)
+      const { service: updatedService } = await apiClient.updateService(editingService.id, serviceData)
       setServiceList(serviceList.map((s) => (s.id === editingService.id ? updatedService : s)))
       setIsEditDialogOpen(false)
       setEditingService(null)
       resetForm()
-      toast({
-        title: "Layanan Berhasil Diperbarui",
-        description: `Layanan "${updatedService.name}" telah diperbarui.`,
-      })
+      showSuccessToast("Layanan Berhasil Diperbarui", `Layanan "${updatedService.name}" telah diperbarui.`)
     } catch (err) {
       console.error("[v0] Error updating service:", err)
-      toast({
-        title: "Gagal Memperbarui Layanan",
-        description: "Terjadi kesalahan saat memperbarui layanan. Silakan coba lagi.",
-        variant: "destructive",
-      })
+      showErrorToast(err, "Gagal Memperbarui Layanan")
     } finally {
       setIsSubmitting(false)
     }
@@ -253,18 +236,10 @@ export function ServiceManagement() {
     try {
       await apiClient.deleteService(service.id)
       setServiceList(serviceList.filter((s) => s.id !== service.id))
-      toast({
-        title: "Layanan Berhasil Dihapus",
-        description: `Layanan "${service.name}" telah dihapus dari sistem.`,
-        variant: "destructive",
-      })
+      showSuccessToast("Layanan Berhasil Dihapus", `Layanan "${service.name}" telah dihapus dari sistem.`)
     } catch (err) {
       console.error("[v0] Error deleting service:", err)
-      toast({
-        title: "Gagal Menghapus Layanan",
-        description: "Terjadi kesalahan saat menghapus layanan. Silakan coba lagi.",
-        variant: "destructive",
-      })
+      showErrorToast(err, "Gagal Menghapus Layanan")
     }
   }
 
@@ -287,7 +262,7 @@ export function ServiceManagement() {
           <Label htmlFor="category">Kategori *</Label>
           <Select
             value={formData.category}
-            onValueChange={(value: Service["category"]) => setFormData({ ...formData, category: value })}
+            onValueChange={(value: string) => setFormData({ ...formData, category: value })}
             disabled={isSubmitting}
           >
             <SelectTrigger>
@@ -360,26 +335,26 @@ export function ServiceManagement() {
         <div className="flex items-center space-x-2">
           <Switch
             id="supportsPickup"
-            checked={formData.supportsPickup}
-            onCheckedChange={(checked) => setFormData({ ...formData, supportsPickup: checked })}
+            checked={formData.supports_pickup}
+            onCheckedChange={(checked) => setFormData({ ...formData, supports_pickup: checked })}
             disabled={isSubmitting}
           />
           <Label htmlFor="supportsPickup">Mendukung Layanan Pickup</Label>
         </div>
 
-        {formData.supportsPickup && (
+        {formData.supports_pickup && (
           <div className="space-y-2">
             <Label htmlFor="pickupFee">Biaya Pickup (IDR)</Label>
             <Input
               id="pickupFee"
               type="number"
-              value={formData.pickupFee}
-              onChange={(e) => setFormData({ ...formData, pickupFee: Number.parseInt(e.target.value) || 0 })}
+              value={formData.pickup_fee}
+              onChange={(e) => setFormData({ ...formData, pickup_fee: Number.parseInt(e.target.value) || 0 })}
               placeholder="15000"
-              className={errors.pickupFee ? "border-red-500" : ""}
+              className={errors.pickup_fee ? "border-red-500" : ""}
               disabled={isSubmitting}
             />
-            {errors.pickupFee && <p className="text-sm text-red-500">{errors.pickupFee}</p>}
+            {errors.pickup_fee && <p className="text-sm text-red-500">{errors.pickup_fee}</p>}
           </div>
         )}
       </div>
@@ -421,10 +396,7 @@ export function ServiceManagement() {
         </div>
         <Card>
           <CardContent className="pt-6">
-            <div className="text-center py-8">
-              <p className="text-red-600 mb-4">{error}</p>
-              <Button onClick={fetchServices}>Coba Lagi</Button>
-            </div>
+            <ErrorState title="Gagal Memuat Layanan" message={error} onRetry={fetchServices} />
           </CardContent>
         </Card>
       </div>
@@ -539,8 +511,8 @@ export function ServiceManagement() {
                         <TableCell>
                           <div className="flex items-center gap-1">
                             <MapPin className="w-3 h-3 text-muted-foreground" />
-                            {service.supportsPickup ? (
-                              <span className="text-green-600">Ya ({formatCurrency(service.pickupFee || 0)})</span>
+                            {service.supports_pickup ? (
+                              <span className="text-green-600">Ya ({formatCurrency(service.pickup_fee || 0)})</span>
                             ) : (
                               <span className="text-muted-foreground">Tidak</span>
                             )}

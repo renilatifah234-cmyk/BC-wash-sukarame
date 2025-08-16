@@ -7,16 +7,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Upload, FileImage, X, CheckCircle } from "lucide-react"
 import type { BookingData } from "@/app/booking/page"
-import { generateBookingCode } from "@/lib/dummy-data"
+import { apiClient } from "@/lib/api-client"
+import { showErrorToast, showSuccessToast } from "@/lib/error-utils"
 
 interface PaymentProofProps {
   onNext: () => void
   onPrev: () => void
   onUpload: (file: File) => void
   bookingData: BookingData
+  updateBookingData: (data: Partial<BookingData>) => void
 }
 
-export function PaymentProof({ onNext, onPrev, onUpload, bookingData }: PaymentProofProps) {
+export function PaymentProof({ onNext, onPrev, onUpload, bookingData, updateBookingData }: PaymentProofProps) {
   const [uploadedFile, setUploadedFile] = useState<File | null>(bookingData.paymentProof || null)
   const [dragActive, setDragActive] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
@@ -24,10 +26,14 @@ export function PaymentProof({ onNext, onPrev, onUpload, bookingData }: PaymentP
 
   const handleFileSelect = (file: File) => {
     if (file.type.startsWith("image/")) {
+      if (file.size > 5 * 1024 * 1024) {
+        showErrorToast(new Error("File terlalu besar"), "Ukuran file maksimal 5MB")
+        return
+      }
       setUploadedFile(file)
       onUpload(file)
     } else {
-      alert("Hanya file gambar yang diperbolehkan (JPG, PNG, dll)")
+      showErrorToast(new Error("Format file tidak didukung"), "Hanya file gambar yang diperbolehkan (JPG, PNG, dll)")
     }
   }
 
@@ -62,19 +68,59 @@ export function PaymentProof({ onNext, onPrev, onUpload, bookingData }: PaymentP
   }
 
   const handleSubmit = async () => {
-    if (!uploadedFile) return
+    if (!uploadedFile || !bookingData.service || !bookingData.branch || !bookingData.date || !bookingData.time) {
+      showErrorToast(new Error("Data tidak lengkap"), "Pastikan semua data booking sudah terisi")
+      return
+    }
 
     setIsProcessing(true)
 
-    // Simulate processing time
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    try {
+      const totalPrice =
+        bookingData.service.price + (bookingData.isPickupService ? bookingData.service.pickup_fee || 0 : 0)
 
-    // Generate booking code and proceed
-    const bookingCode = generateBookingCode()
-    onUpload(uploadedFile)
+      const bookingPayload = {
+        customer_name: bookingData.customerName!,
+        customer_phone: bookingData.customerPhone!,
+        customer_email: bookingData.customerEmail!,
+        service_id: bookingData.service.id,
+        branch_id: bookingData.branch.id,
+        booking_date: bookingData.date,
+        booking_time: bookingData.time,
+        total_price: totalPrice,
+        is_pickup_service: bookingData.isPickupService || false,
+        pickup_address: bookingData.pickupAddress,
+        pickup_notes: bookingData.pickupNotes,
+        vehicle_plate_number: bookingData.vehiclePlateNumber,
+        payment_method: "transfer" as const,
+        booking_source: "online" as const,
+      }
 
-    setIsProcessing(false)
-    onNext()
+      const { booking } = await apiClient.createBooking(bookingPayload)
+
+      if (uploadedFile) {
+        try {
+          const paymentProofUrl = await apiClient.uploadPaymentProof(booking.id, uploadedFile)
+          console.log("[v0] Payment proof uploaded:", paymentProofUrl)
+        } catch (uploadError) {
+          console.error("[v0] Payment proof upload failed:", uploadError)
+          // Continue anyway - booking is created, just payment proof upload failed
+        }
+      }
+
+      updateBookingData({ bookingCode: booking.booking_code })
+
+      showSuccessToast(
+        "Booking Berhasil Dibuat",
+        "Booking Anda telah berhasil dibuat dan menunggu konfirmasi pembayaran",
+      )
+      onNext()
+    } catch (err) {
+      console.error("[v0] Error creating booking:", err)
+      showErrorToast(err, "Gagal Membuat Booking")
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
   return (
@@ -125,6 +171,7 @@ export function PaymentProof({ onNext, onPrev, onUpload, bookingData }: PaymentP
                   size="sm"
                   onClick={removeFile}
                   className="text-destructive hover:text-destructive"
+                  disabled={isProcessing}
                 >
                   <X className="w-4 h-4" />
                 </Button>
@@ -153,7 +200,7 @@ export function PaymentProof({ onNext, onPrev, onUpload, bookingData }: PaymentP
       </Card>
 
       <div className="flex justify-between pt-6">
-        <Button variant="outline" onClick={onPrev} size="lg" className="px-8 bg-transparent">
+        <Button variant="outline" onClick={onPrev} size="lg" className="px-8 bg-transparent" disabled={isProcessing}>
           Kembali
         </Button>
         <Button onClick={handleSubmit} disabled={!uploadedFile || isProcessing} size="lg" className="px-8">
