@@ -18,25 +18,42 @@ interface PaymentProofProps {
   updateBookingData: (data: Partial<BookingData>) => void
 }
 
+/**
+ * Payment Proof Upload Component
+ *
+ * Handles payment proof file upload and booking creation.
+ * Supports drag & drop, file validation, and progress tracking.
+ */
 export function PaymentProof({ onNext, onPrev, onUpload, bookingData, updateBookingData }: PaymentProofProps) {
   const [uploadedFile, setUploadedFile] = useState<File | null>(bookingData.paymentProof || null)
   const [dragActive, setDragActive] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  /**
+   * Validates and handles file selection
+   * @param file - Selected file to validate and process
+   */
   const handleFileSelect = (file: File) => {
-    if (file.type.startsWith("image/")) {
-      if (file.size > 5 * 1024 * 1024) {
-        showErrorToast(new Error("File terlalu besar"), "Ukuran file maksimal 5MB")
-        return
-      }
-      setUploadedFile(file)
-      onUpload(file)
-    } else {
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
       showErrorToast(new Error("Format file tidak didukung"), "Hanya file gambar yang diperbolehkan (JPG, PNG, dll)")
+      return
     }
+
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      showErrorToast(new Error("File terlalu besar"), "Ukuran file maksimal 5MB")
+      return
+    }
+
+    setUploadedFile(file)
+    onUpload(file)
   }
 
+  /**
+   * Handles drag and drop events for file upload
+   */
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
@@ -67,7 +84,12 @@ export function PaymentProof({ onNext, onPrev, onUpload, bookingData, updateBook
     setUploadedFile(null)
   }
 
+  /**
+   * Handles booking creation and payment proof upload
+   * Creates the booking record and uploads payment proof file
+   */
   const handleSubmit = async () => {
+    // Validate required data
     if (!uploadedFile || !bookingData.service || !bookingData.branch || !bookingData.date || !bookingData.time) {
       showErrorToast(new Error("Data tidak lengkap"), "Pastikan semua data booking sudah terisi")
       return
@@ -76,9 +98,11 @@ export function PaymentProof({ onNext, onPrev, onUpload, bookingData, updateBook
     setIsProcessing(true)
 
     try {
+      // Calculate total price including pickup fee if applicable
       const totalPrice =
         bookingData.service.price + (bookingData.isPickupService ? bookingData.service.pickup_fee || 0 : 0)
 
+      // Prepare booking payload
       const bookingPayload = {
         customer_name: bookingData.customerName!,
         customer_phone: bookingData.customerPhone!,
@@ -96,18 +120,21 @@ export function PaymentProof({ onNext, onPrev, onUpload, bookingData, updateBook
         booking_source: "online" as const,
       }
 
+      // Create booking record
       const { booking } = await apiClient.createBooking(bookingPayload)
 
+      // Upload payment proof if file is provided
       if (uploadedFile) {
         try {
-          const paymentProofUrl = await apiClient.uploadPaymentProof(booking.id, uploadedFile)
-          console.log("[v0] Payment proof uploaded:", paymentProofUrl)
+          await apiClient.uploadPaymentProof(booking.id, uploadedFile)
         } catch (uploadError) {
-          console.error("[v0] Payment proof upload failed:", uploadError)
+          console.error("Payment proof upload failed:", uploadError)
           // Continue anyway - booking is created, just payment proof upload failed
+          // Admin can still process the booking manually
         }
       }
 
+      // Update booking data with generated booking code
       updateBookingData({ bookingCode: booking.booking_code })
 
       showSuccessToast(
@@ -116,7 +143,7 @@ export function PaymentProof({ onNext, onPrev, onUpload, bookingData, updateBook
       )
       onNext()
     } catch (err) {
-      console.error("[v0] Error creating booking:", err)
+      console.error("Error creating booking:", err)
       showErrorToast(err, "Gagal Membuat Booking")
     } finally {
       setIsProcessing(false)

@@ -190,7 +190,7 @@ export function BranchTimeSelection({
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Clock className="w-4 h-4 flex-shrink-0" />
                     <span>
-                      {branchOption.operating_hours.open} - {branchOption.operating_hours.close} WIB
+                      {branchOption.operating_hours_open} - {branchOption.operating_hours_close} WIB
                     </span>
                   </div>
                   {branch?.id === branchOption.id && (

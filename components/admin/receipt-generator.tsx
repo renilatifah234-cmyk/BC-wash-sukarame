@@ -29,21 +29,45 @@ interface ReceiptGeneratorProps {
   onClose?: () => void
 }
 
+/**
+ * Receipt Generator Component
+ *
+ * Generates and displays a printable receipt for completed car wash bookings.
+ * Supports PDF download, printing, and sharing functionality.
+ */
 export function ReceiptGenerator({ receiptData, onClose }: ReceiptGeneratorProps) {
   const [isGenerating, setIsGenerating] = useState(false)
 
+  /**
+   * Handles PDF generation and download
+   * In production, this would integrate with a PDF generation service
+   */
   const handleDownload = async () => {
     setIsGenerating(true)
-    // Simulate PDF generation
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-    console.log("Downloading receipt PDF")
-    setIsGenerating(false)
+    try {
+      // Simulate PDF generation - replace with actual PDF service integration
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+
+      // TODO: Integrate with actual PDF generation service
+      // Example: const pdfBlob = await generateReceiptPDF(receiptData)
+      // downloadFile(pdfBlob, `receipt-${receiptData.bookingCode}.pdf`)
+    } catch (error) {
+      console.error("Failed to generate PDF:", error)
+    } finally {
+      setIsGenerating(false)
+    }
   }
 
+  /**
+   * Handles receipt printing using browser's print functionality
+   */
   const handlePrint = () => {
     window.print()
   }
 
+  /**
+   * Handles receipt sharing via Web Share API or clipboard fallback
+   */
   const handleShare = async () => {
     if (navigator.share) {
       try {
@@ -53,10 +77,11 @@ export function ReceiptGenerator({ receiptData, onClose }: ReceiptGeneratorProps
           url: window.location.href,
         })
       } catch (error) {
-        console.log("Error sharing:", error)
+        // User cancelled sharing or sharing failed
+        console.error("Sharing failed:", error)
       }
     } else {
-      // Fallback: copy to clipboard
+      // Fallback: copy receipt text to clipboard
       const receiptText = `
 BC WASH SUKARAME
 Struk Pembayaran

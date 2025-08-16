@@ -17,7 +17,7 @@ export function ContactInfo() {
     const fetchBranches = async () => {
       try {
         setLoading(true)
-        const branchData = await apiClient.getBranches()
+        const { branches: branchData } = await apiClient.getBranches()
         // Only show active branches to customers
         const activeBranches = branchData.filter((branch) => branch.status === "active")
         setBranches(activeBranches)
@@ -106,7 +106,7 @@ export function ContactInfo() {
                 <div className="flex items-center gap-3">
                   <Clock className="w-5 h-5 text-muted-foreground flex-shrink-0" />
                   <p className="text-muted-foreground">
-                    {branch.operatingHours.open} - {branch.operatingHours.close} WIB
+                    {branch.operating_hours_open} - {branch.operating_hours_close} WIB
                   </p>
                 </div>
               </CardContent>
