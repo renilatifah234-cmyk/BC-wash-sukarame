@@ -1,3 +1,5 @@
+"use client"
+
 import { Hero } from "@/components/customer/hero"
 import { ServiceCategories } from "@/components/customer/service-categories"
 import { WhyChooseUs } from "@/components/customer/why-choose-us"

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -27,6 +27,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { toast } from "@/hooks/use-toast"
 import {
   MapPin,
   Phone,
@@ -40,15 +41,41 @@ import {
   Building,
   CreditCard,
 } from "lucide-react"
-import { branches, updateBranchStatus, type Branch } from "@/lib/dummy-data"
+import { apiClient } from "@/lib/api-client"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
 
+interface Branch {
+  id: string
+  name: string
+  address: string
+  phone: string
+  manager?: string
+  staffCount?: number
+  bankAccount: {
+    bank: string
+    accountNumber: string
+    accountName: string
+  }
+  operatingHours: {
+    open: string
+    close: string
+  }
+  pickupCoverageRadius?: number
+  status: "active" | "inactive"
+  createdAt: string
+  updatedAt: string
+}
+
 export function BranchManagement() {
+  const [branches, setBranches] = useState<Branch[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const [newBranchData, setNewBranchData] = useState({
     name: "",
@@ -66,11 +93,40 @@ export function BranchManagement() {
 
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  const handleStatusToggle = (branchId: string, currentStatus: "active" | "inactive") => {
-    const newStatus = currentStatus === "active" ? "inactive" : "active"
-    updateBranchStatus(branchId, newStatus)
-    // In real app, this would trigger a re-fetch or state update
-    console.log(`Branch ${branchId} status changed to ${newStatus}`)
+  useEffect(() => {
+    fetchBranches()
+  }, [])
+
+  const fetchBranches = async () => {
+    try {
+      setLoading(true)
+      const branchData = await apiClient.getBranches()
+      setBranches(branchData)
+    } catch (err) {
+      console.error("[v0] Error fetching branches:", err)
+      setError("Gagal memuat data cabang")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleStatusToggle = async (branchId: string, currentStatus: "active" | "inactive") => {
+    try {
+      const newStatus = currentStatus === "active" ? "inactive" : "active"
+      await apiClient.updateBranchStatus(branchId, newStatus)
+      setBranches(branches.map((branch) => (branch.id === branchId ? { ...branch, status: newStatus } : branch)))
+      toast({
+        title: "Status Berhasil Diperbarui",
+        description: `Cabang telah ${newStatus === "active" ? "diaktifkan" : "dinonaktifkan"}.`,
+      })
+    } catch (err) {
+      console.error("[v0] Error updating branch status:", err)
+      toast({
+        title: "Gagal Memperbarui Status",
+        description: "Terjadi kesalahan saat memperbarui status cabang.",
+        variant: "destructive",
+      })
+    }
   }
 
   const validateForm = () => {
@@ -118,13 +174,7 @@ export function BranchManagement() {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleAddBranch = () => {
-    if (!validateForm()) return
-
-    // In real app, this would make an API call
-    console.log("Adding new branch:", newBranchData)
-
-    // Reset form and close dialog
+  const resetForm = () => {
     setNewBranchData({
       name: "",
       address: "",
@@ -139,7 +189,49 @@ export function BranchManagement() {
       pickupRadius: 10,
     })
     setErrors({})
-    setIsAddDialogOpen(false)
+  }
+
+  const handleAddBranch = async () => {
+    if (!validateForm()) return
+
+    setIsSubmitting(true)
+    try {
+      const branchData = {
+        name: newBranchData.name,
+        address: newBranchData.address,
+        phone: newBranchData.phone,
+        manager: newBranchData.manager,
+        staffCount: newBranchData.staffCount,
+        bankAccount: {
+          bank: newBranchData.bankName,
+          accountNumber: newBranchData.accountNumber,
+          accountName: newBranchData.accountName,
+        },
+        operatingHours: {
+          open: newBranchData.openTime,
+          close: newBranchData.closeTime,
+        },
+        pickupCoverageRadius: newBranchData.pickupRadius,
+      }
+
+      const newBranch = await apiClient.createBranch(branchData)
+      setBranches([...branches, newBranch])
+      resetForm()
+      setIsAddDialogOpen(false)
+      toast({
+        title: "Cabang Berhasil Ditambahkan",
+        description: `Cabang "${newBranch.name}" telah ditambahkan ke sistem.`,
+      })
+    } catch (err) {
+      console.error("[v0] Error creating branch:", err)
+      toast({
+        title: "Gagal Menambahkan Cabang",
+        description: "Terjadi kesalahan saat menambahkan cabang. Silakan coba lagi.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleEditBranch = (branch: Branch) => {
@@ -160,29 +252,48 @@ export function BranchManagement() {
     setIsEditDialogOpen(true)
   }
 
-  const handleUpdateBranch = () => {
-    if (!validateForm()) return
+  const handleUpdateBranch = async () => {
+    if (!validateForm() || !selectedBranch) return
 
-    // In real app, this would make an API call
-    console.log("Updating branch:", selectedBranch?.id, newBranchData)
+    setIsSubmitting(true)
+    try {
+      const branchData = {
+        name: newBranchData.name,
+        address: newBranchData.address,
+        phone: newBranchData.phone,
+        manager: newBranchData.manager,
+        staffCount: newBranchData.staffCount,
+        bankAccount: {
+          bank: newBranchData.bankName,
+          accountNumber: newBranchData.accountNumber,
+          accountName: newBranchData.accountName,
+        },
+        operatingHours: {
+          open: newBranchData.openTime,
+          close: newBranchData.closeTime,
+        },
+        pickupCoverageRadius: newBranchData.pickupRadius,
+      }
 
-    // Reset form and close dialog
-    setNewBranchData({
-      name: "",
-      address: "",
-      phone: "",
-      manager: "",
-      staffCount: 1,
-      bankName: "",
-      accountNumber: "",
-      accountName: "",
-      openTime: "08:00",
-      closeTime: "18:00",
-      pickupRadius: 10,
-    })
-    setErrors({})
-    setSelectedBranch(null)
-    setIsEditDialogOpen(false)
+      const updatedBranch = await apiClient.updateBranch(selectedBranch.id, branchData)
+      setBranches(branches.map((branch) => (branch.id === selectedBranch.id ? updatedBranch : branch)))
+      resetForm()
+      setSelectedBranch(null)
+      setIsEditDialogOpen(false)
+      toast({
+        title: "Cabang Berhasil Diperbarui",
+        description: `Cabang "${updatedBranch.name}" telah diperbarui.`,
+      })
+    } catch (err) {
+      console.error("[v0] Error updating branch:", err)
+      toast({
+        title: "Gagal Memperbarui Cabang",
+        description: "Terjadi kesalahan saat memperbarui cabang. Silakan coba lagi.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleViewBranch = (branch: Branch) => {
@@ -209,6 +320,7 @@ export function BranchManagement() {
             onChange={(e) => setNewBranchData((prev) => ({ ...prev, name: e.target.value }))}
             placeholder="BC Wash Cabang..."
             className={errors.name ? "border-destructive" : ""}
+            disabled={isSubmitting}
           />
           {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
         </div>
@@ -221,6 +333,7 @@ export function BranchManagement() {
             onChange={(e) => setNewBranchData((prev) => ({ ...prev, phone: e.target.value }))}
             placeholder="0721-123456"
             className={errors.phone ? "border-destructive" : ""}
+            disabled={isSubmitting}
           />
           {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
         </div>
@@ -235,6 +348,7 @@ export function BranchManagement() {
           placeholder="Jl. Nama Jalan No. XX, Kelurahan, Kecamatan, Kota"
           className={errors.address ? "border-destructive" : ""}
           rows={3}
+          disabled={isSubmitting}
         />
         {errors.address && <p className="text-sm text-destructive">{errors.address}</p>}
       </div>
@@ -248,6 +362,7 @@ export function BranchManagement() {
             onChange={(e) => setNewBranchData((prev) => ({ ...prev, manager: e.target.value }))}
             placeholder="Nama lengkap manager"
             className={errors.manager ? "border-destructive" : ""}
+            disabled={isSubmitting}
           />
           {errors.manager && <p className="text-sm text-destructive">{errors.manager}</p>}
         </div>
@@ -263,6 +378,7 @@ export function BranchManagement() {
               setNewBranchData((prev) => ({ ...prev, staffCount: Number.parseInt(e.target.value) || 1 }))
             }
             className={errors.staffCount ? "border-destructive" : ""}
+            disabled={isSubmitting}
           />
           {errors.staffCount && <p className="text-sm text-destructive">{errors.staffCount}</p>}
         </div>
@@ -281,6 +397,7 @@ export function BranchManagement() {
             <Select
               value={newBranchData.openTime}
               onValueChange={(value) => setNewBranchData((prev) => ({ ...prev, openTime: value }))}
+              disabled={isSubmitting}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -303,6 +420,7 @@ export function BranchManagement() {
             <Select
               value={newBranchData.closeTime}
               onValueChange={(value) => setNewBranchData((prev) => ({ ...prev, closeTime: value }))}
+              disabled={isSubmitting}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -334,6 +452,7 @@ export function BranchManagement() {
             setNewBranchData((prev) => ({ ...prev, pickupRadius: Number.parseInt(e.target.value) || 10 }))
           }
           className={errors.pickupRadius ? "border-destructive" : ""}
+          disabled={isSubmitting}
         />
         {errors.pickupRadius && <p className="text-sm text-destructive">{errors.pickupRadius}</p>}
       </div>
@@ -351,6 +470,7 @@ export function BranchManagement() {
             <Select
               value={newBranchData.bankName}
               onValueChange={(value) => setNewBranchData((prev) => ({ ...prev, bankName: value }))}
+              disabled={isSubmitting}
             >
               <SelectTrigger className={errors.bankName ? "border-destructive" : ""}>
                 <SelectValue placeholder="Pilih bank" />
@@ -376,6 +496,7 @@ export function BranchManagement() {
               onChange={(e) => setNewBranchData((prev) => ({ ...prev, accountNumber: e.target.value }))}
               placeholder="1234567890"
               className={errors.accountNumber ? "border-destructive" : ""}
+              disabled={isSubmitting}
             />
             {errors.accountNumber && <p className="text-sm text-destructive">{errors.accountNumber}</p>}
           </div>
@@ -389,12 +510,58 @@ export function BranchManagement() {
             onChange={(e) => setNewBranchData((prev) => ({ ...prev, accountName: e.target.value }))}
             placeholder="BC Wash Cabang..."
             className={errors.accountName ? "border-destructive" : ""}
+            disabled={isSubmitting}
           />
           {errors.accountName && <p className="text-sm text-destructive">{errors.accountName}</p>}
         </div>
       </div>
     </div>
   )
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="font-serif text-2xl font-bold text-foreground">Manajemen Cabang</h2>
+            <p className="text-muted-foreground mt-1">Memuat data cabang...</p>
+          </div>
+        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="h-16 bg-gray-200 rounded"></div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="font-serif text-2xl font-bold text-foreground">Manajemen Cabang</h2>
+            <p className="text-muted-foreground mt-1">Kelola informasi dan status cabang BC Wash</p>
+          </div>
+        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-8">
+              <p className="text-red-600 mb-4">{error}</p>
+              <Button onClick={fetchBranches}>Coba Lagi</Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -405,7 +572,7 @@ export function BranchManagement() {
         </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="flex items-center gap-2">
+            <Button className="flex items-center gap-2" onClick={resetForm}>
               <Plus className="w-4 h-4" />
               Tambah Cabang
             </Button>
@@ -417,10 +584,19 @@ export function BranchManagement() {
             </DialogHeader>
             <BranchFormFields />
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} disabled={isSubmitting}>
                 Batal
               </Button>
-              <Button onClick={handleAddBranch}>Tambah Cabang</Button>
+              <Button onClick={handleAddBranch} disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Clock className="w-4 h-4 mr-2 animate-spin" />
+                    Menambahkan...
+                  </>
+                ) : (
+                  "Tambah Cabang"
+                )}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -431,100 +607,106 @@ export function BranchManagement() {
           <CardTitle className="font-serif text-xl">Daftar Cabang</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nama Cabang</TableHead>
-                  <TableHead>Manager</TableHead>
-                  <TableHead>Kontak</TableHead>
-                  <TableHead>Staff</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Dibuat</TableHead>
-                  <TableHead className="text-right">Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {branches.map((branch) => (
-                  <TableRow key={branch.id}>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{branch.name}</p>
-                        <p className="text-sm text-muted-foreground truncate max-w-[200px]">{branch.address}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4 text-muted-foreground" />
-                        <span>{branch.manager || "Tidak ada"}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-sm">
-                          <Phone className="w-3 h-3 text-muted-foreground" />
-                          <span>{branch.phone}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Clock className="w-3 h-3" />
-                          <span>
-                            {branch.operatingHours.open} - {branch.operatingHours.close}
-                          </span>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{branch.staffCount || 0} orang</Badge>
-                    </TableCell>
-                    <TableCell>{getStatusBadge(branch.status)}</TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        <p>{format(new Date(branch.createdAt), "dd MMM yyyy", { locale: id })}</p>
-                        <p className="text-muted-foreground">
-                          {format(new Date(branch.createdAt), "HH:mm", { locale: id })}
-                        </p>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Aksi</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => handleViewBranch(branch)}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            Lihat Detail
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleEditBranch(branch)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit Cabang
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => handleStatusToggle(branch.id, branch.status)}>
-                            {branch.status === "active" ? (
-                              <>
-                                <EyeOff className="mr-2 h-4 w-4" />
-                                Nonaktifkan
-                              </>
-                            ) : (
-                              <>
-                                <Eye className="mr-2 h-4 w-4" />
-                                Aktifkan
-                              </>
-                            )}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+          {branches.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Belum ada cabang yang tersedia. Tambahkan cabang pertama Anda.
+            </div>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nama Cabang</TableHead>
+                    <TableHead>Manager</TableHead>
+                    <TableHead>Kontak</TableHead>
+                    <TableHead>Staff</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Dibuat</TableHead>
+                    <TableHead className="text-right">Aksi</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {branches.map((branch) => (
+                    <TableRow key={branch.id}>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{branch.name}</p>
+                          <p className="text-sm text-muted-foreground truncate max-w-[200px]">{branch.address}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Users className="w-4 h-4 text-muted-foreground" />
+                          <span>{branch.manager || "Tidak ada"}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 text-sm">
+                            <Phone className="w-3 h-3 text-muted-foreground" />
+                            <span>{branch.phone}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Clock className="w-3 h-3" />
+                            <span>
+                              {branch.operatingHours.open} - {branch.operatingHours.close}
+                            </span>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{branch.staffCount || 0} orang</Badge>
+                      </TableCell>
+                      <TableCell>{getStatusBadge(branch.status)}</TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <p>{format(new Date(branch.createdAt), "dd MMM yyyy", { locale: id })}</p>
+                          <p className="text-muted-foreground">
+                            {format(new Date(branch.createdAt), "HH:mm", { locale: id })}
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <span className="sr-only">Open menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Aksi</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => handleViewBranch(branch)}>
+                              <Eye className="mr-2 h-4 w-4" />
+                              Lihat Detail
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleEditBranch(branch)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit Cabang
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleStatusToggle(branch.id, branch.status)}>
+                              {branch.status === "active" ? (
+                                <>
+                                  <EyeOff className="mr-2 h-4 w-4" />
+                                  Nonaktifkan
+                                </>
+                              ) : (
+                                <>
+                                  <Eye className="mr-2 h-4 w-4" />
+                                  Aktifkan
+                                </>
+                              )}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -537,10 +719,19 @@ export function BranchManagement() {
           </DialogHeader>
           <BranchFormFields />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} disabled={isSubmitting}>
               Batal
             </Button>
-            <Button onClick={handleUpdateBranch}>Simpan Perubahan</Button>
+            <Button onClick={handleUpdateBranch} disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Clock className="w-4 h-4 mr-2 animate-spin" />
+                  Menyimpan...
+                </>
+              ) : (
+                "Simpan Perubahan"
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

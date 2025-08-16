@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -32,7 +32,8 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { toast } from "@/hooks/use-toast"
 import { Plus, Edit, Trash2, Car, Bike, Crown, Clock, MapPin, DollarSign } from "lucide-react"
-import { services, formatCurrency, type Service } from "@/lib/dummy-data"
+import { apiClient } from "@/lib/api-client"
+import type { Service } from "@/lib/dummy-data"
 
 interface ServiceFormData {
   name: string
@@ -57,13 +58,41 @@ const initialFormData: ServiceFormData = {
 }
 
 export function ServiceManagement() {
-  const [serviceList, setServiceList] = useState<Service[]>(services)
+  const [serviceList, setServiceList] = useState<Service[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [editingService, setEditingService] = useState<Service | null>(null)
   const [formData, setFormData] = useState<ServiceFormData>(initialFormData)
   const [featuresInput, setFeaturesInput] = useState("")
   const [errors, setErrors] = useState<Partial<ServiceFormData>>({})
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(() => {
+    fetchServices()
+  }, [])
+
+  const fetchServices = async () => {
+    try {
+      setLoading(true)
+      const services = await apiClient.getServices()
+      setServiceList(services)
+    } catch (err) {
+      console.error("[v0] Error fetching services:", err)
+      setError("Gagal memuat data layanan")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(amount)
+  }
 
   const getCategoryName = (category: Service["category"]) => {
     switch (category) {
@@ -133,27 +162,39 @@ export function ServiceManagement() {
     setErrors({})
   }
 
-  const handleCreateService = () => {
+  const handleCreateService = async () => {
     if (!validateForm()) return
 
-    const newService: Service = {
-      id: `service-${Date.now()}`,
-      ...formData,
-      features: featuresInput
-        ? featuresInput
-            .split(",")
-            .map((f) => f.trim())
-            .filter((f) => f)
-        : undefined,
-    }
+    setIsSubmitting(true)
+    try {
+      const serviceData = {
+        ...formData,
+        features: featuresInput
+          ? featuresInput
+              .split(",")
+              .map((f) => f.trim())
+              .filter((f) => f)
+          : undefined,
+      }
 
-    setServiceList([...serviceList, newService])
-    setIsCreateDialogOpen(false)
-    resetForm()
-    toast({
-      title: "Layanan Berhasil Ditambahkan",
-      description: `Layanan "${newService.name}" telah ditambahkan ke sistem.`,
-    })
+      const newService = await apiClient.createService(serviceData)
+      setServiceList([...serviceList, newService])
+      setIsCreateDialogOpen(false)
+      resetForm()
+      toast({
+        title: "Layanan Berhasil Ditambahkan",
+        description: `Layanan "${newService.name}" telah ditambahkan ke sistem.`,
+      })
+    } catch (err) {
+      console.error("[v0] Error creating service:", err)
+      toast({
+        title: "Gagal Menambahkan Layanan",
+        description: "Terjadi kesalahan saat menambahkan layanan. Silakan coba lagi.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleEditService = (service: Service) => {
@@ -172,37 +213,59 @@ export function ServiceManagement() {
     setIsEditDialogOpen(true)
   }
 
-  const handleUpdateService = () => {
+  const handleUpdateService = async () => {
     if (!validateForm() || !editingService) return
 
-    const updatedService: Service = {
-      ...editingService,
-      ...formData,
-      features: featuresInput
-        ? featuresInput
-            .split(",")
-            .map((f) => f.trim())
-            .filter((f) => f)
-        : undefined,
-    }
+    setIsSubmitting(true)
+    try {
+      const serviceData = {
+        ...formData,
+        features: featuresInput
+          ? featuresInput
+              .split(",")
+              .map((f) => f.trim())
+              .filter((f) => f)
+          : undefined,
+      }
 
-    setServiceList(serviceList.map((s) => (s.id === editingService.id ? updatedService : s)))
-    setIsEditDialogOpen(false)
-    setEditingService(null)
-    resetForm()
-    toast({
-      title: "Layanan Berhasil Diperbarui",
-      description: `Layanan "${updatedService.name}" telah diperbarui.`,
-    })
+      const updatedService = await apiClient.updateService(editingService.id, serviceData)
+      setServiceList(serviceList.map((s) => (s.id === editingService.id ? updatedService : s)))
+      setIsEditDialogOpen(false)
+      setEditingService(null)
+      resetForm()
+      toast({
+        title: "Layanan Berhasil Diperbarui",
+        description: `Layanan "${updatedService.name}" telah diperbarui.`,
+      })
+    } catch (err) {
+      console.error("[v0] Error updating service:", err)
+      toast({
+        title: "Gagal Memperbarui Layanan",
+        description: "Terjadi kesalahan saat memperbarui layanan. Silakan coba lagi.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
-  const handleDeleteService = (service: Service) => {
-    setServiceList(serviceList.filter((s) => s.id !== service.id))
-    toast({
-      title: "Layanan Berhasil Dihapus",
-      description: `Layanan "${service.name}" telah dihapus dari sistem.`,
-      variant: "destructive",
-    })
+  const handleDeleteService = async (service: Service) => {
+    try {
+      await apiClient.deleteService(service.id)
+      setServiceList(serviceList.filter((s) => s.id !== service.id))
+      toast({
+        title: "Layanan Berhasil Dihapus",
+        description: `Layanan "${service.name}" telah dihapus dari sistem.`,
+        variant: "destructive",
+      })
+    } catch (err) {
+      console.error("[v0] Error deleting service:", err)
+      toast({
+        title: "Gagal Menghapus Layanan",
+        description: "Terjadi kesalahan saat menghapus layanan. Silakan coba lagi.",
+        variant: "destructive",
+      })
+    }
   }
 
   const ServiceForm = ({ isEdit = false }: { isEdit?: boolean }) => (
@@ -216,6 +279,7 @@ export function ServiceManagement() {
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             placeholder="Contoh: Cuci Mobil Premium"
             className={errors.name ? "border-red-500" : ""}
+            disabled={isSubmitting}
           />
           {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
         </div>
@@ -224,6 +288,7 @@ export function ServiceManagement() {
           <Select
             value={formData.category}
             onValueChange={(value: Service["category"]) => setFormData({ ...formData, category: value })}
+            disabled={isSubmitting}
           >
             <SelectTrigger>
               <SelectValue />
@@ -245,6 +310,7 @@ export function ServiceManagement() {
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           placeholder="Deskripsi detail layanan..."
           className={errors.description ? "border-red-500" : ""}
+          disabled={isSubmitting}
         />
         {errors.description && <p className="text-sm text-red-500">{errors.description}</p>}
       </div>
@@ -259,6 +325,7 @@ export function ServiceManagement() {
             onChange={(e) => setFormData({ ...formData, price: Number.parseInt(e.target.value) || 0 })}
             placeholder="35000"
             className={errors.price ? "border-red-500" : ""}
+            disabled={isSubmitting}
           />
           {errors.price && <p className="text-sm text-red-500">{errors.price}</p>}
         </div>
@@ -271,6 +338,7 @@ export function ServiceManagement() {
             onChange={(e) => setFormData({ ...formData, duration: Number.parseInt(e.target.value) || 0 })}
             placeholder="45"
             className={errors.duration ? "border-red-500" : ""}
+            disabled={isSubmitting}
           />
           {errors.duration && <p className="text-sm text-red-500">{errors.duration}</p>}
         </div>
@@ -283,6 +351,7 @@ export function ServiceManagement() {
           value={featuresInput}
           onChange={(e) => setFeaturesInput(e.target.value)}
           placeholder="Gratis 1 Minuman, Vacuum Interior"
+          disabled={isSubmitting}
         />
         <p className="text-sm text-muted-foreground">Contoh: Gratis 1 Minuman, Vacuum Interior</p>
       </div>
@@ -293,6 +362,7 @@ export function ServiceManagement() {
             id="supportsPickup"
             checked={formData.supportsPickup}
             onCheckedChange={(checked) => setFormData({ ...formData, supportsPickup: checked })}
+            disabled={isSubmitting}
           />
           <Label htmlFor="supportsPickup">Mendukung Layanan Pickup</Label>
         </div>
@@ -307,6 +377,7 @@ export function ServiceManagement() {
               onChange={(e) => setFormData({ ...formData, pickupFee: Number.parseInt(e.target.value) || 0 })}
               placeholder="15000"
               className={errors.pickupFee ? "border-red-500" : ""}
+              disabled={isSubmitting}
             />
             {errors.pickupFee && <p className="text-sm text-red-500">{errors.pickupFee}</p>}
           </div>
@@ -314,6 +385,51 @@ export function ServiceManagement() {
       </div>
     </div>
   )
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="font-serif text-2xl md:text-3xl font-bold text-foreground">Kelola Layanan</h1>
+            <p className="text-muted-foreground mt-1">Memuat data layanan...</p>
+          </div>
+        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="h-16 bg-gray-200 rounded"></div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="font-serif text-2xl md:text-3xl font-bold text-foreground">Kelola Layanan</h1>
+            <p className="text-muted-foreground mt-1">Kelola semua layanan yang tersedia di seluruh cabang</p>
+          </div>
+        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-8">
+              <p className="text-red-600 mb-4">{error}</p>
+              <Button onClick={fetchServices}>Coba Lagi</Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -338,10 +454,19 @@ export function ServiceManagement() {
             </DialogHeader>
             <ServiceForm />
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} disabled={isSubmitting}>
                 Batal
               </Button>
-              <Button onClick={handleCreateService}>Tambah Layanan</Button>
+              <Button onClick={handleCreateService} disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Clock className="w-4 h-4 mr-2 animate-spin" />
+                    Menambahkan...
+                  </>
+                ) : (
+                  "Tambah Layanan"
+                )}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -357,102 +482,108 @@ export function ServiceManagement() {
             <CardDescription>Total {serviceList.length} layanan tersedia</CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Layanan</TableHead>
-                  <TableHead>Kategori</TableHead>
-                  <TableHead>Harga</TableHead>
-                  <TableHead>Durasi</TableHead>
-                  <TableHead>Pickup</TableHead>
-                  <TableHead className="text-right">Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {serviceList.map((service) => {
-                  const IconComponent = getCategoryIcon(service.category)
-                  return (
-                    <TableRow key={service.id}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{service.name}</p>
-                          <p className="text-sm text-muted-foreground line-clamp-1">{service.description}</p>
-                          {service.features && service.features.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {service.features.map((feature, index) => (
-                                <Badge key={index} variant="secondary" className="text-xs">
-                                  {feature}
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getCategoryColor(service.category)}>
-                          <IconComponent className="w-3 h-3 mr-1" />
-                          {getCategoryName(service.category)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <DollarSign className="w-3 h-3 text-muted-foreground" />
-                          {formatCurrency(service.price)}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-3 h-3 text-muted-foreground" />
-                          {service.duration} menit
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3 text-muted-foreground" />
-                          {service.supportsPickup ? (
-                            <span className="text-green-600">Ya ({formatCurrency(service.pickupFee || 0)})</span>
-                          ) : (
-                            <span className="text-muted-foreground">Tidak</span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button variant="ghost" size="sm" onClick={() => handleEditService(service)}>
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <Trash2 className="w-4 h-4 text-red-500" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Hapus Layanan</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Apakah Anda yakin ingin menghapus layanan "{service.name}"? Tindakan ini tidak dapat
-                                  dibatalkan dan akan mempengaruhi semua cabang.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Batal</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleDeleteService(service)}
-                                  className="bg-red-600 hover:bg-red-700"
-                                >
-                                  Hapus
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
+            {serviceList.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Belum ada layanan yang tersedia. Tambahkan layanan pertama Anda.
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Layanan</TableHead>
+                    <TableHead>Kategori</TableHead>
+                    <TableHead>Harga</TableHead>
+                    <TableHead>Durasi</TableHead>
+                    <TableHead>Pickup</TableHead>
+                    <TableHead className="text-right">Aksi</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {serviceList.map((service) => {
+                    const IconComponent = getCategoryIcon(service.category)
+                    return (
+                      <TableRow key={service.id}>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{service.name}</p>
+                            <p className="text-sm text-muted-foreground line-clamp-1">{service.description}</p>
+                            {service.features && service.features.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {service.features.map((feature, index) => (
+                                  <Badge key={index} variant="secondary" className="text-xs">
+                                    {feature}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={getCategoryColor(service.category)}>
+                            <IconComponent className="w-3 h-3 mr-1" />
+                            {getCategoryName(service.category)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <DollarSign className="w-3 h-3 text-muted-foreground" />
+                            {formatCurrency(service.price)}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-muted-foreground" />
+                            {service.duration} menit
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3 text-muted-foreground" />
+                            {service.supportsPickup ? (
+                              <span className="text-green-600">Ya ({formatCurrency(service.pickupFee || 0)})</span>
+                            ) : (
+                              <span className="text-muted-foreground">Tidak</span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button variant="ghost" size="sm" onClick={() => handleEditService(service)}>
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  <Trash2 className="w-4 h-4 text-red-500" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Hapus Layanan</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Apakah Anda yakin ingin menghapus layanan "{service.name}"? Tindakan ini tidak dapat
+                                    dibatalkan dan akan mempengaruhi semua cabang.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Batal</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDeleteService(service)}
+                                    className="bg-red-600 hover:bg-red-700"
+                                  >
+                                    Hapus
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -466,10 +597,19 @@ export function ServiceManagement() {
           </DialogHeader>
           <ServiceForm isEdit />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} disabled={isSubmitting}>
               Batal
             </Button>
-            <Button onClick={handleUpdateService}>Simpan Perubahan</Button>
+            <Button onClick={handleUpdateService} disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Clock className="w-4 h-4 mr-2 animate-spin" />
+                  Menyimpan...
+                </>
+              ) : (
+                "Simpan Perubahan"
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

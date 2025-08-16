@@ -2,60 +2,85 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Calendar, DollarSign, Car, Users, TrendingUp, Clock } from "lucide-react"
-import { formatCurrency } from "@/lib/dummy-data"
+import { useEffect, useState } from "react"
+import { apiClient } from "@/lib/api-client"
+
+interface DashboardStatsData {
+  totalBookingsToday: number
+  dailyRevenue: number
+  activeServices: number
+  newCustomers: number
+  averageServiceTime: number
+  customerSatisfaction: number
+  bookingGrowth: number
+  revenueGrowth: number
+  newCustomerGrowth: number
+}
 
 export function DashboardStats() {
-  // Mock data - in real app, this would come from API
-  const stats = [
-    {
-      title: "Total Booking Hari Ini",
-      value: "24",
-      change: "+12%",
-      changeType: "positive" as const,
-      icon: Calendar,
-      description: "dari kemarin",
-    },
-    {
-      title: "Pendapatan Hari Ini",
-      value: formatCurrency(1250000),
-      change: "+8%",
-      changeType: "positive" as const,
-      icon: DollarSign,
-      description: "dari kemarin",
-    },
-    {
-      title: "Layanan Aktif",
-      value: "11",
-      change: "0%",
-      changeType: "neutral" as const,
-      icon: Car,
-      description: "total layanan",
-    },
-    {
-      title: "Pelanggan Baru",
-      value: "8",
-      change: "+25%",
-      changeType: "positive" as const,
-      icon: Users,
-      description: "minggu ini",
-    },
-    {
-      title: "Rata-rata Waktu Layanan",
-      value: "45 min",
-      change: "-5%",
-      changeType: "positive" as const,
-      icon: Clock,
-      description: "lebih cepat",
-    },
-    {
-      title: "Tingkat Kepuasan",
-      value: "4.8/5",
-      change: "+0.2",
-      changeType: "positive" as const,
-      icon: TrendingUp,
-      description: "rating rata-rata",
-    },
-  ]
+  const [stats, setStats] = useState<DashboardStatsData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchDashboardStats = async () => {
+      try {
+        setLoading(true)
+        const [bookings, services, customers] = await Promise.all([
+          apiClient.getBookings(),
+          apiClient.getServices(),
+          apiClient.getCustomers(),
+        ])
+
+        const today = new Date().toISOString().split("T")[0]
+        const todayBookings = bookings.filter((booking) => booking.date === today)
+        const completedTodayBookings = todayBookings.filter((b) => b.status === "completed")
+
+        // Calculate daily revenue from completed bookings
+        const dailyRevenue = completedTodayBookings.reduce((sum, booking) => sum + booking.totalPrice, 0)
+
+        // Calculate new customers (joined in last 7 days)
+        const weekAgo = new Date()
+        weekAgo.setDate(weekAgo.getDate() - 7)
+        const newCustomers = customers.filter((customer) => new Date(customer.joinDate) >= weekAgo).length
+
+        // Calculate average service time from services
+        const avgServiceTime =
+          services.length > 0
+            ? Math.round(services.reduce((sum, service) => sum + service.duration, 0) / services.length)
+            : 45
+
+        const statsData: DashboardStatsData = {
+          totalBookingsToday: todayBookings.length,
+          dailyRevenue,
+          activeServices: services.length,
+          newCustomers,
+          averageServiceTime: avgServiceTime,
+          customerSatisfaction: 4.8, // This would come from a reviews/ratings system
+          bookingGrowth: 12, // This would be calculated from historical data
+          revenueGrowth: 8, // This would be calculated from historical data
+          newCustomerGrowth: 25, // This would be calculated from historical data
+        }
+
+        setStats(statsData)
+      } catch (err) {
+        console.error("[v0] Error fetching dashboard stats:", err)
+        setError("Gagal memuat statistik dashboard")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchDashboardStats()
+  }, [])
+
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(amount)
+  }
 
   const getChangeColor = (type: "positive" | "negative" | "neutral") => {
     switch (type) {
@@ -68,9 +93,91 @@ export function DashboardStats() {
     }
   }
 
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <Card key={i} className="animate-pulse">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <div className="h-4 bg-gray-200 rounded w-32"></div>
+              <div className="h-4 w-4 bg-gray-200 rounded"></div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-8 bg-gray-200 rounded w-20 mb-2"></div>
+              <div className="h-3 bg-gray-200 rounded w-24"></div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    )
+  }
+
+  if (error || !stats) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Card className="col-span-full">
+          <CardContent className="pt-6">
+            <p className="text-center text-red-600">{error || "Gagal memuat data"}</p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  const statsConfig = [
+    {
+      title: "Total Booking Hari Ini",
+      value: stats.totalBookingsToday.toString(),
+      change: `+${stats.bookingGrowth}%`,
+      changeType: "positive" as const,
+      icon: Calendar,
+      description: "dari kemarin",
+    },
+    {
+      title: "Pendapatan Hari Ini",
+      value: formatCurrency(stats.dailyRevenue),
+      change: `+${stats.revenueGrowth}%`,
+      changeType: "positive" as const,
+      icon: DollarSign,
+      description: "dari kemarin",
+    },
+    {
+      title: "Layanan Aktif",
+      value: stats.activeServices.toString(),
+      change: "0%",
+      changeType: "neutral" as const,
+      icon: Car,
+      description: "total layanan",
+    },
+    {
+      title: "Pelanggan Baru",
+      value: stats.newCustomers.toString(),
+      change: `+${stats.newCustomerGrowth}%`,
+      changeType: "positive" as const,
+      icon: Users,
+      description: "minggu ini",
+    },
+    {
+      title: "Rata-rata Waktu Layanan",
+      value: `${stats.averageServiceTime} min`,
+      change: "-5%",
+      changeType: "positive" as const,
+      icon: Clock,
+      description: "lebih cepat",
+    },
+    {
+      title: "Tingkat Kepuasan",
+      value: `${stats.customerSatisfaction}/5`,
+      change: "+0.2",
+      changeType: "positive" as const,
+      icon: TrendingUp,
+      description: "rating rata-rata",
+    },
+  ]
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {stats.map((stat, index) => {
+      {statsConfig.map((stat, index) => {
         const IconComponent = stat.icon
         return (
           <Card key={index}>

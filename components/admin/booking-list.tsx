@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -15,107 +15,62 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { BookingDetailModal } from "@/components/admin/booking-detail-modal"
 import { MoreHorizontal, Eye, CheckCircle, XCircle, Clock, Phone } from "lucide-react"
-import { formatCurrency } from "@/lib/dummy-data"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
+import { apiClient } from "@/lib/api-client"
+import type { Booking, Service, Branch } from "@/lib/dummy-data"
 
-interface BookingItem {
-  id: string
-  bookingCode: string
-  customerName: string
-  customerPhone: string
-  customerEmail: string
-  service: string
-  branch: string
-  date: string
-  time: string
-  amount: number
-  status: "pending" | "confirmed" | "in-progress" | "completed" | "cancelled"
-  createdAt: string
-  paymentProof?: string
+interface BookingWithDetails extends Booking {
+  service?: Service
+  branch?: Branch
 }
 
 export function BookingList() {
-  const [selectedBooking, setSelectedBooking] = useState<BookingItem | null>(null)
+  const [bookings, setBookings] = useState<BookingWithDetails[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [selectedBooking, setSelectedBooking] = useState<BookingWithDetails | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
 
-  // Mock booking data - in real app, this would come from API
-  const bookings: BookingItem[] = [
-    {
-      id: "1",
-      bookingCode: "BCW001",
-      customerName: "Ahmad Rizki",
-      customerPhone: "08123456789",
-      customerEmail: "ahmad.rizki@email.com",
-      service: "Cuci Mobil Kecil Hidrolik",
-      branch: "Sukarame Utama",
-      date: "2024-01-15",
-      time: "10:00",
-      amount: 45000,
-      status: "confirmed",
-      createdAt: "2024-01-14T10:00:00Z",
-      paymentProof: "proof1.jpg",
-    },
-    {
-      id: "2",
-      bookingCode: "BCW002",
-      customerName: "Sari Dewi",
-      customerPhone: "08987654321",
-      customerEmail: "sari.dewi@email.com",
-      service: "Cuci Motor Sedang Steam",
-      branch: "Sukarame Cabang 2",
-      date: "2024-01-15",
-      time: "14:00",
-      amount: 15000,
-      status: "pending",
-      createdAt: "2024-01-14T14:00:00Z",
-      paymentProof: "proof2.jpg",
-    },
-    {
-      id: "3",
-      bookingCode: "BCW003",
-      customerName: "Budi Santoso",
-      customerPhone: "08555666777",
-      customerEmail: "budi.santoso@email.com",
-      service: "Fogging Anti Bakteri",
-      branch: "Sukarame Utama",
-      date: "2024-01-15",
-      time: "16:00",
-      amount: 75000,
-      status: "in-progress",
-      createdAt: "2024-01-15T08:00:00Z",
-      paymentProof: "proof3.jpg",
-    },
-    {
-      id: "4",
-      bookingCode: "BCW004",
-      customerName: "Maya Putri",
-      customerPhone: "08111222333",
-      customerEmail: "maya.putri@email.com",
-      service: "Cuci Mobil Besar Non-Hidrolik",
-      branch: "Sukarame Utama",
-      date: "2024-01-15",
-      time: "11:30",
-      amount: 40000,
-      status: "completed",
-      createdAt: "2024-01-15T09:00:00Z",
-      paymentProof: "proof4.jpg",
-    },
-    {
-      id: "5",
-      bookingCode: "BCW005",
-      customerName: "Andi Wijaya",
-      customerPhone: "08444555666",
-      customerEmail: "andi.wijaya@email.com",
-      service: "Cuci Motor Kecil Steam",
-      branch: "Sukarame Cabang 2",
-      date: "2024-01-15",
-      time: "09:00",
-      amount: 13000,
-      status: "cancelled",
-      createdAt: "2024-01-15T07:00:00Z",
-    },
-  ]
+  useEffect(() => {
+    fetchBookings()
+  }, [])
+
+  const fetchBookings = async () => {
+    try {
+      setLoading(true)
+      const [bookingsData, services, branches] = await Promise.all([
+        apiClient.getBookings(),
+        apiClient.getServices(),
+        apiClient.getBranches(),
+      ])
+
+      const enrichedBookings: BookingWithDetails[] = bookingsData.map((booking) => ({
+        ...booking,
+        service: services.find((s) => s.id === booking.serviceId),
+        branch: branches.find((b) => b.id === booking.branchId),
+      }))
+
+      // Sort by creation date, newest first
+      enrichedBookings.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+
+      setBookings(enrichedBookings)
+    } catch (err) {
+      console.error("[v0] Error fetching bookings:", err)
+      setError("Gagal memuat data booking")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(amount)
+  }
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -134,19 +89,71 @@ export function BookingList() {
     }
   }
 
-  const handleStatusChange = (bookingId: string, newStatus: string) => {
-    // In real app, this would make an API call to update the booking status
-    console.log(`Updating booking ${bookingId} to status: ${newStatus}`)
-    // For demo purposes, we'll just log it
+  const handleStatusChange = async (bookingId: string, newStatus: string) => {
+    try {
+      setUpdatingStatus(bookingId)
+      await apiClient.updateBooking(bookingId, { status: newStatus as any })
+
+      // Update local state
+      setBookings((prev) =>
+        prev.map((booking) =>
+          booking.id === bookingId
+            ? { ...booking, status: newStatus as any, updatedAt: new Date().toISOString() }
+            : booking,
+        ),
+      )
+
+      console.log("[v0] Successfully updated booking status:", bookingId, newStatus)
+    } catch (err) {
+      console.error("[v0] Error updating booking status:", err)
+      // You could add a toast notification here
+    } finally {
+      setUpdatingStatus(null)
+    }
   }
 
-  const handleViewDetails = (booking: BookingItem) => {
+  const handleViewDetails = (booking: BookingWithDetails) => {
     setSelectedBooking(booking)
     setIsDetailModalOpen(true)
   }
 
   const handleCallCustomer = (phone: string) => {
     window.open(`tel:${phone}`)
+  }
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-serif text-xl">Daftar Booking</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="animate-pulse">
+                <div className="h-16 bg-gray-200 rounded"></div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-serif text-xl">Daftar Booking</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <p className="text-red-600 mb-4">{error}</p>
+            <Button onClick={fetchBookings}>Coba Lagi</Button>
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
@@ -171,86 +178,98 @@ export function BookingList() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {bookings.map((booking) => (
-                  <TableRow key={booking.id}>
-                    <TableCell className="font-medium font-mono">{booking.bookingCode}</TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{booking.customerName}</p>
-                        <p className="text-sm text-muted-foreground">{booking.customerPhone}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="max-w-[200px]">
-                        <p className="text-sm truncate">{booking.service}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>{booking.branch}</TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="text-sm">{format(new Date(booking.date), "dd MMM yyyy", { locale: id })}</p>
-                        <p className="text-sm text-muted-foreground">{booking.time} WIB</p>
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-medium">{formatCurrency(booking.amount)}</TableCell>
-                    <TableCell>{getStatusBadge(booking.status)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleCallCustomer(booking.customerPhone)}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Phone className="h-4 w-4" />
-                        </Button>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                              <span className="sr-only">Open menu</span>
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Aksi</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => handleViewDetails(booking)}>
-                              <Eye className="mr-2 h-4 w-4" />
-                              Lihat Detail
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            {booking.status === "pending" && (
-                              <DropdownMenuItem onClick={() => handleStatusChange(booking.id, "confirmed")}>
-                                <CheckCircle className="mr-2 h-4 w-4" />
-                                Konfirmasi
-                              </DropdownMenuItem>
-                            )}
-                            {booking.status === "confirmed" && (
-                              <DropdownMenuItem onClick={() => handleStatusChange(booking.id, "in-progress")}>
-                                <Clock className="mr-2 h-4 w-4" />
-                                Mulai Layanan
-                              </DropdownMenuItem>
-                            )}
-                            {booking.status === "in-progress" && (
-                              <DropdownMenuItem onClick={() => handleStatusChange(booking.id, "completed")}>
-                                <CheckCircle className="mr-2 h-4 w-4" />
-                                Selesaikan
-                              </DropdownMenuItem>
-                            )}
-                            {(booking.status === "pending" || booking.status === "confirmed") && (
-                              <DropdownMenuItem
-                                onClick={() => handleStatusChange(booking.id, "cancelled")}
-                                className="text-red-600"
-                              >
-                                <XCircle className="mr-2 h-4 w-4" />
-                                Batalkan
-                              </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
+                {bookings.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                      Belum ada booking yang tersedia
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  bookings.map((booking) => (
+                    <TableRow key={booking.id}>
+                      <TableCell className="font-medium font-mono">{booking.bookingCode}</TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{booking.customerName}</p>
+                          <p className="text-sm text-muted-foreground">{booking.customerPhone}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="max-w-[200px]">
+                          <p className="text-sm truncate">{booking.service?.name || "Layanan tidak ditemukan"}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>{booking.branch?.name || "Cabang tidak ditemukan"}</TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="text-sm">{format(new Date(booking.date), "dd MMM yyyy", { locale: id })}</p>
+                          <p className="text-sm text-muted-foreground">{booking.time} WIB</p>
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-medium">{formatCurrency(booking.totalPrice)}</TableCell>
+                      <TableCell>{getStatusBadge(booking.status)}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleCallCustomer(booking.customerPhone)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Phone className="h-4 w-4" />
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-8 w-8 p-0" disabled={updatingStatus === booking.id}>
+                                <span className="sr-only">Open menu</span>
+                                {updatingStatus === booking.id ? (
+                                  <Clock className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <MoreHorizontal className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Aksi</DropdownMenuLabel>
+                              <DropdownMenuItem onClick={() => handleViewDetails(booking)}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                Lihat Detail
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              {booking.status === "pending" && (
+                                <DropdownMenuItem onClick={() => handleStatusChange(booking.id, "confirmed")}>
+                                  <CheckCircle className="mr-2 h-4 w-4" />
+                                  Konfirmasi
+                                </DropdownMenuItem>
+                              )}
+                              {booking.status === "confirmed" && (
+                                <DropdownMenuItem onClick={() => handleStatusChange(booking.id, "in-progress")}>
+                                  <Clock className="mr-2 h-4 w-4" />
+                                  Mulai Layanan
+                                </DropdownMenuItem>
+                              )}
+                              {booking.status === "in-progress" && (
+                                <DropdownMenuItem onClick={() => handleStatusChange(booking.id, "completed")}>
+                                  <CheckCircle className="mr-2 h-4 w-4" />
+                                  Selesaikan
+                                </DropdownMenuItem>
+                              )}
+                              {(booking.status === "pending" || booking.status === "confirmed") && (
+                                <DropdownMenuItem
+                                  onClick={() => handleStatusChange(booking.id, "cancelled")}
+                                  className="text-red-600"
+                                >
+                                  <XCircle className="mr-2 h-4 w-4" />
+                                  Batalkan
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>

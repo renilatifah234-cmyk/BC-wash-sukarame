@@ -1,10 +1,80 @@
+"use client"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { MapPin, Phone, Clock } from "lucide-react"
-import { branches } from "@/lib/dummy-data"
 import Link from "next/link"
+import { useEffect, useState } from "react"
+import { apiClient } from "@/lib/api-client"
+import type { Branch } from "@/lib/dummy-data"
 
 export function ContactInfo() {
+  const [branches, setBranches] = useState<Branch[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchBranches = async () => {
+      try {
+        setLoading(true)
+        const branchData = await apiClient.getBranches()
+        // Only show active branches to customers
+        const activeBranches = branchData.filter((branch) => branch.status === "active")
+        setBranches(activeBranches)
+      } catch (err) {
+        console.error("[v0] Error fetching branches:", err)
+        setError("Gagal memuat informasi cabang. Silakan coba lagi.")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchBranches()
+  }, [])
+
+  if (loading) {
+    return (
+      <section className="py-20 px-4 bg-muted/30">
+        <div className="container mx-auto max-w-6xl">
+          <div className="text-center mb-16">
+            <h2 className="font-serif text-3xl md:text-4xl font-bold text-foreground mb-4">Lokasi & Kontak</h2>
+            <p className="text-lg text-muted-foreground">
+              Kunjungi cabang terdekat atau hubungi kami untuk informasi lebih lanjut
+            </p>
+          </div>
+          <div className="grid md:grid-cols-2 gap-8 mb-12">
+            {[1, 2].map((i) => (
+              <Card key={i} className="animate-pulse">
+                <CardHeader>
+                  <div className="h-6 bg-gray-200 rounded mb-2"></div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="h-4 bg-gray-200 rounded"></div>
+                  <div className="h-4 bg-gray-200 rounded"></div>
+                  <div className="h-4 bg-gray-200 rounded"></div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (error) {
+    return (
+      <section className="py-20 px-4 bg-muted/30">
+        <div className="container mx-auto max-w-6xl">
+          <div className="text-center">
+            <h2 className="font-serif text-3xl md:text-4xl font-bold text-foreground mb-4">Lokasi & Kontak</h2>
+            <p className="text-lg text-red-600 mb-8">{error}</p>
+            <Button onClick={() => window.location.reload()}>Coba Lagi</Button>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="py-20 px-4 bg-muted/30">
       <div className="container mx-auto max-w-6xl">

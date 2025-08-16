@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,18 +15,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { User, Car, MapPin, FileText, CalendarIcon, Clock, CreditCard, X, CheckCircle } from "lucide-react"
-import {
-  services,
-  branches,
-  formatCurrency,
-  calculateLoyaltyPoints,
-  getActiveBranches,
-  createOfflineBooking,
-  type Service,
-} from "@/lib/dummy-data"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
 import { cn } from "@/lib/utils"
+import { apiClient } from "@/lib/api-client"
+import type { Service, Branch } from "@/lib/dummy-data"
 
 interface ManualBookingFormProps {
   onSuccess: (bookingCode: string) => void
@@ -34,6 +27,9 @@ interface ManualBookingFormProps {
 }
 
 export function ManualBookingForm({ onSuccess, onCancel }: ManualBookingFormProps) {
+  const [services, setServices] = useState<Service[]>([])
+  const [branches, setBranches] = useState<Branch[]>([])
+  const [loading, setLoading] = useState(true)
   const [formData, setFormData] = useState({
     customerName: "",
     customerPhone: "",
@@ -53,7 +49,24 @@ export function ManualBookingForm({ onSuccess, onCancel }: ManualBookingFormProp
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const activeBranches = getActiveBranches()
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        const [servicesData, branchesData] = await Promise.all([apiClient.getServices(), apiClient.getBranches()])
+
+        setServices(servicesData)
+        setBranches(branchesData.filter((branch) => branch.status === "active"))
+      } catch (err) {
+        console.error("[v0] Error fetching form data:", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
+
   const selectedService = services.find((s) => s.id === formData.serviceId)
   const selectedBranch = branches.find((b) => b.id === formData.branchId)
 
@@ -141,6 +154,10 @@ export function ManualBookingForm({ onSuccess, onCancel }: ManualBookingFormProp
     return basePrice + pickupFee
   }
 
+  const calculateLoyaltyPoints = (amount: number): number => {
+    return Math.floor(amount / 1000)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -149,9 +166,6 @@ export function ManualBookingForm({ onSuccess, onCancel }: ManualBookingFormProp
     setIsSubmitting(true)
 
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
       const totalPrice = calculateTotalPrice()
       const loyaltyPoints = calculateLoyaltyPoints(totalPrice)
 
@@ -164,7 +178,7 @@ export function ManualBookingForm({ onSuccess, onCancel }: ManualBookingFormProp
         date: format(formData.date!, "yyyy-MM-dd"),
         time: formData.time,
         totalPrice,
-        status: "confirmed" as const, // Offline bookings are immediately confirmed
+        status: "confirmed" as const,
         isPickupService: formData.isPickupService,
         pickupAddress: formData.pickupAddress || undefined,
         pickupNotes: formData.pickupNotes || undefined,
@@ -172,16 +186,26 @@ export function ManualBookingForm({ onSuccess, onCancel }: ManualBookingFormProp
         loyaltyPointsEarned: loyaltyPoints,
         paymentMethod: formData.paymentMethod,
         notes: formData.notes || undefined,
-        adminUserId: "admin-001", // In real app, get from auth context
+        bookingSource: "offline" as const,
+        createdByAdmin: true,
       }
 
-      const newBooking = createOfflineBooking(bookingData)
+      const newBooking = await apiClient.createBooking(bookingData)
       onSuccess(newBooking.bookingCode)
     } catch (error) {
-      console.error("Error creating booking:", error)
+      console.error("[v0] Error creating booking:", error)
+      // You could add error handling/toast notification here
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(amount)
   }
 
   const getCategoryName = (category: Service["category"]) => {
@@ -208,6 +232,24 @@ export function ManualBookingForm({ onSuccess, onCancel }: ManualBookingFormProp
       default:
         return "bg-gray-100 text-gray-800"
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="font-serif text-2xl font-bold text-foreground">Buat Booking Manual</h2>
+            <p className="text-muted-foreground mt-1">Memuat data...</p>
+          </div>
+        </div>
+        <div className="animate-pulse space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-32 bg-gray-200 rounded"></div>
+          ))}
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -365,7 +407,7 @@ export function ManualBookingForm({ onSuccess, onCancel }: ManualBookingFormProp
                   <SelectValue placeholder="Pilih cabang" />
                 </SelectTrigger>
                 <SelectContent>
-                  {activeBranches.map((branch) => (
+                  {branches.map((branch) => (
                     <SelectItem key={branch.id} value={branch.id}>
                       <div>
                         <p className="font-medium">{branch.name}</p>

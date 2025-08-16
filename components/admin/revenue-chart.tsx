@@ -3,24 +3,97 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
+import { useEffect, useState } from "react"
+import { apiClient } from "@/lib/api-client"
+
+interface RevenueData {
+  day: string
+  revenue: number
+  bookings: number
+}
 
 export function RevenueChart() {
-  // Mock revenue data for the last 7 days
-  const revenueData = [
-    { day: "Sen", revenue: 850000, bookings: 18 },
-    { day: "Sel", revenue: 920000, bookings: 22 },
-    { day: "Rab", revenue: 780000, bookings: 16 },
-    { day: "Kam", revenue: 1100000, bookings: 25 },
-    { day: "Jum", revenue: 1350000, bookings: 28 },
-    { day: "Sab", revenue: 1580000, bookings: 32 },
-    { day: "Min", revenue: 1250000, bookings: 24 },
-  ]
+  const [revenueData, setRevenueData] = useState<RevenueData[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchRevenueData = async () => {
+      try {
+        setLoading(true)
+        const bookings = await apiClient.getBookings()
+
+        // Get last 7 days
+        const last7Days = Array.from({ length: 7 }, (_, i) => {
+          const date = new Date()
+          date.setDate(date.getDate() - (6 - i))
+          return date
+        })
+
+        const dayNames = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"]
+
+        const revenueByDay = last7Days.map((date) => {
+          const dateStr = date.toISOString().split("T")[0]
+          const dayBookings = bookings.filter((booking) => booking.date === dateStr)
+          const completedBookings = dayBookings.filter((booking) => booking.status === "completed")
+          const revenue = completedBookings.reduce((sum, booking) => sum + booking.totalPrice, 0)
+
+          return {
+            day: dayNames[date.getDay()],
+            revenue,
+            bookings: dayBookings.length,
+          }
+        })
+
+        setRevenueData(revenueByDay)
+      } catch (err) {
+        console.error("[v0] Error fetching revenue data:", err)
+        setError("Gagal memuat data pendapatan")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchRevenueData()
+  }, [])
 
   const chartConfig = {
     revenue: {
       label: "Pendapatan",
       color: "hsl(var(--primary))",
     },
+  }
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-serif text-xl">Pendapatan 7 Hari Terakhir</CardTitle>
+          <CardDescription>Grafik pendapatan harian dalam Rupiah</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px] flex items-center justify-center">
+            <div className="animate-pulse text-muted-foreground">Memuat data...</div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-serif text-xl">Pendapatan 7 Hari Terakhir</CardTitle>
+          <CardDescription>Grafik pendapatan harian dalam Rupiah</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px] flex items-center justify-center">
+            <p className="text-red-600">{error}</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (

@@ -3,60 +3,64 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { formatCurrency } from "@/lib/dummy-data"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
 import Link from "next/link"
+import { useEffect, useState } from "react"
+import { apiClient } from "@/lib/api-client"
+import type { Booking, Service, Branch } from "@/lib/dummy-data"
+
+interface BookingWithDetails extends Booking {
+  service?: Service
+  branch?: Branch
+}
 
 export function RecentBookings() {
-  // Mock recent bookings data
-  const recentBookings = [
-    {
-      id: "BCW001",
-      customerName: "Ahmad Rizki",
-      service: "Cuci Mobil Kecil Hidrolik",
-      amount: 45000,
-      status: "confirmed" as const,
-      date: new Date("2024-01-15T10:00:00"),
-      branch: "Sukarame Utama",
-    },
-    {
-      id: "BCW002",
-      customerName: "Sari Dewi",
-      service: "Cuci Motor Sedang Steam",
-      amount: 15000,
-      status: "pending" as const,
-      date: new Date("2024-01-15T14:00:00"),
-      branch: "Sukarame Cabang 2",
-    },
-    {
-      id: "BCW003",
-      customerName: "Budi Santoso",
-      service: "Fogging Anti Bakteri",
-      amount: 75000,
-      status: "in-progress" as const,
-      date: new Date("2024-01-15T16:00:00"),
-      branch: "Sukarame Utama",
-    },
-    {
-      id: "BCW004",
-      customerName: "Maya Putri",
-      service: "Cuci Mobil Besar Non-Hidrolik",
-      amount: 40000,
-      status: "completed" as const,
-      date: new Date("2024-01-15T11:30:00"),
-      branch: "Sukarame Utama",
-    },
-    {
-      id: "BCW005",
-      customerName: "Andi Wijaya",
-      service: "Cuci Motor Kecil Steam",
-      amount: 13000,
-      status: "cancelled" as const,
-      date: new Date("2024-01-15T09:00:00"),
-      branch: "Sukarame Cabang 2",
-    },
-  ]
+  const [recentBookings, setRecentBookings] = useState<BookingWithDetails[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchRecentBookings = async () => {
+      try {
+        setLoading(true)
+        const [bookings, services, branches] = await Promise.all([
+          apiClient.getBookings(),
+          apiClient.getServices(),
+          apiClient.getBranches(),
+        ])
+
+        // Get the 5 most recent bookings
+        const sortedBookings = bookings
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .slice(0, 5)
+
+        // Enrich bookings with service and branch details
+        const enrichedBookings: BookingWithDetails[] = sortedBookings.map((booking) => ({
+          ...booking,
+          service: services.find((s) => s.id === booking.serviceId),
+          branch: branches.find((b) => b.id === booking.branchId),
+        }))
+
+        setRecentBookings(enrichedBookings)
+      } catch (err) {
+        console.error("[v0] Error fetching recent bookings:", err)
+        setError("Gagal memuat booking terbaru")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchRecentBookings()
+  }, [])
+
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(amount)
+  }
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -75,6 +79,52 @@ export function RecentBookings() {
     }
   }
 
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="font-serif text-xl">Booking Terbaru</CardTitle>
+          <Button variant="outline" size="sm" disabled>
+            Lihat Semua
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="flex items-center justify-between p-3 border rounded-lg animate-pulse">
+                <div className="space-y-2 flex-1">
+                  <div className="h-4 bg-gray-200 rounded w-32"></div>
+                  <div className="h-3 bg-gray-200 rounded w-48"></div>
+                  <div className="h-3 bg-gray-200 rounded w-24"></div>
+                </div>
+                <div className="space-y-2">
+                  <div className="h-4 bg-gray-200 rounded w-20"></div>
+                  <div className="h-6 bg-gray-200 rounded w-16"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="font-serif text-xl">Booking Terbaru</CardTitle>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/admin/bookings">Lihat Semua</Link>
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <p className="text-center text-red-600 py-8">{error}</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -85,26 +135,30 @@ export function RecentBookings() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {recentBookings.map((booking) => (
-            <div key={booking.id} className="flex items-center justify-between p-3 border rounded-lg">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-sm">{booking.customerName}</span>
-                  <span className="text-xs text-muted-foreground">#{booking.id}</span>
+          {recentBookings.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">Belum ada booking hari ini</p>
+          ) : (
+            recentBookings.map((booking) => (
+              <div key={booking.id} className="flex items-center justify-between p-3 border rounded-lg">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-sm">{booking.customerName}</span>
+                    <span className="text-xs text-muted-foreground">#{booking.bookingCode}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{booking.service?.name || "Layanan tidak ditemukan"}</p>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>{format(new Date(`${booking.date}T${booking.time}`), "dd MMM, HH:mm", { locale: id })}</span>
+                    <span>•</span>
+                    <span>{booking.branch?.name || "Cabang tidak ditemukan"}</span>
+                  </div>
                 </div>
-                <p className="text-sm text-muted-foreground">{booking.service}</p>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span>{format(booking.date, "dd MMM, HH:mm", { locale: id })}</span>
-                  <span>•</span>
-                  <span>{booking.branch}</span>
+                <div className="text-right space-y-1">
+                  <p className="font-semibold text-sm">{formatCurrency(booking.totalPrice)}</p>
+                  {getStatusBadge(booking.status)}
                 </div>
               </div>
-              <div className="text-right space-y-1">
-                <p className="font-semibold text-sm">{formatCurrency(booking.amount)}</p>
-                {getStatusBadge(booking.status)}
-              </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </CardContent>
     </Card>
