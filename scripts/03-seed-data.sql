@@ -68,9 +68,4 @@ INSERT INTO bookings (id, booking_code, customer_name, customer_phone, customer_
 ('booking-010', 'BCW010', 'Lina Marlina', '08999000111', 'lina.marlina@email.com', 'car-small-regular', 'sukarame-branch2', '2024-01-18', '09:30', 35000, 'confirmed', false, NULL, NULL, 'B 2222 EFG', 35, 0, 'online', false, NULL, 'transfer', NULL, '2024-01-17T18:00:00Z', '2024-01-17T18:15:00Z')
 ON CONFLICT (id) DO NOTHING;
 
--- Update sequences to avoid conflicts with seeded data
-SELECT setval('services_id_seq', 1000, false);
-SELECT setval('branches_id_seq', 1000, false);
-SELECT setval('customers_id_seq', 1000, false);
-SELECT setval('admins_id_seq', 1000, false);
-SELECT setval('bookings_id_seq', 1000, false);
+-- Removed sequence update commands since tables use TEXT primary keys, not auto-incrementing sequences
