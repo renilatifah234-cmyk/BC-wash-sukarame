@@ -5,12 +5,12 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { CheckCircle, MapPin, Calendar, Clock, Phone, Copy, Home, Car, Star } from "lucide-react"
-import { formatCurrency, generateBookingCode, calculateLoyaltyPoints } from "@/lib/dummy-data"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
 import type { BookingData } from "@/app/booking/page"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Link from "next/link"
+import { formatCurrency } from "@/lib/utils"
 
 interface BookingConfirmationProps {
   bookingData: BookingData
@@ -18,18 +18,13 @@ interface BookingConfirmationProps {
 }
 
 export function BookingConfirmation({ bookingData, onNewBooking }: BookingConfirmationProps) {
-  const [bookingCode, setBookingCode] = useState<string>("")
   const [copied, setCopied] = useState(false)
 
-  useEffect(() => {
-    // Generate booking code when component mounts
-    const code = generateBookingCode()
-    setBookingCode(code)
-  }, [])
-
   const copyBookingCode = async () => {
+    if (!bookingData.bookingCode) return
+
     try {
-      await navigator.clipboard.writeText(bookingCode)
+      await navigator.clipboard.writeText(bookingData.bookingCode)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch (err) {
@@ -37,16 +32,21 @@ export function BookingConfirmation({ bookingData, onNewBooking }: BookingConfir
     }
   }
 
-  if (!bookingData.service || !bookingData.branch || !bookingData.date || !bookingData.time) {
+  if (
+    !bookingData.service ||
+    !bookingData.branch ||
+    !bookingData.date ||
+    !bookingData.time ||
+    !bookingData.bookingCode
+  ) {
     return <div>Data booking tidak lengkap</div>
   }
 
   const bookingDate = new Date(bookingData.date)
   const formattedDate = format(bookingDate, "EEEE, dd MMMM yyyy", { locale: id })
 
-  const loyaltyPointsEarned = calculateLoyaltyPoints(
-    bookingData.service.price + (bookingData.isPickupService ? bookingData.service.pickupFee || 0 : 0),
-  )
+  const totalPrice = bookingData.service.price + (bookingData.isPickupService ? bookingData.service.pickup_fee || 0 : 0)
+  const loyaltyPointsEarned = Math.floor(totalPrice / 1000) // 1 point per 1000 IDR
 
   return (
     <div className="space-y-6">
@@ -64,7 +64,7 @@ export function BookingConfirmation({ bookingData, onNewBooking }: BookingConfir
           <div className="text-center">
             <p className="text-sm text-muted-foreground mb-2">Kode Booking Anda</p>
             <div className="flex items-center justify-center gap-2 mb-4">
-              <span className="text-3xl font-bold font-mono text-primary">{bookingCode}</span>
+              <span className="text-3xl font-bold font-mono text-primary">{bookingData.bookingCode}</span>
               <Button variant="ghost" size="sm" onClick={copyBookingCode} className="h-8 w-8 p-0">
                 {copied ? <CheckCircle className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
               </Button>
@@ -97,12 +97,9 @@ export function BookingConfirmation({ bookingData, onNewBooking }: BookingConfir
               )}
             </div>
             <div className="text-right">
-              <p className="text-2xl font-bold text-primary">
-                {formatCurrency(
-                  bookingData.service.price + (bookingData.isPickupService ? bookingData.service.pickupFee || 0 : 0),
-                )}
-              </p>
+              <p className="text-2xl font-bold text-primary">{formatCurrency(totalPrice)}</p>
               <p className="text-sm text-muted-foreground">~{bookingData.service.duration} menit</p>
+              {bookingData.isPickupService && <p className="text-xs text-muted-foreground">Termasuk biaya pickup</p>}
             </div>
           </div>
 
@@ -149,7 +146,7 @@ export function BookingConfirmation({ bookingData, onNewBooking }: BookingConfir
             <p className="text-sm">Email: {bookingData.customerEmail}</p>
           </div>
 
-          {bookingData.isPickupService && (
+          {bookingData.isPickupService && bookingData.pickupAddress && (
             <>
               <Separator />
               <div className="space-y-2">

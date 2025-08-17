@@ -1,13 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { MapPin, Clock, Phone } from "lucide-react"
-import { branches, type Branch } from "@/lib/dummy-data"
+import { apiClient, type Branch } from "@/lib/api-client"
 import { format, addDays, isToday, isTomorrow } from "date-fns"
 import { id } from "date-fns/locale"
+import { ErrorState } from "@/components/ui/error-state"
+import { showErrorToast } from "@/lib/error-utils"
 
 interface BranchTimeSelectionProps {
   onNext: () => void
@@ -26,6 +28,9 @@ export function BranchTimeSelection({
   selectedDate,
   selectedTime,
 }: BranchTimeSelectionProps) {
+  const [branches, setBranches] = useState<Branch[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [branch, setBranch] = useState<Branch | undefined>(selectedBranch)
   const [date, setDate] = useState<Date | undefined>(selectedDate ? new Date(selectedDate) : undefined)
   const [time, setTime] = useState<string | undefined>(selectedTime)
@@ -52,6 +57,28 @@ export function BranchTimeSelection({
     "17:00",
     "17:30",
   ]
+
+  useEffect(() => {
+    fetchBranches()
+  }, [])
+
+  const fetchBranches = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      const { branches: branchesData } = await apiClient.getBranches()
+      const activeBranches = branchesData.filter((b) => b.status === "active")
+      setBranches(activeBranches)
+    } catch (err) {
+      console.error("[v0] Error fetching branches:", err)
+      const errorMessage = "Gagal memuat data cabang"
+      setError(errorMessage)
+      showErrorToast(err, "Gagal Memuat Cabang")
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleBranchSelect = (selectedBranch: Branch) => {
     setBranch(selectedBranch)
@@ -82,6 +109,43 @@ export function BranchTimeSelection({
 
   const canProceed = branch && date && time
 
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="font-serif text-2xl md:text-3xl font-bold text-foreground">Pilih Waktu & Lokasi</h1>
+          <p className="text-muted-foreground mt-1">Memuat data cabang...</p>
+        </div>
+        <div className="grid md:grid-cols-2 gap-4">
+          {[1, 2].map((i) => (
+            <Card key={i} className="animate-pulse">
+              <CardHeader className="pb-3">
+                <div className="h-6 bg-gray-200 rounded w-48"></div>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="h-4 bg-gray-200 rounded w-full"></div>
+                <div className="h-4 bg-gray-200 rounded w-32"></div>
+                <div className="h-4 bg-gray-200 rounded w-40"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="font-serif text-2xl md:text-3xl font-bold text-foreground">Pilih Waktu & Lokasi</h1>
+          <p className="text-muted-foreground mt-1">Tentukan cabang dan jadwal kunjungan Anda</p>
+        </div>
+        <ErrorState title="Gagal Memuat Cabang" message={error} onRetry={fetchBranches} />
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -92,46 +156,54 @@ export function BranchTimeSelection({
       {/* Branch Selection */}
       <div className="space-y-4">
         <h2 className="font-serif text-xl font-semibold">Pilih Cabang</h2>
-        <div className="grid md:grid-cols-2 gap-4">
-          {branches.map((branchOption) => (
-            <Card
-              key={branchOption.id}
-              className={`cursor-pointer transition-all hover:shadow-md ${
-                branch?.id === branchOption.id ? "ring-2 ring-primary bg-primary/5" : ""
-              }`}
-              onClick={() => handleBranchSelect(branchOption)}
-            >
-              <CardHeader className="pb-3">
-                <CardTitle className="font-serif text-lg flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-primary" />
-                  {branchOption.name}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                  <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                  <span>{branchOption.address}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Phone className="w-4 h-4 flex-shrink-0" />
-                  <span>{branchOption.phone}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Clock className="w-4 h-4 flex-shrink-0" />
-                  <span>
-                    {branchOption.operatingHours.open} - {branchOption.operatingHours.close} WIB
-                  </span>
-                </div>
-                {branch?.id === branchOption.id && (
-                  <div className="flex items-center gap-2 text-primary text-sm font-medium pt-2">
-                    <div className="w-2 h-2 bg-primary rounded-full" />
-                    Terpilih
+        {branches.length === 0 ? (
+          <ErrorState
+            title="Cabang Tidak Tersedia"
+            message="Saat ini tidak ada cabang yang tersedia untuk booking."
+            showRetry={false}
+          />
+        ) : (
+          <div className="grid md:grid-cols-2 gap-4">
+            {branches.map((branchOption) => (
+              <Card
+                key={branchOption.id}
+                className={`cursor-pointer transition-all hover:shadow-md ${
+                  branch?.id === branchOption.id ? "ring-2 ring-primary bg-primary/5" : ""
+                }`}
+                onClick={() => handleBranchSelect(branchOption)}
+              >
+                <CardHeader className="pb-3">
+                  <CardTitle className="font-serif text-lg flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-primary" />
+                    {branchOption.name}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                    <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <span>{branchOption.address}</span>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Phone className="w-4 h-4 flex-shrink-0" />
+                    <span>{branchOption.phone}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Clock className="w-4 h-4 flex-shrink-0" />
+                    <span>
+                      {branchOption.operating_hours_open} - {branchOption.operating_hours_close} WIB
+                    </span>
+                  </div>
+                  {branch?.id === branchOption.id && (
+                    <div className="flex items-center gap-2 text-primary text-sm font-medium pt-2">
+                      <div className="w-2 h-2 bg-primary rounded-full" />
+                      Terpilih
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Date Selection */}

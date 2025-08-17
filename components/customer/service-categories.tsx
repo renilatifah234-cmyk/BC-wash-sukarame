@@ -26,7 +26,7 @@ export function ServiceCategories() {
     const fetchServices = async () => {
       try {
         setLoading(true)
-        const services = await apiClient.getServices()
+        const { services } = await apiClient.getServices()
 
         const categoryMap = {
           "car-regular": {

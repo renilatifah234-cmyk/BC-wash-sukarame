@@ -4,6 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Calendar, DollarSign, Car, Users, TrendingUp, Clock } from "lucide-react"
 import { useEffect, useState } from "react"
 import { apiClient } from "@/lib/api-client"
+import { ErrorState } from "@/components/ui/error-state"
+import { showErrorToast } from "@/lib/error-utils"
+import { formatCurrency } from "@/lib/utils"
 
 interface DashboardStatsData {
   totalBookingsToday: number
@@ -26,23 +29,28 @@ export function DashboardStats() {
     const fetchDashboardStats = async () => {
       try {
         setLoading(true)
-        const [bookings, services, customers] = await Promise.all([
+        setError(null)
+
+        const [bookingsResponse, servicesResponse, customersResponse] = await Promise.all([
           apiClient.getBookings(),
           apiClient.getServices(),
           apiClient.getCustomers(),
         ])
 
+        const { bookings } = bookingsResponse
+        const { services } = servicesResponse
+        const { customers } = customersResponse
+
         const today = new Date().toISOString().split("T")[0]
-        const todayBookings = bookings.filter((booking) => booking.date === today)
+        const todayBookings = bookings.filter((booking) => booking.booking_date === today)
         const completedTodayBookings = todayBookings.filter((b) => b.status === "completed")
 
-        // Calculate daily revenue from completed bookings
-        const dailyRevenue = completedTodayBookings.reduce((sum, booking) => sum + booking.totalPrice, 0)
+        const dailyRevenue = completedTodayBookings.reduce((sum, booking) => sum + booking.total_price, 0)
 
         // Calculate new customers (joined in last 7 days)
         const weekAgo = new Date()
         weekAgo.setDate(weekAgo.getDate() - 7)
-        const newCustomers = customers.filter((customer) => new Date(customer.joinDate) >= weekAgo).length
+        const newCustomers = customers.filter((customer) => new Date(customer.join_date) >= weekAgo).length
 
         // Calculate average service time from services
         const avgServiceTime =
@@ -65,7 +73,9 @@ export function DashboardStats() {
         setStats(statsData)
       } catch (err) {
         console.error("[v0] Error fetching dashboard stats:", err)
-        setError("Gagal memuat statistik dashboard")
+        const errorMessage = "Gagal memuat statistik dashboard"
+        setError(errorMessage)
+        showErrorToast(err, "Gagal Memuat Statistik")
       } finally {
         setLoading(false)
       }
@@ -73,14 +83,6 @@ export function DashboardStats() {
 
     fetchDashboardStats()
   }, [])
-
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(amount)
-  }
 
   const getChangeColor = (type: "positive" | "negative" | "neutral") => {
     switch (type) {
@@ -112,12 +114,24 @@ export function DashboardStats() {
     )
   }
 
-  if (error || !stats) {
+  if (error) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="col-span-full">
           <CardContent className="pt-6">
-            <p className="text-center text-red-600">{error || "Gagal memuat data"}</p>
+            <ErrorState title="Gagal Memuat Statistik" message={error} onRetry={() => window.location.reload()} />
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (!stats) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Card className="col-span-full">
+          <CardContent className="pt-6">
+            <ErrorState title="Data Tidak Tersedia" message="Statistik dashboard tidak dapat dimuat" />
           </CardContent>
         </Card>
       </div>

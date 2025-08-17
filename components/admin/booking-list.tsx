@@ -18,11 +18,20 @@ import { MoreHorizontal, Eye, CheckCircle, XCircle, Clock, Phone } from "lucide-
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
 import { apiClient } from "@/lib/api-client"
+import { sendWhatsAppNotification } from "@/lib/whatsapp-utils"
 import type { Booking, Service, Branch } from "@/lib/dummy-data"
+import { ErrorState } from "@/components/ui/error-state"
+import { showErrorToast, showSuccessToast } from "@/lib/error-utils"
 
 interface BookingWithDetails extends Booking {
   service?: Service
   branch?: Branch
+  services?: {
+    name: string
+  }
+  branches?: {
+    name: string
+  }
 }
 
 export function BookingList() {
@@ -40,25 +49,34 @@ export function BookingList() {
   const fetchBookings = async () => {
     try {
       setLoading(true)
-      const [bookingsData, services, branches] = await Promise.all([
-        apiClient.getBookings(),
-        apiClient.getServices(),
-        apiClient.getBranches(),
-      ])
+      setError(null)
+
+      const { bookings: bookingsData } = await apiClient.getBookings()
+      const { services } = await apiClient.getServices()
+      const { branches } = await apiClient.getBranches()
 
       const enrichedBookings: BookingWithDetails[] = bookingsData.map((booking) => ({
         ...booking,
         service: services.find((s) => s.id === booking.serviceId),
         branch: branches.find((b) => b.id === booking.branchId),
+        // Ensure properties are in camelCase
+        bookingCode: booking.booking_code,
+        customerName: booking.customer_name,
+        customerPhone: booking.customer_phone,
+        customerEmail: booking.customer_email,
+        totalPrice: booking.total_price,
+        vehiclePlateNumber: booking.vehicle_plate_number,
+        createdAt: booking.created_at,
+        updatedAt: booking.updated_at
       }))
 
-      // Sort by creation date, newest first
       enrichedBookings.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
       setBookings(enrichedBookings)
     } catch (err) {
       console.error("[v0] Error fetching bookings:", err)
       setError("Gagal memuat data booking")
+      showErrorToast(err, "Gagal Memuat Data")
     } finally {
       setLoading(false)
     }
@@ -92,21 +110,15 @@ export function BookingList() {
   const handleStatusChange = async (bookingId: string, newStatus: string) => {
     try {
       setUpdatingStatus(bookingId)
-      await apiClient.updateBooking(bookingId, { status: newStatus as any })
 
-      // Update local state
-      setBookings((prev) =>
-        prev.map((booking) =>
-          booking.id === bookingId
-            ? { ...booking, status: newStatus as any, updatedAt: new Date().toISOString() }
-            : booking,
-        ),
-      )
+      const { booking } = await apiClient.updateBooking(bookingId, { status: newStatus as any })
 
-      console.log("[v0] Successfully updated booking status:", bookingId, newStatus)
+      setBookings((prev) => prev.map((b) => (b.id === bookingId ? { ...b, ...booking } : b)))
+
+      showSuccessToast("Status Berhasil Diperbarui", `Booking ${booking.booking_code} telah diperbarui`)
     } catch (err) {
       console.error("[v0] Error updating booking status:", err)
-      // You could add a toast notification here
+      showErrorToast(err, "Gagal Memperbarui Status")
     } finally {
       setUpdatingStatus(null)
     }
@@ -117,9 +129,9 @@ export function BookingList() {
     setIsDetailModalOpen(true)
   }
 
-  const handleCallCustomer = (phone: string) => {
-    window.open(`tel:${phone}`)
-  }
+  const handleCallCustomer = (booking: BookingWithDetails) => {
+    sendWhatsAppNotification(booking);
+  };
 
   if (loading) {
     return (
@@ -147,10 +159,7 @@ export function BookingList() {
           <CardTitle className="font-serif text-xl">Daftar Booking</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8">
-            <p className="text-red-600 mb-4">{error}</p>
-            <Button onClick={fetchBookings}>Coba Lagi</Button>
-          </div>
+          <ErrorState title="Gagal Memuat Data Booking" message={error} onRetry={fetchBookings} />
         </CardContent>
       </Card>
     )
@@ -202,7 +211,9 @@ export function BookingList() {
                       <TableCell>{booking.branch?.name || "Cabang tidak ditemukan"}</TableCell>
                       <TableCell>
                         <div>
-                          <p className="text-sm">{format(new Date(booking.date), "dd MMM yyyy", { locale: id })}</p>
+                          <p className="text-sm">
+                            {format(booking.date ? new Date(booking.date + "T00:00:00") : new Date(), "dd MMM yyyy", { locale: id })}
+                          </p>
                           <p className="text-sm text-muted-foreground">{booking.time} WIB</p>
                         </div>
                       </TableCell>
@@ -213,7 +224,7 @@ export function BookingList() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleCallCustomer(booking.customerPhone)}
+                            onClick={() => handleCallCustomer(booking)}
                             className="h-8 w-8 p-0"
                           >
                             <Phone className="h-4 w-4" />

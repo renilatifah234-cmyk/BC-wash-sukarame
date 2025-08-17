@@ -35,7 +35,7 @@ export function LoyaltyDashboard() {
     try {
       setLoading(true)
       const customerData = await apiClient.getCustomers()
-      setCustomers(customerData)
+      setCustomers(customerData.customers)
     } catch (err) {
       console.error("[v0] Error fetching customers:", err)
       setError("Gagal memuat data pelanggan")
@@ -54,7 +54,7 @@ export function LoyaltyDashboard() {
   const totalCustomers = customers.length
   const totalLoyaltyPoints = customers.reduce((sum, customer) => sum + customer.totalLoyaltyPoints, 0)
   const averagePointsPerCustomer = totalCustomers > 0 ? Math.round(totalLoyaltyPoints / totalCustomers) : 0
-  const totalVehicles = customers.reduce((sum, customer) => sum + customer.vehiclePlateNumbers.length, 0)
+  const totalVehicles = customers.reduce((sum, customer) => sum + (Array.isArray(customer.vehiclePlateNumbers) ? customer.vehiclePlateNumbers.length : 0), 0)
 
   const getCustomerTier = (points: number) => {
     if (points >= 200) return { name: "Platinum", color: "bg-purple-100 text-purple-800" }
@@ -239,11 +239,15 @@ export function LoyaltyDashboard() {
                         </TableCell>
                         <TableCell>
                           <div className="space-y-1">
-                            {customer.vehiclePlateNumbers.map((plate, index) => (
-                              <Badge key={index} variant="outline" className="font-mono text-xs">
-                                {plate}
-                              </Badge>
-                            ))}
+                            {totalVehicles === 0 ? (
+                              <span className="text-xs text-muted-foreground">-</span>
+                            ) : (
+                              customer.vehiclePlateNumbers.map((plate, index) => (
+                                <Badge key={index} variant="outline" className="font-mono text-xs">
+                                  {plate}
+                                </Badge>
+                              ))
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>

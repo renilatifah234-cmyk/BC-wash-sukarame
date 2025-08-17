@@ -101,7 +101,14 @@ export function BranchManagement() {
     try {
       setLoading(true)
       const branchData = await apiClient.getBranches()
-      setBranches(branchData)
+      const formattedBranches = branchData.branches.map(branch => ({
+        ...branch,
+        operatingHours: {
+          open: branch.operatingHours.open || "08:00",
+          close: branch.operatingHours.close || "18:00"
+        }
+      }))
+      setBranches(formattedBranches)
     } catch (err) {
       console.error("[v0] Error fetching branches:", err)
       setError("Gagal memuat data cabang")
@@ -214,7 +221,7 @@ export function BranchManagement() {
         pickupCoverageRadius: newBranchData.pickupRadius,
       }
 
-      const newBranch = await apiClient.createBranch(branchData)
+      const { branch: newBranch } = await apiClient.createBranch(branchData)
       setBranches([...branches, newBranch])
       resetForm()
       setIsAddDialogOpen(false)
@@ -660,9 +667,9 @@ export function BranchManagement() {
                       <TableCell>{getStatusBadge(branch.status)}</TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          <p>{format(new Date(branch.createdAt), "dd MMM yyyy", { locale: id })}</p>
+                          <p>{branch.createdAt}</p>
                           <p className="text-muted-foreground">
-                            {format(new Date(branch.createdAt), "HH:mm", { locale: id })}
+                            {branch.createdAt}
                           </p>
                         </div>
                       </TableCell>
