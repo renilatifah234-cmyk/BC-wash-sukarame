@@ -35,16 +35,12 @@ export function RecentBookings() {
           .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
           .slice(0, 5)
 
-        console.log("[v0] Fetched bookings:", sortedBookings)
-
         // Enrich bookings with service and branch details
         const enrichedBookings: BookingWithDetails[] = sortedBookings.map((booking) => ({
           ...booking,
           service: services.find((s) => s.id === booking.serviceId),
           branch: branches.find((b) => b.id === booking.branchId),
         }))
-
-        console.log("[v0] Enriched bookings:", enrichedBookings)
 
         setRecentBookings(enrichedBookings)
       } catch (err) {
