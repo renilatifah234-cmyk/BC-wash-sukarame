@@ -195,7 +195,9 @@ export function BookingList() {
                       <TableCell>{booking.branch?.name || "Cabang tidak ditemukan"}</TableCell>
                       <TableCell>
                         <div>
-                          <p className="text-sm">{format(new Date(booking.date), "dd MMM yyyy", { locale: id })}</p>
+                          <p className="text-sm">
+                            {format(booking.date ? new Date(booking.date + "T00:00:00") : new Date(), "dd MMM yyyy", { locale: id })}
+                          </p>
                           <p className="text-sm text-muted-foreground">{booking.time} WIB</p>
                         </div>
                       </TableCell>
