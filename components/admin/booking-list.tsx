@@ -113,9 +113,89 @@ export function BookingList() {
     setIsDetailModalOpen(true)
   }
 
-  const handleCallCustomer = (phone: string) => {
-    window.open(`tel:${phone}`)
-  }
+  const handleCallCustomer = (booking: any) => {
+    let message = "";
+
+    switch (booking.status) {
+      case "pending":
+        message = `Hello ${booking.customer_name},  
+
+  📌 Booking Code: ${booking.booking_code}  
+  🛠 Service: ${booking.services.name}  
+  📅 Date: ${booking.booking_date} at ${booking.booking_time}  
+  🚗 Vehicle: ${booking.vehicle_plate_number}  
+  🏢 Branch: ${booking.branches.name}  
+
+  Your booking is *pending*.  
+  The payment has not yet been confirmed by admin. Please complete your payment or upload proof if not yet submitted. 🙏`;
+        break;
+
+      case "confirmed":
+        message = `Hello ${booking.customer_name},  
+
+  📌 Booking Code: ${booking.booking_code}  
+  🛠 Service: ${booking.services.name}  
+  📅 Date: ${booking.booking_date} at ${booking.booking_time}  
+  🚗 Vehicle: ${booking.vehicle_plate_number}  
+  🏢 Branch: ${booking.branches.name}  
+
+  Your booking is now *confirmed*. ✅  
+  Please come to the branch on time. Thank you!`;
+        break;
+
+      case "in-progress":
+        message = `Hello ${booking.customer_name},  
+
+  📌 Booking Code: ${booking.booking_code}  
+  🛠 Service: ${booking.services.name}  
+  📅 Date: ${booking.booking_date} at ${booking.booking_time}  
+  🚗 Vehicle: ${booking.vehicle_plate_number}  
+  🏢 Branch: ${booking.branches.name}  
+
+  Your service is currently *in progress*. 🧽  
+  Our staff is working on cleaning your vehicle.`;
+        break;
+
+      case "completed":
+        message = `Hello ${booking.customer_name},  
+
+  📌 Booking Code: ${booking.booking_code}  
+  🛠 Service: ${booking.services.name}  
+  📅 Date: ${booking.booking_date} at ${booking.booking_time}  
+  🚗 Vehicle: ${booking.vehicle_plate_number}  
+  🏢 Branch: ${booking.branches.name}  
+
+  Your service has been *completed*! 🎉  
+  Thank you for trusting us. We hope to see you again. 🙏`;
+        break;
+
+      case "cancelled":
+        message = `Hello ${booking.customer_name},  
+
+  📌 Booking Code: ${booking.booking_code}  
+  🛠 Service: ${booking.services.name}  
+  📅 Date: ${booking.booking_date} at ${booking.booking_time}  
+  🚗 Vehicle: ${booking.vehicle_plate_number}  
+  🏢 Branch: ${booking.branches.name}  
+
+  Unfortunately, your booking has been *cancelled*. ❌  
+  If this was not intended, please contact our admin for assistance.`;
+        break;
+
+      default:
+        message = `Hello ${booking.customer_name}, your booking update is not available at the moment.`;
+    }
+
+    const encodedMessage = encodeURIComponent(message);
+
+    // Format phone number with Indonesia prefix
+    let formattedPhone = booking.customer_phone.replace(/\D/g, "");
+    if (formattedPhone.startsWith("0")) {
+      formattedPhone = "62" + formattedPhone.substring(1);
+    }
+
+    window.open(`https://wa.me/${formattedPhone}?text=${encodedMessage}`, "_blank");
+  };
 
   if (loading) {
     return (
@@ -208,7 +288,7 @@ export function BookingList() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleCallCustomer(booking.customer_phone)}
+                            onClick={() => handleCallCustomer(booking)}
                             className="h-8 w-8 p-0"
                           >
                             <Phone className="h-4 w-4" />
