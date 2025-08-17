@@ -24,7 +24,7 @@ export function RecentBookings() {
     const fetchRecentBookings = async () => {
       try {
         setLoading(true)
-        const [bookings, services, branches] = await Promise.all([
+        const [{ bookings }, { services }, { branches }] = await Promise.all([
           apiClient.getBookings(),
           apiClient.getServices(),
           apiClient.getBranches(),
@@ -35,12 +35,16 @@ export function RecentBookings() {
           .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
           .slice(0, 5)
 
+        console.log("[v0] Fetched bookings:", sortedBookings)
+
         // Enrich bookings with service and branch details
         const enrichedBookings: BookingWithDetails[] = sortedBookings.map((booking) => ({
           ...booking,
           service: services.find((s) => s.id === booking.serviceId),
           branch: branches.find((b) => b.id === booking.branchId),
         }))
+
+        console.log("[v0] Enriched bookings:", enrichedBookings)
 
         setRecentBookings(enrichedBookings)
       } catch (err) {
@@ -142,18 +146,20 @@ export function RecentBookings() {
               <div key={booking.id} className="flex items-center justify-between p-3 border rounded-lg">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">{booking.customerName}</span>
-                    <span className="text-xs text-muted-foreground">#{booking.bookingCode}</span>
+                    <span className="font-medium text-sm">{booking.customer_name}</span>
+                    <span className="text-xs text-muted-foreground">#{booking.booking_code}</span>
                   </div>
-                  <p className="text-sm text-muted-foreground">{booking.service?.name || "Layanan tidak ditemukan"}</p>
+                  <p className="text-sm text-muted-foreground">{booking.services?.name || "Layanan tidak ditemukan"}</p>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span>{format(new Date(`${booking.date}T${booking.time}`), "dd MMM, HH:mm", { locale: id })}</span>
+                    <span>
+                      {format(booking.date ? new Date(booking.date + "T00:00:00") : new Date(), "dd MMM yyyy", { locale: id })}
+                    </span>
                     <span>•</span>
-                    <span>{booking.branch?.name || "Cabang tidak ditemukan"}</span>
+                    <span>{booking.branches?.name || "Cabang tidak ditemukan"}</span>
                   </div>
                 </div>
                 <div className="text-right space-y-1">
-                  <p className="font-semibold text-sm">{formatCurrency(booking.totalPrice)}</p>
+                  <p className="font-semibold text-sm">{formatCurrency(booking.total_price)}</p>
                   {getStatusBadge(booking.status)}
                 </div>
               </div>
