@@ -19,7 +19,7 @@ import { format } from "date-fns"
 import { id } from "date-fns/locale"
 import { cn } from "@/lib/utils"
 import { apiClient } from "@/lib/api-client"
-import type { Service, Branch } from "@/lib/dummy-data"
+import type { Service, Branch, CreateBookingData } from "@/lib/api-client"
 
 interface ManualBookingFormProps {
   onSuccess: (bookingCode: string) => void
@@ -55,8 +55,11 @@ export function ManualBookingForm({ onSuccess, onCancel }: ManualBookingFormProp
         setLoading(true)
         const [servicesData, branchesData] = await Promise.all([apiClient.getServices(), apiClient.getBranches()])
 
-        setServices(servicesData)
-        setBranches(branchesData.filter((branch) => branch.status === "active"))
+        console.log("[v0] Fetched services:", servicesData)
+        console.log("[v0] Fetched branches:", branchesData)
+
+        setServices(servicesData.services) // Access the services array from the response
+        setBranches(branchesData.branches.filter((branch: Branch) => branch.status === "active"))
       } catch (err) {
         console.error("[v0] Error fetching form data:", err)
       } finally {
@@ -150,7 +153,7 @@ export function ManualBookingForm({ onSuccess, onCancel }: ManualBookingFormProp
   const calculateTotalPrice = () => {
     if (!selectedService) return 0
     const basePrice = selectedService.price
-    const pickupFee = formData.isPickupService ? selectedService.pickupFee || 0 : 0
+    const pickupFee = formData.isPickupService ? selectedService.pickup_fee || 0 : 0
     return basePrice + pickupFee
   }
 
@@ -169,29 +172,27 @@ export function ManualBookingForm({ onSuccess, onCancel }: ManualBookingFormProp
       const totalPrice = calculateTotalPrice()
       const loyaltyPoints = calculateLoyaltyPoints(totalPrice)
 
-      const bookingData = {
-        customerName: formData.customerName,
-        customerPhone: formData.customerPhone,
-        customerEmail: formData.customerEmail,
-        serviceId: formData.serviceId,
-        branchId: formData.branchId,
-        date: format(formData.date!, "yyyy-MM-dd"),
-        time: formData.time,
-        totalPrice,
-        status: "confirmed" as const,
-        isPickupService: formData.isPickupService,
-        pickupAddress: formData.pickupAddress || undefined,
-        pickupNotes: formData.pickupNotes || undefined,
-        vehiclePlateNumber: formData.vehiclePlateNumber,
-        loyaltyPointsEarned: loyaltyPoints,
-        paymentMethod: formData.paymentMethod,
+      const bookingData: CreateBookingData = {
+        customer_name: formData.customerName,
+        customer_phone: formData.customerPhone,
+        customer_email: formData.customerEmail,
+        service_id: formData.serviceId,
+        branch_id: formData.branchId,
+        booking_date: format(formData.date!, "yyyy-MM-dd"),
+        booking_time: formData.time,
+        total_price: totalPrice,
+        is_pickup_service: formData.isPickupService,
+        pickup_address: formData.pickupAddress || undefined,
+        pickup_notes: formData.pickupNotes || undefined,
+        vehicle_plate_number: formData.vehiclePlateNumber,
+        payment_method: formData.paymentMethod,
         notes: formData.notes || undefined,
-        bookingSource: "offline" as const,
-        createdByAdmin: true,
+        booking_source: "offline",
+        created_by_admin: true
       }
 
       const newBooking = await apiClient.createBooking(bookingData)
-      onSuccess(newBooking.bookingCode)
+      onSuccess(newBooking.booking.booking_code)
     } catch (error) {
       console.error("[v0] Error creating booking:", error)
       // You could add error handling/toast notification here
@@ -471,7 +472,7 @@ export function ManualBookingForm({ onSuccess, onCancel }: ManualBookingFormProp
         </Card>
 
         {/* Pickup Service */}
-        {selectedService?.supportsPickup && (
+        {selectedService?.supports_pickup && (
           <Card>
             <CardHeader>
               <CardTitle className="font-serif text-xl flex items-center gap-2">
@@ -487,7 +488,7 @@ export function ManualBookingForm({ onSuccess, onCancel }: ManualBookingFormProp
                   onCheckedChange={(checked) => handleInputChange("isPickupService", checked)}
                 />
                 <Label htmlFor="isPickupService" className="cursor-pointer">
-                  Gunakan layanan pickup (+{formatCurrency(selectedService.pickupFee || 0)})
+                  Gunakan layanan pickup (+{formatCurrency(selectedService.pickup_fee || 0)})
                 </Label>
               </div>
 
@@ -556,10 +557,10 @@ export function ManualBookingForm({ onSuccess, onCancel }: ManualBookingFormProp
                 <span>Harga Layanan:</span>
                 <span>{formatCurrency(selectedService?.price || 0)}</span>
               </div>
-              {formData.isPickupService && selectedService?.pickupFee && (
+              {formData.isPickupService && selectedService?.pickup_fee && (
                 <div className="flex justify-between items-center mb-2">
                   <span>Biaya Pickup:</span>
-                  <span>{formatCurrency(selectedService.pickupFee)}</span>
+                  <span>{formatCurrency(selectedService.pickup_fee)}</span>
                 </div>
               )}
               <Separator className="my-2" />
