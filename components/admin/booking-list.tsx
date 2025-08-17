@@ -18,6 +18,7 @@ import { MoreHorizontal, Eye, CheckCircle, XCircle, Clock, Phone } from "lucide-
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
 import { apiClient } from "@/lib/api-client"
+import { sendWhatsAppNotification } from "@/lib/whatsapp-utils"
 import type { Booking, Service, Branch } from "@/lib/dummy-data"
 import { ErrorState } from "@/components/ui/error-state"
 import { showErrorToast, showSuccessToast } from "@/lib/error-utils"
@@ -25,6 +26,12 @@ import { showErrorToast, showSuccessToast } from "@/lib/error-utils"
 interface BookingWithDetails extends Booking {
   service?: Service
   branch?: Branch
+  services?: {
+    name: string
+  }
+  branches?: {
+    name: string
+  }
 }
 
 export function BookingList() {
@@ -50,11 +57,20 @@ export function BookingList() {
 
       const enrichedBookings: BookingWithDetails[] = bookingsData.map((booking) => ({
         ...booking,
-        service: services.find((s) => s.id === booking.service_id),
-        branch: branches.find((b) => b.id === booking.branch_id),
+        service: services.find((s) => s.id === booking.serviceId),
+        branch: branches.find((b) => b.id === booking.branchId),
+        // Ensure properties are in camelCase
+        bookingCode: booking.booking_code,
+        customerName: booking.customer_name,
+        customerPhone: booking.customer_phone,
+        customerEmail: booking.customer_email,
+        totalPrice: booking.total_price,
+        vehiclePlateNumber: booking.vehicle_plate_number,
+        createdAt: booking.created_at,
+        updatedAt: booking.updated_at
       }))
 
-      enrichedBookings.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      enrichedBookings.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
       setBookings(enrichedBookings)
     } catch (err) {
@@ -113,88 +129,8 @@ export function BookingList() {
     setIsDetailModalOpen(true)
   }
 
-  const handleCallCustomer = (booking: any) => {
-    let message = "";
-
-    switch (booking.status) {
-      case "pending":
-        message = `Hello ${booking.customer_name},  
-
-  📌 Booking Code: ${booking.booking_code}  
-  🛠 Service: ${booking.services.name}  
-  📅 Date: ${booking.booking_date} at ${booking.booking_time}  
-  🚗 Vehicle: ${booking.vehicle_plate_number}  
-  🏢 Branch: ${booking.branches.name}  
-
-  Your booking is *pending*.  
-  The payment has not yet been confirmed by admin. Please complete your payment or upload proof if not yet submitted. 🙏`;
-        break;
-
-      case "confirmed":
-        message = `Hello ${booking.customer_name},  
-
-  📌 Booking Code: ${booking.booking_code}  
-  🛠 Service: ${booking.services.name}  
-  📅 Date: ${booking.booking_date} at ${booking.booking_time}  
-  🚗 Vehicle: ${booking.vehicle_plate_number}  
-  🏢 Branch: ${booking.branches.name}  
-
-  Your booking is now *confirmed*. ✅  
-  Please come to the branch on time. Thank you!`;
-        break;
-
-      case "in-progress":
-        message = `Hello ${booking.customer_name},  
-
-  📌 Booking Code: ${booking.booking_code}  
-  🛠 Service: ${booking.services.name}  
-  📅 Date: ${booking.booking_date} at ${booking.booking_time}  
-  🚗 Vehicle: ${booking.vehicle_plate_number}  
-  🏢 Branch: ${booking.branches.name}  
-
-  Your service is currently *in progress*. 🧽  
-  Our staff is working on cleaning your vehicle.`;
-        break;
-
-      case "completed":
-        message = `Hello ${booking.customer_name},  
-
-  📌 Booking Code: ${booking.booking_code}  
-  🛠 Service: ${booking.services.name}  
-  📅 Date: ${booking.booking_date} at ${booking.booking_time}  
-  🚗 Vehicle: ${booking.vehicle_plate_number}  
-  🏢 Branch: ${booking.branches.name}  
-
-  Your service has been *completed*! 🎉  
-  Thank you for trusting us. We hope to see you again. 🙏`;
-        break;
-
-      case "cancelled":
-        message = `Hello ${booking.customer_name},  
-
-  📌 Booking Code: ${booking.booking_code}  
-  🛠 Service: ${booking.services.name}  
-  📅 Date: ${booking.booking_date} at ${booking.booking_time}  
-  🚗 Vehicle: ${booking.vehicle_plate_number}  
-  🏢 Branch: ${booking.branches.name}  
-
-  Unfortunately, your booking has been *cancelled*. ❌  
-  If this was not intended, please contact our admin for assistance.`;
-        break;
-
-      default:
-        message = `Hello ${booking.customer_name}, your booking update is not available at the moment.`;
-    }
-
-    const encodedMessage = encodeURIComponent(message);
-
-    // Format phone number with Indonesia prefix
-    let formattedPhone = booking.customer_phone.replace(/\D/g, "");
-    if (formattedPhone.startsWith("0")) {
-      formattedPhone = "62" + formattedPhone.substring(1);
-    }
-
-    window.open(`https://wa.me/${formattedPhone}?text=${encodedMessage}`, "_blank");
+  const handleCallCustomer = (booking: BookingWithDetails) => {
+    sendWhatsAppNotification(booking);
   };
 
   if (loading) {
@@ -260,11 +196,11 @@ export function BookingList() {
                 ) : (
                   bookings.map((booking) => (
                     <TableRow key={booking.id}>
-                      <TableCell className="font-medium font-mono">{booking.booking_code}</TableCell>
+                      <TableCell className="font-medium font-mono">{booking.bookingCode}</TableCell>
                       <TableCell>
                         <div>
-                          <p className="font-medium">{booking.customer_name}</p>
-                          <p className="text-sm text-muted-foreground">{booking.customer_phone}</p>
+                          <p className="font-medium">{booking.customerName}</p>
+                          <p className="text-sm text-muted-foreground">{booking.customerPhone}</p>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -281,7 +217,7 @@ export function BookingList() {
                           <p className="text-sm text-muted-foreground">{booking.time} WIB</p>
                         </div>
                       </TableCell>
-                      <TableCell className="font-medium">{formatCurrency(booking.total_price)}</TableCell>
+                      <TableCell className="font-medium">{formatCurrency(booking.totalPrice)}</TableCell>
                       <TableCell>{getStatusBadge(booking.status)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
