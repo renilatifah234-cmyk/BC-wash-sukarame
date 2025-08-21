@@ -21,7 +21,8 @@ export function RevenueChart() {
     const fetchRevenueData = async () => {
       try {
         setLoading(true)
-        const bookings = await apiClient.getBookings()
+        const bookingsResponse = await apiClient.getBookings()
+        const bookings = bookingsResponse.bookings
 
         // Get last 7 days
         const last7Days = Array.from({ length: 7 }, (_, i) => {
