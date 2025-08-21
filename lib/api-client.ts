@@ -52,6 +52,7 @@ interface Service {
   supports_pickup: boolean
   duration: number
   features: string[]
+  is_active: boolean
   created_at: string
   updated_at: string
 }

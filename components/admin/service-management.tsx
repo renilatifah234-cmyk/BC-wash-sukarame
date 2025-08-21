@@ -262,6 +262,7 @@ export function ServiceManagement() {
                     <TableHead>Harga</TableHead>
                     <TableHead>Durasi</TableHead>
                     <TableHead>Pickup</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead className="text-right">Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -310,6 +311,19 @@ export function ServiceManagement() {
                               <span className="text-green-600">Ya ({formatCurrency(service.pickup_fee || 0)})</span>
                             ) : (
                               <span className="text-muted-foreground">Tidak</span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            {service.is_active ? (
+                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                Aktif
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                                Non-Aktif
+                              </Badge>
                             )}
                           </div>
                         </TableCell>
@@ -375,6 +389,7 @@ export function ServiceManagement() {
               features: editingService.features || [],
               supports_pickup: editingService.supports_pickup || false,
               pickup_fee: editingService.pickup_fee || 0,
+              is_active: editingService.is_active,
             } : undefined}
           />
           <DialogFooter>

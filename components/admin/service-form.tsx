@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react"
 import { Car, Crown, Bike } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 export interface ServiceFormData {
   name: string
@@ -12,6 +13,15 @@ export interface ServiceFormData {
   features: string[]
   supports_pickup: boolean
   pickup_fee: number
+  is_active: boolean
+}
+
+interface FormErrors {
+  name?: string
+  description?: string
+  price?: string
+  duration?: string
+  pickup_fee?: string
 }
 
 interface ServiceFormProps {
@@ -30,15 +40,16 @@ const initialFormData: ServiceFormData = {
   features: [],
   supports_pickup: false,
   pickup_fee: 0,
+  is_active: true
 }
 
 export function ServiceForm({ initialData, onSubmit, isSubmitting = false, buttonLabel = "Submit" }: ServiceFormProps) {
   const [formData, setFormData] = useState<ServiceFormData>(initialData || initialFormData)
   const [featuresInput, setFeaturesInput] = useState(initialData?.features?.join(", ") || "")
-  const [errors, setErrors] = useState<Partial<ServiceFormData>>({})
+  const [errors, setErrors] = useState<FormErrors>({})
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<ServiceFormData> = {}
+    const newErrors: FormErrors = {}
 
     if (!formData.name.trim()) {
       newErrors.name = "Nama layanan wajib diisi"
@@ -208,16 +219,26 @@ export function ServiceForm({ initialData, onSubmit, isSubmitting = false, butto
             {errors.pickup_fee && <p className="text-sm text-red-500">{errors.pickup_fee}</p>}
           </div>
         )}
-      </div>
 
-      <div className="flex justify-end pt-4">
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
-        >
-          {buttonLabel}
-        </button>
+        <div className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            id="isActive"
+            checked={formData.is_active}
+            onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+            className="rounded border-gray-300 text-primary focus:ring-primary"
+            disabled={isSubmitting}
+          />
+          <label htmlFor="isActive" className="text-sm font-medium">
+            Layanan Aktif
+          </label>
+        </div>
+
+        <div className="flex justify-end pt-4">
+          <Button type="submit" disabled={isSubmitting}>
+            {buttonLabel}
+          </Button>
+        </div>
       </div>
     </form>
   )

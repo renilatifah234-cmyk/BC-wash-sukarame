@@ -36,6 +36,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       "supports_pickup",
       "duration",
       "features",
+      "is_active"
     ]
 
     const filteredData = Object.keys(updateData)
