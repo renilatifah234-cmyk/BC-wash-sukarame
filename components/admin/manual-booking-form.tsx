@@ -2,13 +2,14 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { FormInput } from "./form-input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -26,23 +27,39 @@ interface ManualBookingFormProps {
   onCancel: () => void
 }
 
+interface FormData {
+  customerName: string;
+  customerPhone: string;
+  customerEmail: string;
+  serviceId: string;
+  branchId: string;
+  date: Date | undefined;
+  time: string;
+  vehiclePlateNumber: string;
+  isPickupService: boolean;
+  pickupAddress: string;
+  pickupNotes: string;
+  paymentMethod: "cash" | "transfer" | "qris" | "card";
+  notes: string;
+}
+
 export function ManualBookingForm({ onSuccess, onCancel }: ManualBookingFormProps) {
   const [services, setServices] = useState<Service[]>([])
   const [branches, setBranches] = useState<Branch[]>([])
   const [loading, setLoading] = useState(true)
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     customerName: "",
     customerPhone: "",
     customerEmail: "",
     serviceId: "",
     branchId: "",
-    date: undefined as Date | undefined,
+    date: undefined,
     time: "",
     vehiclePlateNumber: "",
     isPickupService: false,
     pickupAddress: "",
     pickupNotes: "",
-    paymentMethod: "cash" as "cash" | "transfer" | "qris" | "card",
+    paymentMethod: "cash",
     notes: "",
   })
 
@@ -143,12 +160,14 @@ export function ManualBookingForm({ onSuccess, onCancel }: ManualBookingFormProp
     return Object.keys(newErrors).length === 0
   }
 
-  const handleInputChange = (field: string, value: any) => {
+  type InputValue = string | boolean | Date | undefined;
+
+  const handleInputChange = useCallback((field: keyof typeof formData, value: InputValue) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }))
     }
-  }
+  }, [])
 
   const calculateTotalPrice = () => {
     if (!selectedService) return 0
@@ -277,43 +296,37 @@ export function ManualBookingForm({ onSuccess, onCancel }: ManualBookingFormProp
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="customerName">Nama Lengkap *</Label>
-                <Input
-                  id="customerName"
-                  value={formData.customerName}
-                  onChange={(e) => handleInputChange("customerName", e.target.value)}
-                  placeholder="Masukkan nama pelanggan"
-                  className={errors.customerName ? "border-destructive" : ""}
-                />
-                {errors.customerName && <p className="text-sm text-destructive">{errors.customerName}</p>}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="customerPhone">Nomor Telepon *</Label>
-                <Input
-                  id="customerPhone"
-                  value={formData.customerPhone}
-                  onChange={(e) => handleInputChange("customerPhone", e.target.value)}
-                  placeholder="08123456789"
-                  className={errors.customerPhone ? "border-destructive" : ""}
-                />
-                {errors.customerPhone && <p className="text-sm text-destructive">{errors.customerPhone}</p>}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="customerEmail">Email *</Label>
-              <Input
-                id="customerEmail"
-                type="email"
-                value={formData.customerEmail}
-                onChange={(e) => handleInputChange("customerEmail", e.target.value)}
-                placeholder="contoh@email.com"
-                className={errors.customerEmail ? "border-destructive" : ""}
+              <FormInput
+                id="customerName"
+                label="Nama Lengkap"
+                value={formData.customerName}
+                onChange={(value) => handleInputChange("customerName", value)}
+                placeholder="Masukkan nama pelanggan"
+                error={errors.customerName}
+                required
               />
-              {errors.customerEmail && <p className="text-sm text-destructive">{errors.customerEmail}</p>}
+
+              <FormInput
+                id="customerPhone"
+                label="Nomor Telepon"
+                value={formData.customerPhone}
+                onChange={(value) => handleInputChange("customerPhone", value)}
+                placeholder="08123456789"
+                error={errors.customerPhone}
+                required
+              />
             </div>
+
+            <FormInput
+              id="customerEmail"
+              label="Email"
+              value={formData.customerEmail}
+              onChange={(value) => handleInputChange("customerEmail", value)}
+              placeholder="contoh@email.com"
+              type="email"
+              error={errors.customerEmail}
+              required
+            />
 
             <div className="space-y-2">
               <Label htmlFor="vehiclePlateNumber">Nomor Plat Kendaraan *</Label>
