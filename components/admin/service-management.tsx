@@ -3,12 +3,8 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Switch } from "@/components/ui/switch"
+import { ServiceForm, type ServiceFormData } from "./service-form"
 import {
   Dialog,
   DialogContent,
@@ -36,28 +32,6 @@ import { ErrorState } from "@/components/ui/error-state"
 import { showErrorToast, showSuccessToast } from "@/lib/error-utils"
 import { formatCurrency } from "@/lib/utils"
 
-interface ServiceFormData {
-  name: string
-  category: string
-  price: number
-  description: string
-  duration: number
-  features: string[]
-  supports_pickup: boolean
-  pickup_fee: number
-}
-
-const initialFormData: ServiceFormData = {
-  name: "",
-  category: "car-regular",
-  price: 0,
-  description: "",
-  duration: 30,
-  features: [],
-  supports_pickup: false,
-  pickup_fee: 0,
-}
-
 export function ServiceManagement() {
   const [serviceList, setServiceList] = useState<Service[]>([])
   const [loading, setLoading] = useState(true)
@@ -65,9 +39,6 @@ export function ServiceManagement() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [editingService, setEditingService] = useState<Service | null>(null)
-  const [formData, setFormData] = useState<ServiceFormData>(initialFormData)
-  const [featuresInput, setFeaturesInput] = useState("")
-  const [errors, setErrors] = useState<Partial<ServiceFormData>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
@@ -130,54 +101,12 @@ export function ServiceManagement() {
     }
   }
 
-  const validateForm = (): boolean => {
-    const newErrors: Partial<ServiceFormData> = {}
-
-    if (!formData.name.trim()) {
-      newErrors.name = "Nama layanan wajib diisi"
-    }
-    if (!formData.description.trim()) {
-      newErrors.description = "Deskripsi layanan wajib diisi"
-    }
-    if (formData.price <= 0) {
-      newErrors.price = "Harga harus lebih dari 0"
-    }
-    if (formData.duration <= 0) {
-      newErrors.duration = "Durasi harus lebih dari 0"
-    }
-    if (formData.supports_pickup && formData.pickup_fee < 0) {
-      newErrors.pickup_fee = "Biaya pickup tidak boleh negatif"
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const resetForm = () => {
-    setFormData(initialFormData)
-    setFeaturesInput("")
-    setErrors({})
-  }
-
-  const handleCreateService = async () => {
-    if (!validateForm()) return
-
+  const handleCreateService = async (data: ServiceFormData) => {
     setIsSubmitting(true)
     try {
-      const serviceData = {
-        ...formData,
-        features: featuresInput
-          ? featuresInput
-              .split(",")
-              .map((f) => f.trim())
-              .filter((f) => f)
-          : [],
-      }
-
-      const { service: newService } = await apiClient.createService(serviceData)
+      const { service: newService } = await apiClient.createService(data)
       setServiceList([...serviceList, newService])
       setIsCreateDialogOpen(false)
-      resetForm()
       showSuccessToast("Layanan Berhasil Ditambahkan", `Layanan "${newService.name}" telah ditambahkan ke sistem.`)
     } catch (err) {
       console.error("[v0] Error creating service:", err)
@@ -189,40 +118,18 @@ export function ServiceManagement() {
 
   const handleEditService = (service: Service) => {
     setEditingService(service)
-    setFormData({
-      name: service.name,
-      category: service.category,
-      price: service.price,
-      description: service.description,
-      duration: service.duration,
-      features: service.features || [],
-      supports_pickup: service.supports_pickup || false,
-      pickup_fee: service.pickup_fee || 0,
-    })
-    setFeaturesInput(service.features?.join(", ") || "")
     setIsEditDialogOpen(true)
   }
 
-  const handleUpdateService = async () => {
-    if (!validateForm() || !editingService) return
+  const handleUpdateService = async (data: ServiceFormData) => {
+    if (!editingService) return
 
     setIsSubmitting(true)
     try {
-      const serviceData = {
-        ...formData,
-        features: featuresInput
-          ? featuresInput
-              .split(",")
-              .map((f) => f.trim())
-              .filter((f) => f)
-          : [],
-      }
-
-      const { service: updatedService } = await apiClient.updateService(editingService.id, serviceData)
+      const { service: updatedService } = await apiClient.updateService(editingService.id, data)
       setServiceList(serviceList.map((s) => (s.id === editingService.id ? updatedService : s)))
       setIsEditDialogOpen(false)
       setEditingService(null)
-      resetForm()
       showSuccessToast("Layanan Berhasil Diperbarui", `Layanan "${updatedService.name}" telah diperbarui.`)
     } catch (err) {
       console.error("[v0] Error updating service:", err)
@@ -231,6 +138,17 @@ export function ServiceManagement() {
       setIsSubmitting(false)
     }
   }
+
+  // const handleDeleteService = async (service: Service) => {
+  //   try {
+  //     await apiClient.deleteService(service.id)
+  //     setServiceList(serviceList.filter((s) => s.id !== service.id))
+  //     showSuccessToast("Layanan Berhasil Dihapus", `Layanan "${service.name}" telah dihapus dari sistem.`)
+  //   } catch (err) {
+  //     console.error("[v0] Error deleting service:", err)
+  //     showErrorToast(err, "Gagal Menghapus Layanan")
+  //   }
+  // }
 
   const handleDeleteService = async (service: Service) => {
     try {
@@ -242,124 +160,6 @@ export function ServiceManagement() {
       showErrorToast(err, "Gagal Menghapus Layanan")
     }
   }
-
-  const ServiceForm = ({ isEdit = false }: { isEdit?: boolean }) => (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Nama Layanan *</Label>
-          <Input
-            id="name"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            placeholder="Contoh: Cuci Mobil Premium"
-            className={errors.name ? "border-red-500" : ""}
-            disabled={isSubmitting}
-          />
-          {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="category">Kategori *</Label>
-          <Select
-            value={formData.category}
-            onValueChange={(value: string) => setFormData({ ...formData, category: value })}
-            disabled={isSubmitting}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="car-regular">Mobil Regular</SelectItem>
-              <SelectItem value="car-premium">Mobil Premium</SelectItem>
-              <SelectItem value="motorcycle">Motor</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="description">Deskripsi *</Label>
-        <Textarea
-          id="description"
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          placeholder="Deskripsi detail layanan..."
-          className={errors.description ? "border-red-500" : ""}
-          disabled={isSubmitting}
-        />
-        {errors.description && <p className="text-sm text-red-500">{errors.description}</p>}
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="price">Harga (IDR) *</Label>
-          <Input
-            id="price"
-            type="number"
-            value={formData.price}
-            onChange={(e) => setFormData({ ...formData, price: Number.parseInt(e.target.value) || 0 })}
-            placeholder="35000"
-            className={errors.price ? "border-red-500" : ""}
-            disabled={isSubmitting}
-          />
-          {errors.price && <p className="text-sm text-red-500">{errors.price}</p>}
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="duration">Durasi (menit) *</Label>
-          <Input
-            id="duration"
-            type="number"
-            value={formData.duration}
-            onChange={(e) => setFormData({ ...formData, duration: Number.parseInt(e.target.value) || 0 })}
-            placeholder="45"
-            className={errors.duration ? "border-red-500" : ""}
-            disabled={isSubmitting}
-          />
-          {errors.duration && <p className="text-sm text-red-500">{errors.duration}</p>}
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="features">Fitur Bonus (pisahkan dengan koma)</Label>
-        <Input
-          id="features"
-          value={featuresInput}
-          onChange={(e) => setFeaturesInput(e.target.value)}
-          placeholder="Gratis 1 Minuman, Vacuum Interior"
-          disabled={isSubmitting}
-        />
-        <p className="text-sm text-muted-foreground">Contoh: Gratis 1 Minuman, Vacuum Interior</p>
-      </div>
-
-      <div className="space-y-4">
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="supportsPickup"
-            checked={formData.supports_pickup}
-            onCheckedChange={(checked) => setFormData({ ...formData, supports_pickup: checked })}
-            disabled={isSubmitting}
-          />
-          <Label htmlFor="supportsPickup">Mendukung Layanan Pickup</Label>
-        </div>
-
-        {formData.supports_pickup && (
-          <div className="space-y-2">
-            <Label htmlFor="pickupFee">Biaya Pickup (IDR)</Label>
-            <Input
-              id="pickupFee"
-              type="number"
-              value={formData.pickup_fee}
-              onChange={(e) => setFormData({ ...formData, pickup_fee: Number.parseInt(e.target.value) || 0 })}
-              placeholder="15000"
-              className={errors.pickup_fee ? "border-red-500" : ""}
-              disabled={isSubmitting}
-            />
-            {errors.pickup_fee && <p className="text-sm text-red-500">{errors.pickup_fee}</p>}
-          </div>
-        )}
-      </div>
-    </div>
-  )
 
   if (loading) {
     return (
@@ -412,7 +212,8 @@ export function ServiceManagement() {
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={resetForm}>
+            {/* <Button onClick={resetForm}> */}
+            <Button>
               <Plus className="w-4 h-4 mr-2" />
               Tambah Layanan
             </Button>
@@ -424,20 +225,14 @@ export function ServiceManagement() {
                 Tambahkan layanan baru yang akan tersedia di seluruh cabang BC Wash.
               </DialogDescription>
             </DialogHeader>
-            <ServiceForm />
+            <ServiceForm 
+              onSubmit={handleCreateService}
+              isSubmitting={isSubmitting}
+              buttonLabel={isSubmitting ? "Menambahkan..." : "Tambah Layanan"}
+            />
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} disabled={isSubmitting}>
                 Batal
-              </Button>
-              <Button onClick={handleCreateService} disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <Clock className="w-4 h-4 mr-2 animate-spin" />
-                    Menambahkan...
-                  </>
-                ) : (
-                  "Tambah Layanan"
-                )}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -567,20 +362,24 @@ export function ServiceManagement() {
             <DialogTitle>Edit Layanan</DialogTitle>
             <DialogDescription>Perbarui informasi layanan. Perubahan akan berlaku di seluruh cabang.</DialogDescription>
           </DialogHeader>
-          <ServiceForm isEdit />
+          <ServiceForm 
+            onSubmit={handleUpdateService}
+            isSubmitting={isSubmitting}
+            buttonLabel={isSubmitting ? "Menyimpan..." : "Simpan Perubahan"}
+            initialData={editingService ? {
+              name: editingService.name,
+              category: editingService.category,
+              price: editingService.price,
+              description: editingService.description,
+              duration: editingService.duration,
+              features: editingService.features || [],
+              supports_pickup: editingService.supports_pickup || false,
+              pickup_fee: editingService.pickup_fee || 0,
+            } : undefined}
+          />
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} disabled={isSubmitting}>
               Batal
-            </Button>
-            <Button onClick={handleUpdateService} disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <Clock className="w-4 h-4 mr-2 animate-spin" />
-                  Menyimpan...
-                </>
-              ) : (
-                "Simpan Perubahan"
-              )}
             </Button>
           </DialogFooter>
         </DialogContent>
