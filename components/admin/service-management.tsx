@@ -246,10 +246,10 @@ export function ServiceManagement() {
               <Car className="w-5 h-5" />
               Daftar Layanan
             </CardTitle>
-            <CardDescription>Total {serviceList.length} layanan tersedia</CardDescription>
+            <CardDescription>Total {serviceList.filter(service => service.is_active).length} layanan aktif</CardDescription>
           </CardHeader>
           <CardContent>
-            {serviceList.length === 0 ? (
+            {serviceList.filter(service => service.is_active).length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 Belum ada layanan yang tersedia. Tambahkan layanan pertama Anda.
               </div>
@@ -267,7 +267,7 @@ export function ServiceManagement() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {serviceList.map((service) => {
+                  {serviceList.filter(service => service.is_active).map((service) => {
                     const IconComponent = getCategoryIcon(service.category)
                     return (
                       <TableRow key={service.id}>
