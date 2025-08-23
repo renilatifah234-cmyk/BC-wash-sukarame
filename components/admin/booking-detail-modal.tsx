@@ -139,13 +139,15 @@ export function BookingDetailModal({ booking, isOpen, onClose, onStatusChange }:
           <DialogDescription>Informasi lengkap booking pelanggan</DialogDescription>
         </DialogHeader>
 
+        {console.log(booking)}
+
         <div className="space-y-6">
           {/* Status and Basic Info */}
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-semibold text-lg">{booking.service}</h3>
               <p className="text-sm text-muted-foreground">
-                Dibuat: {format(new Date(booking.createdAt), "dd MMM yyyy, HH:mm", { locale: id })}
+                Dibuat: {booking.createdAt ? format(new Date(booking.createdAt), "dd MMM yyyy, HH:mm", { locale: id }) : "-"}
               </p>
             </div>
             <div className="text-right">
@@ -244,7 +246,7 @@ export function BookingDetailModal({ booking, isOpen, onClose, onStatusChange }:
                   <Calendar className="w-4 h-4 text-muted-foreground" />
                   <div>
                     <p className="font-medium">
-                      {format(new Date(booking.date), "EEEE, dd MMMM yyyy", { locale: id })}
+                      {format(new Date(booking.booking_date), "EEEE, dd MMMM yyyy", { locale: id })}
                     </p>
                     <p className="text-sm text-muted-foreground">Tanggal Booking</p>
                   </div>

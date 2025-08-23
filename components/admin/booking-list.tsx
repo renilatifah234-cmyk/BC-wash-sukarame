@@ -57,8 +57,8 @@ export function BookingList() {
 
       const enrichedBookings: BookingWithDetails[] = bookingsData.map((booking) => ({
         ...booking,
-        service: services.find((s) => s.id === booking.serviceId),
-        branch: branches.find((b) => b.id === booking.branchId),
+        service: services.find((s) => s.id === booking.service_id),
+        branch: branches.find((b) => b.id === booking.branch_id),
         // Ensure properties are in camelCase
         bookingCode: booking.booking_code,
         customerName: booking.customer_name,
