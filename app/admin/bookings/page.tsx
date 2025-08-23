@@ -9,16 +9,28 @@ import { BookingStats } from "@/components/admin/booking-stats"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 import Link from "next/link"
+import { apiClient } from "@/lib/api-client" // Import apiClient
+import { Booking, BookingApiResponse } from "@/lib/types" // Import Booking and BookingApiResponse types
 
 export default function AdminBookingsPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [bookings, setBookings] = useState<Booking[]>([]) // State for bookings
   const router = useRouter()
 
   useEffect(() => {
     const authStatus = localStorage.getItem("admin_authenticated")
     if (authStatus === "true") {
       setIsAuthenticated(true)
+      // Fetch bookings when authenticated
+      apiClient.getBookings() // Use apiClient.getBookings()
+        .then((data: BookingApiResponse) => { // Type the data parameter
+          setBookings(data.bookings); // Assuming the API returns data in the format { bookings: Booking[] }
+        })
+        .catch((error: Error) => { // Type the error parameter
+          console.error("Error fetching bookings:", error);
+          // Handle error appropriately, e.g., show a message to the user
+        });
     } else {
       router.push("/admin/login")
     }
@@ -49,7 +61,7 @@ export default function AdminBookingsPage() {
           </Button>
         </div>
 
-        <BookingStats />
+        <BookingStats bookings={bookings} /> {/* Pass bookings to BookingStats */}
         <BookingFilters />
         <BookingList />
       </div>

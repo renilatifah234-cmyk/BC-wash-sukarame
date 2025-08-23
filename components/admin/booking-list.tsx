@@ -24,14 +24,29 @@ import { ErrorState } from "@/components/ui/error-state"
 import { showErrorToast, showSuccessToast } from "@/lib/error-utils"
 
 interface BookingWithDetails extends Booking {
-  service?: Service
-  branch?: Branch
-  services?: {
-    name: string
-  }
-  branches?: {
-    name: string
-  }
+  // Properties from original Booking type that are explicitly needed
+  serviceId: string;
+  branchId: string;
+  date: string;
+  time: string;
+  bookingSource: "online" | "offline"; // Make non-optional, handle default if needed
+  vehiclePlateNumber: string;
+  createdAt: string;
+  updatedAt: string;
+  loyaltyPointsEarned?: number; // Corrected name based on error suggestion
+  bookingCode: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail: string;
+  totalPrice: number;
+  status: "pending" | "confirmed" | "in-progress" | "completed" | "cancelled";
+
+  // Derived properties for display in the table and for the modal
+  service: string; // Service name as string (non-nullable)
+  branch: string;  // Branch name as string (non-nullable)
+
+  // Property for the modal, mapping totalPrice to amount
+  amount: number;
 }
 
 export function BookingList() {
@@ -56,18 +71,29 @@ export function BookingList() {
       const { branches } = await apiClient.getBranches()
 
       const enrichedBookings: BookingWithDetails[] = bookingsData.map((booking) => ({
-        ...booking,
-        service: services.find((s) => s.id === booking.serviceId),
-        branch: branches.find((b) => b.id === booking.branchId),
-        // Ensure properties are in camelCase
+        // Explicitly map all properties required by BookingWithDetails
+        id: booking.id,
+        serviceId: booking.service_id,
+        branchId: booking.branch_id,
+        date: booking.booking_date, // Assuming booking.date exists
+        time: booking.booking_time, // Assuming booking.time exists
+        // Handle bookingSource type mismatch - provide a default if unknown
+        bookingSource: booking.booking_source === "online" || booking.booking_source === "offline" ? booking.booking_source : "offline", // Default to offline if unknown
+        vehiclePlateNumber: booking.vehicle_plate_number,
+        createdAt: booking.created_at,
+        updatedAt: booking.updated_at,
+        loyaltyPointsEarned: booking.loyalty_points_earned, // Use corrected name
         bookingCode: booking.booking_code,
         customerName: booking.customer_name,
         customerPhone: booking.customer_phone,
         customerEmail: booking.customer_email,
         totalPrice: booking.total_price,
-        vehiclePlateNumber: booking.vehicle_plate_number,
-        createdAt: booking.created_at,
-        updatedAt: booking.updated_at
+        status: booking.status,
+
+        // Derived properties
+        service: services.find((s) => s.id === booking.service_id)?.name || "Layanan tidak ditemukan", // Ensure non-nullable string
+        branch: branches.find((b) => b.id === booking.branch_id)?.name || "Cabang tidak ditemukan",   // Ensure non-nullable string
+        amount: booking.total_price,
       }))
 
       enrichedBookings.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
@@ -205,10 +231,10 @@ export function BookingList() {
                       </TableCell>
                       <TableCell>
                         <div className="max-w-[200px]">
-                          <p className="text-sm truncate">{booking.service?.name || "Layanan tidak ditemukan"}</p>
+                          <p className="text-sm truncate">{booking.service}</p>
                         </div>
                       </TableCell>
-                      <TableCell>{booking.branch?.name || "Cabang tidak ditemukan"}</TableCell>
+                      <TableCell>{booking.branch}</TableCell>
                       <TableCell>
                         <div>
                           <p className="text-sm">

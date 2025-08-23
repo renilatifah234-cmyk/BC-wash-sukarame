@@ -8,7 +8,7 @@ import {
   logError,
 } from "@/lib/error-utils"
 
-interface ApiResponse<T> {
+export interface ApiResponse<T> {
   success: boolean
   data?: T
   error?: string
@@ -27,19 +27,31 @@ interface Booking {
   total_price: number
   status: "pending" | "confirmed" | "in-progress" | "completed" | "cancelled"
   is_pickup_service: boolean
-  pickup_address?: string
-  pickup_notes?: string
+  pickup_address: string | null;
+  pickup_notes: string | null;
   vehicle_plate_number: string
   payment_method: string
-  payment_proof?: string
+  payment_proof: string | null;
   loyalty_points_used: number
   loyalty_points_earned: number
   notes?: string
   booking_source: string
   created_by_admin: boolean
-  admin_user_id?: string
+  admin_user_id: string | null;
   created_at: string
   updated_at: string
+  services: {
+    name: string;
+    price: number;
+    category: string;
+    duration: number;
+    pickup_fee: number;
+  };
+  branches: {
+    name: string;
+    phone: string;
+    address: string;
+  };
 }
 
 interface Service {
@@ -52,6 +64,7 @@ interface Service {
   supports_pickup: boolean
   duration: number
   features: string[]
+  is_active: boolean
   created_at: string
   updated_at: string
 }
@@ -247,6 +260,18 @@ class ApiClient {
     } catch (error) {
       console.error(`[v0] Failed to delete booking with id ${id}:`, error)
       throw error
+    }
+  }
+
+  // New method to fetch booking statistics
+  async getBookingStats(): Promise<ApiResponse<BookingStatsData>> {
+    try {
+      // The request method is private, so we call it internally.
+      // The endpoint '/bookings/stats' is assumed to return BookingStatsData.
+      return await this.request<ApiResponse<BookingStatsData>>("/bookings/stats");
+    } catch (error) {
+      console.error("[v0] Failed to fetch booking stats:", error);
+      throw error;
     }
   }
 

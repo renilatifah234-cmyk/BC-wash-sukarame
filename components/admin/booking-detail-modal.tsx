@@ -145,7 +145,7 @@ export function BookingDetailModal({ booking, isOpen, onClose, onStatusChange }:
             <div>
               <h3 className="font-semibold text-lg">{booking.service}</h3>
               <p className="text-sm text-muted-foreground">
-                Dibuat: {format(new Date(booking.createdAt), "dd MMM yyyy, HH:mm", { locale: id })}
+                Dibuat: {booking.createdAt ? format(new Date(booking.createdAt), "dd MMM yyyy, HH:mm", { locale: id }) : "-"}
               </p>
             </div>
             <div className="text-right">
