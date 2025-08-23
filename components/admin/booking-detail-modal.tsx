@@ -246,7 +246,7 @@ export function BookingDetailModal({ booking, isOpen, onClose, onStatusChange }:
                   <Calendar className="w-4 h-4 text-muted-foreground" />
                   <div>
                     <p className="font-medium">
-                      {format(new Date(booking.booking_date), "EEEE, dd MMMM yyyy", { locale: id })}
+                      {format(new Date(booking.date), "EEEE, dd MMMM yyyy", { locale: id })}
                     </p>
                     <p className="text-sm text-muted-foreground">Tanggal Booking</p>
                   </div>
