@@ -139,8 +139,6 @@ export function BookingDetailModal({ booking, isOpen, onClose, onStatusChange }:
           <DialogDescription>Informasi lengkap booking pelanggan</DialogDescription>
         </DialogHeader>
 
-        {console.log(booking)}
-
         <div className="space-y-6">
           {/* Status and Basic Info */}
           <div className="flex items-center justify-between">
