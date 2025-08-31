@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, type Dispatch, type SetStateAction } from "react"
+import { BranchMapPicker } from "@/components/admin/branch-map-picker"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -273,19 +274,12 @@ const BranchFormFields = React.memo(function BranchFormFields({
           </div>
         </div>
 
-        {/* Lightweight map preview without API key */}
-        {newBranchData.latitude && newBranchData.longitude && (
-          <div className="rounded-md overflow-hidden border">
-            <iframe
-              title="branch-map-preview"
-              width="100%"
-              height="220"
-              src={`https://maps.google.com/maps?q=${encodeURIComponent(newBranchData.latitude)},${encodeURIComponent(newBranchData.longitude)}&z=15&output=embed`}
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-            />
-          </div>
-        )}
+        <BranchMapPicker
+          lat={newBranchData.latitude ? Number(newBranchData.latitude) : undefined}
+          lng={newBranchData.longitude ? Number(newBranchData.longitude) : undefined}
+          onChange={(la, lo) => setNewBranchData((p) => ({ ...p, latitude: String(la), longitude: String(lo) }))}
+          height={260}
+        />
       </div>
 
       <Separator />
