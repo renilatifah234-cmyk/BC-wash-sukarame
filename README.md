@@ -114,5 +114,5 @@ URL Vercel Project: https://vercel.com/abamakbar07s-projects/v0-bc-wash-sukarame
 
 ---
 
-Project ini awalnya dibuat dan disinkronkan via [v0.app](https://v0.app). Anda tetap bisa melanjutkan pengembangan langsung di repo ini maupun melalui antarmuka v0.
+Project ini awalnya dibuat dan disinkronkan via [v0.app](https://v0.app).
 
