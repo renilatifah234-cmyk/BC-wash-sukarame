@@ -8,16 +8,18 @@ import { CreditCard, MapPin, Calendar, Clock, Copy, CheckCircle } from "lucide-r
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
 import type { BookingData } from "@/app/booking/page"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { formatCurrency } from "@/lib/utils"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface PaymentInfoProps {
   onNext: () => void
   onPrev: () => void
   bookingData: BookingData
+  updateBookingData: (data: Partial<BookingData>) => void
 }
 
-export function PaymentInfo({ onNext, onPrev, bookingData }: PaymentInfoProps) {
+export function PaymentInfo({ onNext, onPrev, bookingData, updateBookingData }: PaymentInfoProps) {
   const [copiedField, setCopiedField] = useState<string | null>(null)
 
   const copyToClipboard = async (text: string, field: string) => {
@@ -37,13 +39,17 @@ export function PaymentInfo({ onNext, onPrev, bookingData }: PaymentInfoProps) {
   const bookingDate = new Date(bookingData.date)
   const formattedDate = format(bookingDate, "EEEE, dd MMMM yyyy", { locale: id })
 
-  const totalPrice = bookingData.service.price + (bookingData.isPickupService ? bookingData.service.pickup_fee || 0 : 0)
+  const totalPrice = useMemo(() => {
+    return bookingData.service!.price + (bookingData.isPickupService ? bookingData.service!.pickup_fee || 0 : 0)
+  }, [bookingData.service, bookingData.isPickupService])
+
+  const method = bookingData.paymentMethod || "transfer"
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-serif text-2xl md:text-3xl font-bold text-foreground">Informasi Pembayaran</h1>
-        <p className="text-muted-foreground mt-1">Transfer ke rekening cabang yang dipilih</p>
+        <h1 className="font-serif text-2xl md:text-3xl font-bold text-foreground">Pembayaran</h1>
+        <p className="text-muted-foreground mt-1">Pilih metode pembayaran yang diinginkan</p>
       </div>
 
       {/* Booking Summary */}
@@ -110,107 +116,131 @@ export function PaymentInfo({ onNext, onPrev, bookingData }: PaymentInfoProps) {
         </CardContent>
       </Card>
 
-      {/* Payment Instructions */}
+      {/* Payment Method */}
       <Card>
         <CardHeader>
           <CardTitle className="font-serif text-xl flex items-center gap-2">
             <CreditCard className="w-5 h-5" />
-            Instruksi Pembayaran
+            Metode Pembayaran
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="bg-primary/5 p-4 rounded-lg">
-            <h3 className="font-semibold text-primary mb-2">Transfer ke Rekening Berikut:</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Bank:</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">{bookingData.branch.bank_name}</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => copyToClipboard(bookingData.branch!.bank_name, "bank")}
-                    className="h-6 w-6 p-0"
-                  >
-                    {copiedField === "bank" ? (
-                      <CheckCircle className="w-3 h-3 text-green-600" />
-                    ) : (
-                      <Copy className="w-3 h-3" />
-                    )}
-                  </Button>
+          <div>
+            <Select value={method} onValueChange={(v: any) => updateBookingData({ paymentMethod: v })}>
+              <SelectTrigger className="w-full sm:w-80">
+                <SelectValue placeholder="Pilih metode" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="transfer">Transfer Manual</SelectItem>
+                <SelectItem value="cash">Bayar di Tempat (COD)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Separator />
+
+          {method === "transfer" ? (
+            <div>
+              <div className="bg-primary/5 p-4 rounded-lg">
+                <h3 className="font-semibold text-primary mb-2">Transfer ke Rekening Berikut:</h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Bank:</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{bookingData.branch.bank_name}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => copyToClipboard(bookingData.branch!.bank_name, "bank")}
+                        className="h-6 w-6 p-0"
+                      >
+                        {copiedField === "bank" ? (
+                          <CheckCircle className="w-3 h-3 text-green-600" />
+                        ) : (
+                          <Copy className="w-3 h-3" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">No. Rekening:</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium font-mono">{bookingData.branch.bank_account_number}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => copyToClipboard(bookingData.branch!.bank_account_number, "account")}
+                        className="h-6 w-6 p-0"
+                      >
+                        {copiedField === "account" ? (
+                          <CheckCircle className="w-3 h-3 text-green-600" />
+                        ) : (
+                          <Copy className="w-3 h-3" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Atas Nama:</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{bookingData.branch.bank_account_name}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => copyToClipboard(bookingData.branch!.bank_account_name, "name")}
+                        className="h-6 w-6 p-0"
+                      >
+                        {copiedField === "name" ? (
+                          <CheckCircle className="w-3 h-3 text-green-600" />
+                        ) : (
+                          <Copy className="w-3 h-3" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Jumlah Transfer:</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl font-bold text-primary">{formatCurrency(totalPrice)}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => copyToClipboard(totalPrice.toString(), "amount")}
+                        className="h-6 w-6 p-0"
+                      >
+                        {copiedField === "amount" ? (
+                          <CheckCircle className="w-3 h-3 text-green-600" />
+                        ) : (
+                          <Copy className="w-3 h-3" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">No. Rekening:</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-medium font-mono">{bookingData.branch.bank_account_number}</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => copyToClipboard(bookingData.branch!.bank_account_number, "account")}
-                    className="h-6 w-6 p-0"
-                  >
-                    {copiedField === "account" ? (
-                      <CheckCircle className="w-3 h-3 text-green-600" />
-                    ) : (
-                      <Copy className="w-3 h-3" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Atas Nama:</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">{bookingData.branch.bank_account_name}</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => copyToClipboard(bookingData.branch!.bank_account_name, "name")}
-                    className="h-6 w-6 p-0"
-                  >
-                    {copiedField === "name" ? (
-                      <CheckCircle className="w-3 h-3 text-green-600" />
-                    ) : (
-                      <Copy className="w-3 h-3" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Jumlah Transfer:</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-xl font-bold text-primary">{formatCurrency(totalPrice)}</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => copyToClipboard(totalPrice.toString(), "amount")}
-                    className="h-6 w-6 p-0"
-                  >
-                    {copiedField === "amount" ? (
-                      <CheckCircle className="w-3 h-3 text-green-600" />
-                    ) : (
-                      <Copy className="w-3 h-3" />
-                    )}
-                  </Button>
-                </div>
+              <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
+                <h4 className="font-semibold text-amber-800 mb-2">Penting:</h4>
+                <ul className="text-sm text-amber-700 space-y-1">
+                  <li>• Transfer sesuai dengan jumlah yang tertera</li>
+                  <li>• Simpan bukti transfer untuk langkah selanjutnya</li>
+                  <li>• Booking akan dikonfirmasi setelah pembayaran diverifikasi</li>
+                </ul>
               </div>
             </div>
-          </div>
-
-          <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
-            <h4 className="font-semibold text-amber-800 mb-2">Penting:</h4>
-            <ul className="text-sm text-amber-700 space-y-1">
-              <li>• Transfer sesuai dengan jumlah yang tertera</li>
-              <li>• Simpan bukti transfer untuk langkah selanjutnya</li>
-              <li>• Booking akan dikonfirmasi setelah pembayaran diverifikasi</li>
-              <li>• Hubungi cabang jika ada kendala pembayaran</li>
-            </ul>
-          </div>
+          ) : (
+            <div className="bg-primary/5 p-4 rounded-lg">
+              <h3 className="font-semibold text-primary mb-2">Bayar di Tempat (COD)</h3>
+              <p className="text-sm text-muted-foreground">
+                Tunjukkan kode booking Anda saat tiba di cabang atau saat penjemputan. Pembayaran dilakukan di lokasi.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -219,7 +249,7 @@ export function PaymentInfo({ onNext, onPrev, bookingData }: PaymentInfoProps) {
           Kembali
         </Button>
         <Button onClick={onNext} size="lg" className="px-8">
-          Sudah Transfer, Lanjutkan
+          {method === "transfer" ? "Sudah Transfer, Lanjutkan" : "Lanjutkan"}
         </Button>
       </div>
     </div>

@@ -175,19 +175,34 @@ export function BookingConfirmation({ bookingData, onNewBooking }: BookingConfir
       </Card>
 
       {/* Status Information */}
-      <Card className="border-amber-200 bg-amber-50">
-        <CardContent className="pt-6">
-          <div className="space-y-3">
-            <h4 className="font-semibold text-amber-800">Status Booking: Menunggu Konfirmasi</h4>
-            <div className="text-sm text-amber-700 space-y-1">
-              <p>• Bukti transfer Anda sedang diverifikasi oleh tim kami</p>
-              <p>• Anda akan menerima konfirmasi melalui WhatsApp/SMS dalam 1-2 jam</p>
-              <p>• Datang 10 menit sebelum waktu booking dengan membawa kode booking</p>
-              <p>• Hubungi cabang jika ada pertanyaan atau perlu mengubah jadwal</p>
+      {bookingData.paymentMethod === "cash" ? (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="pt-6">
+            <div className="space-y-3">
+              <h4 className="font-semibold text-amber-800">Status Booking: Dikonfirmasi (Bayar di Tempat)</h4>
+              <div className="text-sm text-amber-700 space-y-1">
+                <p>• Tunjukkan kode booking saat tiba atau saat penjemputan</p>
+                <p>• Datang 10 menit sebelum waktu booking</p>
+                <p>• Hubungi cabang jika perlu mengubah jadwal</p>
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="pt-6">
+            <div className="space-y-3">
+              <h4 className="font-semibold text-amber-800">Status Booking: Menunggu Konfirmasi</h4>
+              <div className="text-sm text-amber-700 space-y-1">
+                <p>• Bukti transfer Anda sedang diverifikasi oleh tim kami</p>
+                <p>• Anda akan menerima konfirmasi melalui WhatsApp/SMS dalam 1-2 jam</p>
+                <p>• Datang 10 menit sebelum waktu booking dengan membawa kode booking</p>
+                <p>• Hubungi cabang jika ada pertanyaan atau perlu mengubah jadwal</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-4 pt-6">

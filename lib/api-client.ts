@@ -83,6 +83,8 @@ interface Branch {
   bank_account_number: string
   bank_account_name: string
   status: "active" | "inactive" | "maintenance"
+  latitude?: number | null
+  longitude?: number | null
   created_at: string
   updated_at: string
 }
@@ -228,6 +230,15 @@ class ApiClient {
     }
   }
 
+  async getBookingByCode(code: string): Promise<{ booking: Booking }> {
+    try {
+      return await this.request(`/bookings/by-code/${encodeURIComponent(code)}`)
+    } catch (error) {
+      console.error(`[v0] Failed to fetch booking with code ${code}:`, error)
+      throw error
+    }
+  }
+
   async createBooking(bookingData: CreateBookingData): Promise<{ booking: Booking }> {
     try {
       return await this.request("/bookings", {
@@ -348,6 +359,18 @@ class ApiClient {
       })
     } catch (error) {
       console.error(`[v0] Failed to update branch with id ${id}:`, error)
+      throw error
+    }
+  }
+
+  async updateBranchStatus(id: string, status: "active" | "inactive"): Promise<{ branch: Branch }> {
+    try {
+      return await this.request(`/branches/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({ status }),
+      })
+    } catch (error) {
+      console.error(`[v0] Failed to update branch status for id ${id}:`, error)
       throw error
     }
   }

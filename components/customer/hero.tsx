@@ -19,6 +19,9 @@ export function Hero() {
               <Button asChild variant="outline" size="lg" className="text-lg px-8 py-6 bg-transparent">
                 <Link href="/services">Lihat Layanan</Link>
               </Button>
+              <Button asChild variant="outline" size="lg" className="text-lg px-8 py-6 bg-transparent">
+                <Link href="/track">Lacak Booking</Link>
+              </Button>
             </div>
           </div>
           <div className="flex-1 relative">

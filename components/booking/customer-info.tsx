@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { User, Phone, Mail, Car, MapPin, FileText, Clock, Info } from "lucide-react"
 import { getServiceById, type Service } from "@/lib/dummy-data"
+import { PickupAddressInput } from "@/components/booking/pickup-address-input"
 
 interface CustomerInfoProps {
   onNext: () => void
@@ -34,7 +35,7 @@ interface CustomerInfoProps {
     pickupNotes?: string
   }
   selectedService?: Service
-  selectedBranch?: { id: string; name: string }
+  selectedBranch?: { id: string; name: string; pickup_coverage_radius?: number; latitude?: number | null; longitude?: number | null }
 }
 
 export function CustomerInfo({
@@ -56,6 +57,7 @@ export function CustomerInfo({
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [pickupWithinRadius, setPickupWithinRadius] = useState(true)
 
   const service = selectedService ? getServiceById(selectedService.id) : null
   const supportsPickup = true
@@ -223,29 +225,23 @@ export function CustomerInfo({
                 </div>
 
                 <div className="mt-2 text-xs text-cyan-700 bg-cyan-50 p-2 rounded border border-cyan-100">
-                  <strong>Area Layanan:</strong> Radius{" "}
-                  {selectedBranch?.name === "BC Wash Sukarame Utama" ? "10 km" : "8 km"} dari{" "}
-                  {selectedBranch?.name || "cabang yang dipilih"}
+                  <strong>Area Layanan:</strong> Radius {selectedBranch?.pickup_coverage_radius ?? "-"} km dari {selectedBranch?.name || "cabang yang dipilih"}
                 </div>
               </div>
 
-              {formData.isPickupService && (
-                <div className="space-y-4 bg-white/70 p-4 rounded-md border border-cyan-100">
-                  <div className="space-y-2">
-                    <Label htmlFor="pickupAddress" className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4" />
-                      Alamat Pickup
-                    </Label>
-                    <Textarea
-                      id="pickupAddress"
-                      placeholder="Masukkan alamat lengkap untuk pickup kendaraan"
-                      value={formData.pickupAddress}
-                      onChange={(e) => handleInputChange("pickupAddress", e.target.value)}
-                      className={errors.pickupAddress ? "border-destructive" : ""}
-                      rows={3}
-                    />
-                    {errors.pickupAddress && <p className="text-sm text-destructive">{errors.pickupAddress}</p>}
-                  </div>
+            {formData.isPickupService && (
+              <div className="space-y-4 bg-white/70 p-4 rounded-md border border-cyan-100">
+                  <PickupAddressInput
+                    branchId={selectedBranch?.id || ""}
+                    branchName={selectedBranch?.name || "Cabang"}
+                    radiusKm={selectedBranch?.pickup_coverage_radius}
+                    branchLat={selectedBranch?.latitude ?? undefined}
+                    branchLng={selectedBranch?.longitude ?? undefined}
+                    value={formData.pickupAddress}
+                    onChange={(val) => handleInputChange("pickupAddress", val)}
+                    onValidationChange={(ok) => setPickupWithinRadius(ok)}
+                  />
+                  {errors.pickupAddress && <p className="text-sm text-destructive">{errors.pickupAddress}</p>}
 
                   <div className="space-y-2">
                     <Label htmlFor="pickupNotes" className="flex items-center gap-2">
@@ -271,7 +267,7 @@ export function CustomerInfo({
               <Button type="button" variant="outline" onClick={onPrev} size="lg" className="px-8 bg-transparent">
                 Kembali
               </Button>
-              <Button type="submit" size="lg" className="px-8">
+              <Button type="submit" size="lg" className="px-8" disabled={formData.isPickupService && !pickupWithinRadius}>
                 Lanjutkan ke Pembayaran
               </Button>
             </div>

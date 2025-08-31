@@ -10,8 +10,8 @@ export function BookingSteps({ currentStep }: BookingStepsProps) {
     { number: 1, title: "Pilih Layanan", description: "Pilih jenis layanan" },
     { number: 2, title: "Waktu & Lokasi", description: "Pilih cabang dan waktu" },
     { number: 3, title: "Data Diri", description: "Isi informasi kontak" },
-    { number: 4, title: "Pembayaran", description: "Info rekening transfer" },
-    { number: 5, title: "Bukti Transfer", description: "Upload bukti bayar" },
+    { number: 4, title: "Pembayaran", description: "Pilih metode" },
+    { number: 5, title: "Verifikasi", description: "Upload/konfirmasi" },
     { number: 6, title: "Konfirmasi", description: "Booking berhasil" },
   ]
 
