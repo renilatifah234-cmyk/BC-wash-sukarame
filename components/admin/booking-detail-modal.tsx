@@ -27,6 +27,7 @@ import {
 import { formatCurrency, generateReceiptData } from "@/lib/dummy-data"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
+import { sendWhatsAppNotification } from "@/lib/whatsapp-utils"
 
 interface BookingDetailModalProps {
   booking: {
@@ -58,6 +59,7 @@ export function BookingDetailModal({ booking, isOpen, onClose, onStatusChange }:
   const [newStatus, setNewStatus] = useState("")
   const [notes, setNotes] = useState("")
   const [showReceipt, setShowReceipt] = useState(false)
+  const [showPaymentPreview, setShowPaymentPreview] = useState(false)
 
   if (!booking) return null
 
@@ -114,6 +116,20 @@ export function BookingDetailModal({ booking, isOpen, onClose, onStatusChange }:
     window.open(`mailto:${booking.customerEmail}`)
   }
 
+  const handleWhatsAppCustomer = () => {
+    // Build an object compatible with the WA util expectations
+    sendWhatsAppNotification({
+      ...(booking as any),
+      booking_code: booking.bookingCode,
+      booking_date: booking.date,
+      booking_time: booking.time,
+      services: { name: booking.service },
+      branches: { name: booking.branch },
+      vehiclePlateNumber: booking.vehiclePlateNumber,
+      status: booking.status as any,
+    } as any)
+  }
+
   const handleGenerateReceipt = () => {
     setShowReceipt(true)
   }
@@ -132,6 +148,7 @@ export function BookingDetailModal({ booking, isOpen, onClose, onStatusChange }:
   }
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -208,6 +225,10 @@ export function BookingDetailModal({ booking, isOpen, onClose, onStatusChange }:
                 <Button onClick={handleCallCustomer} className="w-full bg-transparent" variant="outline">
                   <Phone className="w-4 h-4 mr-2" />
                   Hubungi Pelanggan
+                </Button>
+                <Button onClick={handleWhatsAppCustomer} className="w-full bg-transparent" variant="outline">
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  WhatsApp Pelanggan
                 </Button>
                 <Button onClick={handleEmailCustomer} className="w-full bg-transparent" variant="outline">
                   <Mail className="w-4 h-4 mr-2" />
@@ -299,7 +320,7 @@ export function BookingDetailModal({ booking, isOpen, onClose, onStatusChange }:
                     <p className="font-medium">{booking.paymentProof}</p>
                     <p className="text-sm text-muted-foreground">Bukti transfer telah diupload</p>
                   </div>
-                  <Button variant="outline" size="sm" className="ml-auto bg-transparent">
+                  <Button variant="outline" size="sm" className="ml-auto bg-transparent" onClick={() => setShowPaymentPreview(true)}>
                     Lihat Bukti
                   </Button>
                 </div>
@@ -355,5 +376,23 @@ export function BookingDetailModal({ booking, isOpen, onClose, onStatusChange }:
         </div>
       </DialogContent>
     </Dialog>
+    {/* Image preview for payment proof */}
+    {booking?.paymentProof && (
+      <Dialog open={showPaymentPreview} onOpenChange={setShowPaymentPreview}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Bukti Pembayaran</DialogTitle>
+            <DialogDescription>Pratinjau bukti pembayaran yang diunggah</DialogDescription>
+          </DialogHeader>
+          <div className="w-full">
+            <img src={booking.paymentProof} alt="Bukti pembayaran" className="w-full h-auto rounded border" />
+            <a href={booking.paymentProof} target="_blank" rel="noreferrer" className="text-primary underline text-sm mt-2 inline-block">
+              Buka di tab baru
+            </a>
+          </div>
+        </DialogContent>
+      </Dialog>
+    )}
+    </>
   )
 }
