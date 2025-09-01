@@ -16,7 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { User, Car, MapPin, FileText, CalendarIcon, Clock, CreditCard, X, CheckCircle } from "lucide-react"
-import { format } from "date-fns"
+import { format, startOfDay } from "date-fns"
 import { id } from "date-fns/locale"
 import { cn } from "@/lib/utils"
 import { apiClient } from "@/lib/api-client"
@@ -456,7 +456,7 @@ export function ManualBookingForm({ onSuccess, onCancel }: ManualBookingFormProp
                       mode="single"
                       selected={formData.date}
                       onSelect={(date) => handleInputChange("date", date)}
-                      disabled={(date) => date < new Date()}
+                      disabled={(d) => d < startOfDay(new Date())}
                       initialFocus
                     />
                   </PopoverContent>

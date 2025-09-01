@@ -25,6 +25,8 @@ export async function GET() {
         accountNumber: branch.bank_account_number,
         accountName: branch.bank_account_name,
       },
+      latitude: branch.latitude ?? null,
+      longitude: branch.longitude ?? null,
     }))
 
     return NextResponse.json({ branches })
@@ -45,6 +47,8 @@ export async function POST(request: NextRequest) {
       bankAccount,
       operatingHours,
       pickupCoverageRadius,
+      latitude,
+      longitude,
     } = await request.json()
 
     const supabase = createClient()
@@ -64,6 +68,8 @@ export async function POST(request: NextRequest) {
         operating_hours_open: new Date(`1970-01-01T${operatingHours.open}`).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
         operating_hours_close: new Date(`1970-01-01T${operatingHours.close}`).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
         pickup_coverage_radius: pickupCoverageRadius,
+        latitude: typeof latitude === 'number' ? latitude : null,
+        longitude: typeof longitude === 'number' ? longitude : null,
       })
       .select()
       .single()

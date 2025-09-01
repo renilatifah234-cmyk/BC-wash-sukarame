@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { BookingDetailModal } from "@/components/admin/booking-detail-modal"
-import { MoreHorizontal, Eye, CheckCircle, XCircle, Clock, Phone } from "lucide-react"
+import { MoreHorizontal, Eye, CheckCircle, XCircle, Clock, Phone, FileImage } from "lucide-react"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
 import { apiClient } from "@/lib/api-client"
@@ -47,6 +47,7 @@ interface BookingWithDetails extends Booking {
 
   // Property for the modal, mapping totalPrice to amount
   amount: number;
+  paymentProof?: string | null;
 }
 
 export function BookingList() {
@@ -94,6 +95,7 @@ export function BookingList() {
         service: services.find((s) => s.id === booking.service_id)?.name || "Layanan tidak ditemukan", // Ensure non-nullable string
         branch: branches.find((b) => b.id === booking.branch_id)?.name || "Cabang tidak ditemukan",   // Ensure non-nullable string
         amount: booking.total_price,
+        paymentProof: (booking as any).payment_proof || null,
       }))
 
       enrichedBookings.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
@@ -222,7 +224,18 @@ export function BookingList() {
                 ) : (
                   bookings.map((booking) => (
                     <TableRow key={booking.id}>
-                      <TableCell className="font-medium font-mono">{booking.bookingCode}</TableCell>
+                      <TableCell className="font-medium font-mono">
+                        <div className="flex items-center gap-2">
+                          <span>{booking.bookingCode}</span>
+                          {booking.paymentProof && (
+                            <span title="Bukti pembayaran tersedia">
+                              <FileImage className="h-4 w-4 text-primary" />
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      {/* show indicator if payment proof uploaded */}
+                      
                       <TableCell>
                         <div>
                           <p className="font-medium">{booking.customerName}</p>
@@ -272,6 +285,12 @@ export function BookingList() {
                                 <Eye className="mr-2 h-4 w-4" />
                                 Lihat Detail
                               </DropdownMenuItem>
+                              {booking.paymentProof && (
+                                <DropdownMenuItem onClick={() => handleViewDetails(booking)}>
+                                  <FileImage className="mr-2 h-4 w-4" />
+                                  Lihat Bukti Pembayaran
+                                </DropdownMenuItem>
+                              )}
                               <DropdownMenuSeparator />
                               {booking.status === "pending" && (
                                 <DropdownMenuItem onClick={() => handleStatusChange(booking.id, "confirmed")}>

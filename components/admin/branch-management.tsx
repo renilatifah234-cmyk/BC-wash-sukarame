@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { useState, useEffect, type Dispatch, type SetStateAction } from "react"
+import { BranchMapPicker } from "@/components/admin/branch-map-picker"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -63,260 +64,40 @@ interface Branch {
   }
   pickupCoverageRadius?: number
   status: "active" | "inactive"
+  latitude?: number | null
+  longitude?: number | null
   createdAt: string
   updatedAt: string
 }
 
-export function BranchManagement() {
-  const [branches, setBranches] = useState<Branch[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null)
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+interface BranchFormData {
+  name: string
+  address: string
+  phone: string
+  manager: string
+  staffCount: string
+  bankName: string
+  accountNumber: string
+  accountName: string
+  openTime: string
+  closeTime: string
+  pickupRadius: string
+  latitude?: string
+  longitude?: string
+}
 
-  const [newBranchData, setNewBranchData] = useState({
-    name: "",
-    address: "",
-    phone: "",
-    manager: "",
-    staffCount: 1,
-    bankName: "",
-    accountNumber: "",
-    accountName: "",
-    openTime: "08:00",
-    closeTime: "18:00",
-    pickupRadius: 10,
-  })
-
-  const [errors, setErrors] = useState<Record<string, string>>({})
-
-  useEffect(() => {
-    fetchBranches()
-  }, [])
-
-  const fetchBranches = async () => {
-    try {
-      setLoading(true)
-      const branchData = await apiClient.getBranches()
-      const formattedBranches = branchData.branches.map(branch => ({
-        ...branch,
-        operatingHours: {
-          open: branch.operatingHours.open || "08:00",
-          close: branch.operatingHours.close || "18:00"
-        }
-      }))
-      setBranches(formattedBranches)
-    } catch (err) {
-      console.error("[v0] Error fetching branches:", err)
-      setError("Gagal memuat data cabang")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleStatusToggle = async (branchId: string, currentStatus: "active" | "inactive") => {
-    try {
-      const newStatus = currentStatus === "active" ? "inactive" : "active"
-      await apiClient.updateBranchStatus(branchId, newStatus)
-      setBranches(branches.map((branch) => (branch.id === branchId ? { ...branch, status: newStatus } : branch)))
-      toast({
-        title: "Status Berhasil Diperbarui",
-        description: `Cabang telah ${newStatus === "active" ? "diaktifkan" : "dinonaktifkan"}.`,
-      })
-    } catch (err) {
-      console.error("[v0] Error updating branch status:", err)
-      toast({
-        title: "Gagal Memperbarui Status",
-        description: "Terjadi kesalahan saat memperbarui status cabang.",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {}
-
-    if (!newBranchData.name.trim()) {
-      newErrors.name = "Nama cabang wajib diisi"
-    }
-
-    if (!newBranchData.address.trim()) {
-      newErrors.address = "Alamat wajib diisi"
-    }
-
-    if (!newBranchData.phone.trim()) {
-      newErrors.phone = "Nomor telepon wajib diisi"
-    } else if (!/^(\+62|62|0)[0-9]{9,13}$/.test(newBranchData.phone.replace(/\s/g, ""))) {
-      newErrors.phone = "Format nomor telepon tidak valid"
-    }
-
-    if (!newBranchData.manager.trim()) {
-      newErrors.manager = "Nama manager wajib diisi"
-    }
-
-    if (!newBranchData.bankName.trim()) {
-      newErrors.bankName = "Nama bank wajib diisi"
-    }
-
-    if (!newBranchData.accountNumber.trim()) {
-      newErrors.accountNumber = "Nomor rekening wajib diisi"
-    }
-
-    if (!newBranchData.accountName.trim()) {
-      newErrors.accountName = "Nama pemilik rekening wajib diisi"
-    }
-
-    if (newBranchData.staffCount < 1) {
-      newErrors.staffCount = "Jumlah staff minimal 1"
-    }
-
-    if (newBranchData.pickupRadius < 1 || newBranchData.pickupRadius > 50) {
-      newErrors.pickupRadius = "Radius pickup harus antara 1-50 km"
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const resetForm = () => {
-    setNewBranchData({
-      name: "",
-      address: "",
-      phone: "",
-      manager: "",
-      staffCount: 1,
-      bankName: "",
-      accountNumber: "",
-      accountName: "",
-      openTime: "08:00",
-      closeTime: "18:00",
-      pickupRadius: 10,
-    })
-    setErrors({})
-  }
-
-  const handleAddBranch = async () => {
-    if (!validateForm()) return
-
-    setIsSubmitting(true)
-    try {
-      const branchData = {
-        name: newBranchData.name,
-        address: newBranchData.address,
-        phone: newBranchData.phone,
-        manager: newBranchData.manager,
-        staffCount: newBranchData.staffCount,
-        bankAccount: {
-          bank: newBranchData.bankName,
-          accountNumber: newBranchData.accountNumber,
-          accountName: newBranchData.accountName,
-        },
-        operatingHours: {
-          open: newBranchData.openTime,
-          close: newBranchData.closeTime,
-        },
-        pickupCoverageRadius: newBranchData.pickupRadius,
-      }
-
-      const { branch: newBranch } = await apiClient.createBranch(branchData)
-      setBranches([...branches, newBranch])
-      resetForm()
-      setIsAddDialogOpen(false)
-      toast({
-        title: "Cabang Berhasil Ditambahkan",
-        description: `Cabang "${newBranch.name}" telah ditambahkan ke sistem.`,
-      })
-    } catch (err) {
-      console.error("[v0] Error creating branch:", err)
-      toast({
-        title: "Gagal Menambahkan Cabang",
-        description: "Terjadi kesalahan saat menambahkan cabang. Silakan coba lagi.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  const handleEditBranch = (branch: Branch) => {
-    setSelectedBranch(branch)
-    setNewBranchData({
-      name: branch.name,
-      address: branch.address,
-      phone: branch.phone,
-      manager: branch.manager || "",
-      staffCount: branch.staffCount || 1,
-      bankName: branch.bankAccount.bank,
-      accountNumber: branch.bankAccount.accountNumber,
-      accountName: branch.bankAccount.accountName,
-      openTime: branch.operatingHours.open,
-      closeTime: branch.operatingHours.close,
-      pickupRadius: branch.pickupCoverageRadius || 10,
-    })
-    setIsEditDialogOpen(true)
-  }
-
-  const handleUpdateBranch = async () => {
-    if (!validateForm() || !selectedBranch) return
-
-    setIsSubmitting(true)
-    try {
-      const branchData = {
-        name: newBranchData.name,
-        address: newBranchData.address,
-        phone: newBranchData.phone,
-        manager: newBranchData.manager,
-        staffCount: newBranchData.staffCount,
-        bankAccount: {
-          bank: newBranchData.bankName,
-          accountNumber: newBranchData.accountNumber,
-          accountName: newBranchData.accountName,
-        },
-        operatingHours: {
-          open: newBranchData.openTime,
-          close: newBranchData.closeTime,
-        },
-        pickupCoverageRadius: newBranchData.pickupRadius,
-      }
-
-      const updatedBranch = await apiClient.updateBranch(selectedBranch.id, branchData)
-      setBranches(branches.map((branch) => (branch.id === selectedBranch.id ? updatedBranch : branch)))
-      resetForm()
-      setSelectedBranch(null)
-      setIsEditDialogOpen(false)
-      toast({
-        title: "Cabang Berhasil Diperbarui",
-        description: `Cabang "${updatedBranch.name}" telah diperbarui.`,
-      })
-    } catch (err) {
-      console.error("[v0] Error updating branch:", err)
-      toast({
-        title: "Gagal Memperbarui Cabang",
-        description: "Terjadi kesalahan saat memperbarui cabang. Silakan coba lagi.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  const handleViewBranch = (branch: Branch) => {
-    setSelectedBranch(branch)
-    setIsViewDialogOpen(true)
-  }
-
-  const getStatusBadge = (status: "active" | "inactive") => {
-    return status === "active" ? (
-      <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Aktif</Badge>
-    ) : (
-      <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Nonaktif</Badge>
-    )
-  }
-
-  const BranchFormFields = () => (
+const BranchFormFields = React.memo(function BranchFormFields({
+  newBranchData,
+  errors,
+  isSubmitting,
+  setNewBranchData,
+}: {
+  newBranchData: BranchFormData
+  errors: Record<string, string>
+  isSubmitting: boolean
+  setNewBranchData: Dispatch<SetStateAction<BranchFormData>>
+}) {
+  return (
     <div className="space-y-4">
       <div className="grid md:grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -381,9 +162,7 @@ export function BranchManagement() {
             type="number"
             min="1"
             value={newBranchData.staffCount}
-            onChange={(e) =>
-              setNewBranchData((prev) => ({ ...prev, staffCount: Number.parseInt(e.target.value) || 1 }))
-            }
+            onChange={(e) => setNewBranchData((prev) => ({ ...prev, staffCount: e.target.value }))}
             className={errors.staffCount ? "border-destructive" : ""}
             disabled={isSubmitting}
           />
@@ -455,13 +234,52 @@ export function BranchManagement() {
           min="1"
           max="50"
           value={newBranchData.pickupRadius}
-          onChange={(e) =>
-            setNewBranchData((prev) => ({ ...prev, pickupRadius: Number.parseInt(e.target.value) || 10 }))
-          }
+          onChange={(e) => setNewBranchData((prev) => ({ ...prev, pickupRadius: e.target.value }))}
           className={errors.pickupRadius ? "border-destructive" : ""}
           disabled={isSubmitting}
         />
         {errors.pickupRadius && <p className="text-sm text-destructive">{errors.pickupRadius}</p>}
+      </div>
+
+      <Separator />
+
+      <div className="space-y-4">
+        <h4 className="font-semibold flex items-center gap-2">
+          Koordinat Lokasi (Opsional)
+        </h4>
+        <div className="grid md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="latitude">Latitude</Label>
+            <Input
+              id="latitude"
+              value={newBranchData.latitude ?? ""}
+              onChange={(e) => setNewBranchData((prev) => ({ ...prev, latitude: e.target.value }))}
+              placeholder="-5.397140"
+              className={errors.latitude ? "border-destructive" : ""}
+              disabled={isSubmitting}
+            />
+            {errors.latitude && <p className="text-sm text-destructive">{errors.latitude}</p>}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="longitude">Longitude</Label>
+            <Input
+              id="longitude"
+              value={newBranchData.longitude ?? ""}
+              onChange={(e) => setNewBranchData((prev) => ({ ...prev, longitude: e.target.value }))}
+              placeholder="105.266640"
+              className={errors.longitude ? "border-destructive" : ""}
+              disabled={isSubmitting}
+            />
+            {errors.longitude && <p className="text-sm text-destructive">{errors.longitude}</p>}
+          </div>
+        </div>
+
+        <BranchMapPicker
+          lat={newBranchData.latitude ? Number(newBranchData.latitude) : undefined}
+          lng={newBranchData.longitude ? Number(newBranchData.longitude) : undefined}
+          onChange={(la, lo) => setNewBranchData((p) => ({ ...p, latitude: String(la), longitude: String(lo) }))}
+          height={260}
+        />
       </div>
 
       <Separator />
@@ -524,6 +342,313 @@ export function BranchManagement() {
       </div>
     </div>
   )
+})
+
+export function BranchManagement() {
+  const [branches, setBranches] = useState<Branch[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null)
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const [newBranchData, setNewBranchData] = useState<BranchFormData>({
+    name: "",
+    address: "",
+    phone: "",
+    manager: "",
+    staffCount: "1",
+    bankName: "",
+    accountNumber: "",
+    accountName: "",
+    openTime: "08:00",
+    closeTime: "18:00",
+    pickupRadius: "10",
+    latitude: "",
+    longitude: "",
+  })
+
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    fetchBranches()
+  }, [])
+
+  // Normalize API branch payload to UI-friendly shape
+  const mapBranch = (branch: any): Branch => {
+    return {
+      id: branch.id,
+      name: branch.name,
+      address: branch.address,
+      phone: branch.phone,
+      manager: branch.manager ?? "",
+      staffCount: branch.staffCount ?? branch.staff_count ?? 0,
+      bankAccount: {
+        bank: branch.bankAccount?.bank ?? branch.bank_name ?? "",
+        accountNumber: branch.bankAccount?.accountNumber ?? branch.bank_account_number ?? "",
+        accountName: branch.bankAccount?.accountName ?? branch.bank_account_name ?? "",
+      },
+      operatingHours: {
+        open:
+          branch.operatingHours?.open ?? branch.operating_hours_open ?? "08:00",
+        close:
+          branch.operatingHours?.close ?? branch.operating_hours_close ?? "18:00",
+      },
+      pickupCoverageRadius:
+        branch.pickupCoverageRadius ?? branch.pickup_coverage_radius ?? 0,
+      status: branch.status === "inactive" ? "inactive" : "active",
+      latitude: branch.latitude ?? null,
+      longitude: branch.longitude ?? null,
+      createdAt: branch.createdAt ?? branch.created_at ?? "",
+      updatedAt: branch.updatedAt ?? branch.updated_at ?? "",
+    }
+  }
+
+  const fetchBranches = async () => {
+    try {
+      setLoading(true)
+      const branchData = await apiClient.getBranches()
+      const formattedBranches = branchData.branches.map(mapBranch)
+      setBranches(formattedBranches)
+    } catch (err) {
+      console.error("[v0] Error fetching branches:", err)
+      setError("Gagal memuat data cabang")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleStatusToggle = async (branchId: string, currentStatus: "active" | "inactive") => {
+    try {
+      const newStatus = currentStatus === "active" ? "inactive" : "active"
+      await apiClient.updateBranchStatus(branchId, newStatus)
+      setBranches(branches.map((branch) => (branch.id === branchId ? { ...branch, status: newStatus } : branch)))
+      toast({
+        title: "Status Berhasil Diperbarui",
+        description: `Cabang telah ${newStatus === "active" ? "diaktifkan" : "dinonaktifkan"}.`,
+      })
+    } catch (err) {
+      console.error("[v0] Error updating branch status:", err)
+      toast({
+        title: "Gagal Memperbarui Status",
+        description: "Terjadi kesalahan saat memperbarui status cabang.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {}
+
+    if (!newBranchData.name.trim()) {
+      newErrors.name = "Nama cabang wajib diisi"
+    }
+
+    if (!newBranchData.address.trim()) {
+      newErrors.address = "Alamat wajib diisi"
+    }
+
+    if (!newBranchData.phone.trim()) {
+      newErrors.phone = "Nomor telepon wajib diisi"
+    } else if (!/^\d+$/.test(newBranchData.phone.replace(/\s/g, ""))) {
+      newErrors.phone = "Nomor telepon hanya boleh angka"
+    }
+
+    if (!newBranchData.manager.trim()) {
+      newErrors.manager = "Nama manager wajib diisi"
+    }
+
+    if (!newBranchData.bankName.trim()) {
+      newErrors.bankName = "Nama bank wajib diisi"
+    }
+
+    if (!newBranchData.accountNumber.trim()) {
+      newErrors.accountNumber = "Nomor rekening wajib diisi"
+    }
+
+    if (!newBranchData.accountName.trim()) {
+      newErrors.accountName = "Nama pemilik rekening wajib diisi"
+    }
+
+    const staffCountNum = parseInt(String(newBranchData.staffCount || "0"), 10)
+    if (!Number.isFinite(staffCountNum) || staffCountNum < 1) {
+      newErrors.staffCount = "Jumlah staff minimal 1"
+    }
+
+    const pickupRadiusNum = parseInt(String(newBranchData.pickupRadius || "0"), 10)
+    if (!Number.isFinite(pickupRadiusNum) || pickupRadiusNum < 1 || pickupRadiusNum > 50) {
+      newErrors.pickupRadius = "Radius pickup harus antara 1-50 km"
+    }
+
+    // Optional: simple numeric check for lat/lng when provided
+    if (newBranchData.latitude && isNaN(Number(newBranchData.latitude))) {
+      newErrors.latitude = "Latitude harus berupa angka"
+    }
+    if (newBranchData.longitude && isNaN(Number(newBranchData.longitude))) {
+      newErrors.longitude = "Longitude harus berupa angka"
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const resetForm = () => {
+    setNewBranchData({
+      name: "",
+      address: "",
+      phone: "",
+      manager: "",
+      staffCount: "1",
+      bankName: "",
+      accountNumber: "",
+      accountName: "",
+      openTime: "08:00",
+      closeTime: "18:00",
+      pickupRadius: "10",
+      latitude: "",
+      longitude: "",
+    })
+    setErrors({})
+  }
+
+  const handleAddBranch = async () => {
+    if (!validateForm()) return
+
+    setIsSubmitting(true)
+    try {
+      const branchData = {
+        name: newBranchData.name,
+        address: newBranchData.address,
+        phone: newBranchData.phone,
+        manager: newBranchData.manager,
+        staffCount: parseInt(newBranchData.staffCount, 10),
+        bankAccount: {
+          bank: newBranchData.bankName,
+          accountNumber: newBranchData.accountNumber,
+          accountName: newBranchData.accountName,
+        },
+        operatingHours: {
+          open: newBranchData.openTime,
+          close: newBranchData.closeTime,
+        },
+        pickupCoverageRadius: parseInt(newBranchData.pickupRadius, 10),
+        latitude: newBranchData.latitude ? Number(newBranchData.latitude) : undefined,
+        longitude: newBranchData.longitude ? Number(newBranchData.longitude) : undefined,
+      }
+
+      const { branch: newBranch } = await apiClient.createBranch(branchData)
+      const mapped = mapBranch(newBranch)
+      setBranches([...branches, mapped])
+      resetForm()
+      setIsAddDialogOpen(false)
+      toast({
+        title: "Cabang Berhasil Ditambahkan",
+        description: `Cabang "${newBranch.name}" telah ditambahkan ke sistem.`,
+      })
+    } catch (err) {
+      console.error("[v0] Error creating branch:", err)
+      toast({
+        title: "Gagal Menambahkan Cabang",
+        description: "Terjadi kesalahan saat menambahkan cabang. Silakan coba lagi.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleEditBranch = (branch: Branch) => {
+    setSelectedBranch(branch)
+    setNewBranchData({
+      name: branch.name,
+      address: branch.address,
+      phone: branch.phone,
+      manager: branch.manager || "",
+      staffCount: String(branch.staffCount || 1),
+      bankName: branch.bankAccount.bank,
+      accountNumber: branch.bankAccount.accountNumber,
+      accountName: branch.bankAccount.accountName,
+      openTime: branch.operatingHours.open,
+      closeTime: branch.operatingHours.close,
+      pickupRadius: String(branch.pickupCoverageRadius || 10),
+      latitude: branch.latitude != null ? String(branch.latitude) : "",
+      longitude: branch.longitude != null ? String(branch.longitude) : "",
+    })
+    setIsEditDialogOpen(true)
+  }
+
+  const handleUpdateBranch = async () => {
+    if (!validateForm() || !selectedBranch) return
+
+    setIsSubmitting(true)
+    try {
+      const branchData = {
+        name: newBranchData.name,
+        address: newBranchData.address,
+        phone: newBranchData.phone,
+        manager: newBranchData.manager,
+        staffCount: parseInt(newBranchData.staffCount, 10),
+        bankAccount: {
+          bank: newBranchData.bankName,
+          accountNumber: newBranchData.accountNumber,
+          accountName: newBranchData.accountName,
+        },
+        operatingHours: {
+          open: newBranchData.openTime,
+          close: newBranchData.closeTime,
+        },
+        pickupCoverageRadius: parseInt(newBranchData.pickupRadius, 10),
+        latitude: newBranchData.latitude ? Number(newBranchData.latitude) : undefined,
+        longitude: newBranchData.longitude ? Number(newBranchData.longitude) : undefined,
+      }
+
+      const { branch: updatedBranch } = await apiClient.updateBranch(selectedBranch.id, branchData)
+      const mapped = mapBranch(updatedBranch)
+      setBranches(branches.map((branch) => (branch.id === selectedBranch.id ? mapped : branch)))
+      resetForm()
+      setSelectedBranch(null)
+      setIsEditDialogOpen(false)
+      toast({
+        title: "Cabang Berhasil Diperbarui",
+        description: `Cabang "${mapped.name}" telah diperbarui.`,
+      })
+    } catch (err) {
+      console.error("[v0] Error updating branch:", err)
+      toast({
+        title: "Gagal Memperbarui Cabang",
+        description: "Terjadi kesalahan saat memperbarui cabang. Silakan coba lagi.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleViewBranch = (branch: Branch) => {
+    setSelectedBranch(branch)
+    setIsViewDialogOpen(true)
+  }
+
+  const getStatusBadge = (status: "active" | "inactive") => {
+    return status === "active" ? (
+      <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Aktif</Badge>
+    ) : (
+      <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Nonaktif</Badge>
+    )
+  }
+
+  const safeFormatDate = (value?: string) => {
+    if (!value) return "-"
+    const date = new Date(value)
+    if (isNaN(date.getTime())) return "-"
+    try {
+      return format(date, "dd MMMM yyyy, HH:mm", { locale: id })
+    } catch {
+      return "-"
+    }
+  }
 
   if (loading) {
     return (
@@ -589,7 +714,12 @@ export function BranchManagement() {
               <DialogTitle>Tambah Cabang Baru</DialogTitle>
               <DialogDescription>Lengkapi informasi cabang baru yang akan ditambahkan ke sistem</DialogDescription>
             </DialogHeader>
-            <BranchFormFields />
+            <BranchFormFields
+              newBranchData={newBranchData}
+              errors={errors}
+              isSubmitting={isSubmitting}
+              setNewBranchData={setNewBranchData}
+            />
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} disabled={isSubmitting}>
                 Batal
@@ -667,9 +797,9 @@ export function BranchManagement() {
                       <TableCell>{getStatusBadge(branch.status)}</TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          <p>{branch.createdAt}</p>
+                          <p>{safeFormatDate(branch.createdAt)}</p>
                           <p className="text-muted-foreground">
-                            {branch.createdAt}
+                            {safeFormatDate(branch.updatedAt)}
                           </p>
                         </div>
                       </TableCell>
@@ -724,7 +854,12 @@ export function BranchManagement() {
             <DialogTitle>Edit Cabang</DialogTitle>
             <DialogDescription>Perbarui informasi cabang {selectedBranch?.name}</DialogDescription>
           </DialogHeader>
-          <BranchFormFields />
+          <BranchFormFields
+            newBranchData={newBranchData}
+            errors={errors}
+            isSubmitting={isSubmitting}
+            setNewBranchData={setNewBranchData}
+          />
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} disabled={isSubmitting}>
               Batal
@@ -826,13 +961,39 @@ export function BranchManagement() {
               <div className="grid md:grid-cols-2 gap-4 text-sm text-muted-foreground">
                 <div>
                   <span>Dibuat:</span>
-                  <p>{format(new Date(selectedBranch.createdAt), "dd MMMM yyyy, HH:mm", { locale: id })}</p>
+                  <p>{safeFormatDate(selectedBranch.createdAt)}</p>
                 </div>
                 <div>
                   <span>Terakhir Diperbarui:</span>
-                  <p>{format(new Date(selectedBranch.updatedAt), "dd MMMM yyyy, HH:mm", { locale: id })}</p>
+                  <p>{safeFormatDate(selectedBranch.updatedAt)}</p>
                 </div>
               </div>
+
+              {(selectedBranch.latitude != null && selectedBranch.longitude != null) && (
+                <div className="space-y-2">
+                  <Separator />
+                  <h4 className="font-semibold">Lokasi Cabang</h4>
+                  <div className="text-sm">Lat: {selectedBranch.latitude}, Lng: {selectedBranch.longitude}</div>
+                  <div className="rounded-md overflow-hidden border">
+                    <iframe
+                      title="branch-map"
+                      width="100%"
+                      height="220"
+                      src={`https://maps.google.com/maps?q=${encodeURIComponent(String(selectedBranch.latitude))},${encodeURIComponent(String(selectedBranch.longitude))}&z=15&output=embed`}
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                    />
+                  </div>
+                  <a
+                    className="text-primary underline text-sm"
+                    href={`https://maps.google.com/?q=${encodeURIComponent(String(selectedBranch.latitude))},${encodeURIComponent(String(selectedBranch.longitude))}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Buka di Google Maps
+                  </a>
+                </div>
+              )}
             </div>
           )}
           <DialogFooter>

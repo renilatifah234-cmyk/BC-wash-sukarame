@@ -6,7 +6,8 @@ import { AdminLayout } from "@/components/admin/admin-layout"
 import { BranchManagement } from "@/components/admin/branch-management"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Building, Settings, Users, CreditCard } from "lucide-react"
+import { Building, Settings, Users, CreditCard, Bell } from "lucide-react"
+import { NotificationTemplates } from "@/components/admin/notification-templates"
 
 export default function AdminSettingsPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -40,7 +41,7 @@ export default function AdminSettingsPage() {
         </div>
 
         <Tabs defaultValue="branches" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="branches" className="flex items-center gap-2">
               <Building className="w-4 h-4" />
               Cabang
@@ -56,6 +57,10 @@ export default function AdminSettingsPage() {
             <TabsTrigger value="payment" className="flex items-center gap-2">
               <CreditCard className="w-4 h-4" />
               Pembayaran
+            </TabsTrigger>
+                        <TabsTrigger value="notifications" className="flex items-center gap-2">
+              <Bell className="w-4 h-4" />
+              Notifikasi
             </TabsTrigger>
           </TabsList>
 
@@ -103,6 +108,9 @@ export default function AdminSettingsPage() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+                  <TabsContent value="notifications">
+            <NotificationTemplates />
           </TabsContent>
         </Tabs>
       </div>

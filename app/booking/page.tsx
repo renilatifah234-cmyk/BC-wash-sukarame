@@ -25,6 +25,7 @@ export interface BookingData {
   pickupAddress?: string
   pickupNotes?: string
   vehiclePlateNumber?: string
+  paymentMethod?: "transfer" | "cash"
 }
 
 export default function BookingPage() {
@@ -79,10 +80,22 @@ export default function BookingPage() {
               customerPhone: bookingData.customerPhone,
               customerEmail: bookingData.customerEmail,
             }}
+            selectedService={bookingData.service}
+            selectedBranch={
+              bookingData.branch
+                ? {
+                    id: bookingData.branch.id,
+                    name: bookingData.branch.name,
+                    pickup_coverage_radius: bookingData.branch.pickup_coverage_radius,
+                    latitude: bookingData.branch.latitude ?? null,
+                    longitude: bookingData.branch.longitude ?? null,
+                  }
+                : undefined
+            }
           />
         )
       case 4:
-        return <PaymentInfo onNext={nextStep} onPrev={prevStep} bookingData={bookingData} />
+        return <PaymentInfo onNext={nextStep} onPrev={prevStep} bookingData={bookingData} updateBookingData={updateBookingData} />
       case 5:
         return (
           <PaymentProof

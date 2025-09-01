@@ -5,7 +5,7 @@ import type React from "react"
 import { useState, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Upload, FileImage, X, CheckCircle } from "lucide-react"
+import { Upload, FileImage, X, CheckCircle, Wallet } from "lucide-react"
 import type { BookingData } from "@/app/booking/page"
 import { apiClient } from "@/lib/api-client"
 import { showErrorToast, showSuccessToast } from "@/lib/error-utils"
@@ -90,8 +90,14 @@ export function PaymentProof({ onNext, onPrev, onUpload, bookingData, updateBook
    */
   const handleSubmit = async () => {
     // Validate required data
-    if (!uploadedFile || !bookingData.service || !bookingData.branch || !bookingData.date || !bookingData.time) {
+    if (!bookingData.service || !bookingData.branch || !bookingData.date || !bookingData.time) {
       showErrorToast(new Error("Data tidak lengkap"), "Pastikan semua data booking sudah terisi")
+      return
+    }
+
+    const method = bookingData.paymentMethod || "transfer"
+    if (method === "transfer" && !uploadedFile) {
+      showErrorToast(new Error("Bukti belum diupload"), "Upload bukti transfer terlebih dahulu")
       return
     }
 
@@ -116,7 +122,7 @@ export function PaymentProof({ onNext, onPrev, onUpload, bookingData, updateBook
         pickup_address: bookingData.pickupAddress,
         pickup_notes: bookingData.pickupNotes,
         vehicle_plate_number: bookingData.vehiclePlateNumber,
-        payment_method: "transfer" as const,
+        payment_method: method,
         booking_source: "online" as const,
       }
 
@@ -124,7 +130,7 @@ export function PaymentProof({ onNext, onPrev, onUpload, bookingData, updateBook
       const { booking } = await apiClient.createBooking(bookingPayload)
 
       // Upload payment proof if file is provided
-      if (uploadedFile) {
+      if (method === "transfer" && uploadedFile) {
         try {
           const uploadResult = await apiClient.uploadPaymentProof(booking.id, uploadedFile)
           console.log("[v0] Payment proof uploaded successfully:", uploadResult.url)
@@ -141,7 +147,9 @@ export function PaymentProof({ onNext, onPrev, onUpload, bookingData, updateBook
 
       showSuccessToast(
         "Booking Berhasil Dibuat",
-        "Booking Anda telah berhasil dibuat dan menunggu konfirmasi pembayaran",
+        method === "transfer"
+          ? "Booking Anda menunggu verifikasi pembayaran"
+          : "Booking Anda telah dikonfirmasi untuk bayar di tempat",
       )
       onNext()
     } catch (err) {
@@ -155,10 +163,20 @@ export function PaymentProof({ onNext, onPrev, onUpload, bookingData, updateBook
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-serif text-2xl md:text-3xl font-bold text-foreground">Upload Bukti Transfer</h1>
-        <p className="text-muted-foreground mt-1">Upload foto atau screenshot bukti transfer Anda</p>
+        {bookingData.paymentMethod === "cash" ? (
+          <>
+            <h1 className="font-serif text-2xl md:text-3xl font-bold text-foreground">Konfirmasi Pembayaran</h1>
+            <p className="text-muted-foreground mt-1">Metode: Bayar di Tempat (COD)</p>
+          </>
+        ) : (
+          <>
+            <h1 className="font-serif text-2xl md:text-3xl font-bold text-foreground">Upload Bukti Transfer</h1>
+            <p className="text-muted-foreground mt-1">Upload foto atau screenshot bukti transfer Anda</p>
+          </>
+        )}
       </div>
 
+      {bookingData.paymentMethod === "cash" ? null : (
       <Card>
         <CardHeader>
           <CardTitle className="font-serif text-xl">Bukti Pembayaran</CardTitle>
@@ -227,14 +245,22 @@ export function PaymentProof({ onNext, onPrev, onUpload, bookingData, updateBook
           </div>
         </CardContent>
       </Card>
+      )}
 
       <div className="flex justify-between pt-6">
         <Button variant="outline" onClick={onPrev} size="lg" className="px-8 bg-transparent" disabled={isProcessing}>
           Kembali
         </Button>
-        <Button onClick={handleSubmit} disabled={!uploadedFile || isProcessing} size="lg" className="px-8">
-          {isProcessing ? "Memproses..." : "Selesaikan Booking"}
-        </Button>
+        {bookingData.paymentMethod === "cash" ? (
+          <Button onClick={handleSubmit} disabled={isProcessing} size="lg" className="px-8">
+            <Wallet className="w-4 h-4 mr-2" />
+            {isProcessing ? "Memproses..." : "Konfirmasi Bayar di Tempat"}
+          </Button>
+        ) : (
+          <Button onClick={handleSubmit} disabled={!uploadedFile || isProcessing} size="lg" className="px-8">
+            {isProcessing ? "Memproses..." : "Selesaikan Booking"}
+          </Button>
+        )}
       </div>
     </div>
   )

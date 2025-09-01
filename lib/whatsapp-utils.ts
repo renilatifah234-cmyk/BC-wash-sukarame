@@ -27,11 +27,11 @@ const generateWhatsAppMessage = (booking: BookingWithDetails): string => {
 
     const baseInfo = `Halo ${booking.customerName}, 👋  
 
-    📌 Kode Booking: ${booking.bookingCode}  
-    🛠 Layanan: ${booking.services?.name}  
+    📌 Kode Booking: ${booking.bookingCode || (booking as any).booking_code}  
+    🛠 Layanan: ${booking.services?.name || (booking as any).service || '-'}  
     📅 Jadwal: ${bookingDate} pukul ${bookingTime}  
-    🚗 Kendaraan: ${booking.vehiclePlateNumber}  
-    🏢 Cabang: ${booking.branches?.name}  
+    🚗 Kendaraan: ${booking.vehiclePlateNumber || (booking as any).vehicle_plate_number || '-'}  
+    🏢 Cabang: ${booking.branches?.name || (booking as any).branch || '-'}  
     `
 
     const statusMessages = {
