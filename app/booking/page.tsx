@@ -87,6 +87,8 @@ export default function BookingPage() {
                     id: bookingData.branch.id,
                     name: bookingData.branch.name,
                     pickup_coverage_radius: bookingData.branch.pickup_coverage_radius,
+                    latitude: bookingData.branch.latitude ?? null,
+                    longitude: bookingData.branch.longitude ?? null,
                   }
                 : undefined
             }
