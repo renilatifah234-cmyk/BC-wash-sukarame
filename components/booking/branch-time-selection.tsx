@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { MapPin, Clock, Phone } from "lucide-react"
 import { apiClient, type Branch } from "@/lib/api-client"
-import { format, addDays, isToday, isTomorrow } from "date-fns"
+import { format, addDays, isToday, isTomorrow, startOfDay } from "date-fns"
 import { id } from "date-fns/locale"
 import { ErrorState } from "@/components/ui/error-state"
 import { showErrorToast } from "@/lib/error-utils"
@@ -215,7 +215,7 @@ export function BranchTimeSelection({
               mode="single"
               selected={date}
               onSelect={handleDateSelect}
-              disabled={(date) => date < new Date() || date > addDays(new Date(), 30)}
+              disabled={(d) => d < startOfDay(new Date()) || d > addDays(startOfDay(new Date()), 30)}
               className="rounded-md border"
               locale={id}
             />
