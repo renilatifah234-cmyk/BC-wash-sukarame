@@ -14,6 +14,7 @@ export interface ServiceFormData {
   supports_pickup: boolean
   pickup_fee: number
   is_active: boolean
+  loyalty_points_reward: number
 }
 
 interface FormErrors {
@@ -22,6 +23,7 @@ interface FormErrors {
   price?: string
   duration?: string
   pickup_fee?: string
+  loyalty_points_reward?: string
 }
 
 interface ServiceFormProps {
@@ -40,7 +42,8 @@ const initialFormData: ServiceFormData = {
   features: [],
   supports_pickup: false,
   pickup_fee: 0,
-  is_active: true
+  is_active: true,
+  loyalty_points_reward: 0,
 }
 
 export function ServiceForm({ initialData, onSubmit, isSubmitting = false, buttonLabel = "Submit" }: ServiceFormProps) {
@@ -65,6 +68,9 @@ export function ServiceForm({ initialData, onSubmit, isSubmitting = false, butto
     }
     if (formData.supports_pickup && formData.pickup_fee < 0) {
       newErrors.pickup_fee = "Biaya pickup tidak boleh negatif"
+    }
+    if (formData.loyalty_points_reward < 0) {
+      newErrors.loyalty_points_reward = "Poin loyalitas harus 0 atau lebih"
     }
 
     setErrors(newErrors)
@@ -173,6 +179,24 @@ export function ServiceForm({ initialData, onSubmit, isSubmitting = false, butto
           />
           {errors.duration && <p className="text-sm text-red-500">{errors.duration}</p>}
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <label className="block text-sm font-medium">Poin Loyalitas</label>
+        <input
+          type="number"
+          value={formData.loyalty_points_reward}
+          onChange={(e) =>
+            setFormData({ ...formData, loyalty_points_reward: Number.parseInt(e.target.value) || 0 })
+          }
+          className={`w-full rounded-md border ${
+            errors.loyalty_points_reward ? "border-red-500" : "border-input"
+          } px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50`}
+          disabled={isSubmitting}
+        />
+        {errors.loyalty_points_reward && (
+          <p className="text-sm text-red-500">{errors.loyalty_points_reward}</p>
+        )}
       </div>
 
       <div className="space-y-2">

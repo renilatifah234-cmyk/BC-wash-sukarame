@@ -65,6 +65,7 @@ interface Service {
   duration: number
   features: string[]
   is_active: boolean
+  loyalty_points_reward?: number
   created_at: string
   updated_at: string
 }

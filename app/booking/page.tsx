@@ -26,6 +26,7 @@ export interface BookingData {
   pickupNotes?: string
   vehiclePlateNumber?: string
   paymentMethod?: "transfer" | "cash"
+  loyaltyPointsUsed?: number
 }
 
 export default function BookingPage() {

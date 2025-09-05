@@ -4,13 +4,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { CreditCard, MapPin, Calendar, Clock, Copy, CheckCircle } from "lucide-react"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
 import type { BookingData } from "@/app/booking/page"
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { formatCurrency } from "@/lib/utils"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { apiClient } from "@/lib/api-client"
 
 interface PaymentInfoProps {
   onNext: () => void
@@ -21,6 +24,7 @@ interface PaymentInfoProps {
 
 export function PaymentInfo({ onNext, onPrev, bookingData, updateBookingData }: PaymentInfoProps) {
   const [copiedField, setCopiedField] = useState<string | null>(null)
+  const [availablePoints, setAvailablePoints] = useState(0)
 
   const copyToClipboard = async (text: string, field: string) => {
     try {
@@ -39,11 +43,33 @@ export function PaymentInfo({ onNext, onPrev, bookingData, updateBookingData }: 
   const bookingDate = new Date(bookingData.date)
   const formattedDate = format(bookingDate, "EEEE, dd MMMM yyyy", { locale: id })
 
+  const discount = (bookingData.loyaltyPointsUsed || 0) * 1000
   const totalPrice = useMemo(() => {
-    return bookingData.service!.price + (bookingData.isPickupService ? bookingData.service!.pickup_fee || 0 : 0)
-  }, [bookingData.service, bookingData.isPickupService])
+    return Math.max(
+      0,
+      bookingData.service!.price +
+        (bookingData.isPickupService ? bookingData.service!.pickup_fee || 0 : 0) -
+        discount,
+    )
+  }, [bookingData.service, bookingData.isPickupService, discount])
 
   const method = bookingData.paymentMethod || "transfer"
+
+  useEffect(() => {
+    const fetchPoints = async () => {
+      if (bookingData.customerPhone) {
+        try {
+          const res = await apiClient.getCustomers(bookingData.customerPhone)
+          if (res.customers && res.customers.length > 0) {
+            setAvailablePoints(res.customers[0].total_loyalty_points)
+          }
+        } catch (err) {
+          console.error("[v0] Failed to fetch customer points:", err)
+        }
+      }
+    }
+    fetchPoints()
+  }, [bookingData.customerPhone])
 
   return (
     <div className="space-y-6">
@@ -74,6 +100,11 @@ export function PaymentInfo({ onNext, onPrev, bookingData, updateBookingData }: 
             </div>
             <div className="text-right">
               <p className="text-2xl font-bold text-primary">{formatCurrency(totalPrice)}</p>
+              {bookingData.loyaltyPointsUsed ? (
+                <p className="text-xs text-muted-foreground">
+                  Diskon poin: -{formatCurrency(discount)}
+                </p>
+              ) : null}
               <p className="text-sm text-muted-foreground">~{bookingData.service.duration} menit</p>
               {bookingData.isPickupService && <p className="text-xs text-muted-foreground">Termasuk biaya pickup</p>}
             </div>
@@ -125,6 +156,21 @@ export function PaymentInfo({ onNext, onPrev, bookingData, updateBookingData }: 
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="loyaltyPoints">Redeem Poin Loyalitas</Label>
+            <p className="text-sm text-muted-foreground">Poin tersedia: {availablePoints}</p>
+            <Input
+              id="loyaltyPoints"
+              type="number"
+              min={0}
+              max={availablePoints}
+              value={bookingData.loyaltyPointsUsed || 0}
+              onChange={(e) =>
+                updateBookingData({ loyaltyPointsUsed: Number.parseInt(e.target.value, 10) || 0 })
+              }
+            />
+          </div>
+
           <div>
             <Select value={method} onValueChange={(v: any) => updateBookingData({ paymentMethod: v })}>
               <SelectTrigger className="w-full sm:w-80">
