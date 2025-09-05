@@ -376,6 +376,7 @@ export function LoyaltyDashboard() {
                             size="sm"
                             className="bg-transparent"
                             onClick={() => handleEditCustomer(customer)}
+
                           >
                             Update
                           </Button>
