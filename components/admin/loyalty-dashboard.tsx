@@ -35,7 +35,17 @@ export function LoyaltyDashboard() {
     try {
       setLoading(true)
       const customerData = await apiClient.getCustomers()
-      setCustomers(customerData.customers)
+      const mappedCustomers: Customer[] = customerData.customers.map((c) => ({
+        id: c.id,
+        name: c.name,
+        phone: c.phone,
+        email: c.email,
+        vehiclePlateNumbers: Array.isArray(c.vehicle_plate_numbers) ? c.vehicle_plate_numbers : [],
+        totalBookings: c.total_bookings ?? 0,
+        totalLoyaltyPoints: c.total_loyalty_points ?? 0,
+        joinDate: c.join_date,
+      }))
+      setCustomers(mappedCustomers)
     } catch (err) {
       console.error("[v0] Error fetching customers:", err)
       setError("Gagal memuat data pelanggan")
@@ -54,7 +64,11 @@ export function LoyaltyDashboard() {
   const totalCustomers = customers.length
   const totalLoyaltyPoints = customers.reduce((sum, customer) => sum + customer.totalLoyaltyPoints, 0)
   const averagePointsPerCustomer = totalCustomers > 0 ? Math.round(totalLoyaltyPoints / totalCustomers) : 0
-  const totalVehicles = customers.reduce((sum, customer) => sum + (Array.isArray(customer.vehiclePlateNumbers) ? customer.vehiclePlateNumbers.length : 0), 0)
+  const totalVehicles = customers.reduce(
+    (sum, customer) =>
+      sum + (Array.isArray(customer.vehiclePlateNumbers) ? customer.vehiclePlateNumbers.length : 0),
+    0,
+  )
 
   const getCustomerTier = (points: number) => {
     if (points >= 200) return { name: "Platinum", color: "bg-purple-100 text-purple-800" }
@@ -76,6 +90,35 @@ export function LoyaltyDashboard() {
       toast({
         title: "Gagal Memuat Detail",
         description: "Terjadi kesalahan saat memuat detail pelanggan.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleUpdatePoints = async (customer: Customer) => {
+    const newPointsStr = prompt(
+      `Masukkan total poin baru untuk ${customer.name}`,
+      customer.totalLoyaltyPoints.toString(),
+    )
+    if (newPointsStr === null) return
+    const newPoints = Number.parseInt(newPointsStr, 10)
+    if (Number.isNaN(newPoints)) {
+      toast({
+        title: "Input tidak valid",
+        description: "Nilai poin harus berupa angka",
+        variant: "destructive",
+      })
+      return
+    }
+    try {
+      await apiClient.updateCustomer(customer.id, { total_loyalty_points: newPoints })
+      toast({ title: "Poin diperbarui" })
+      fetchCustomers()
+    } catch (err) {
+      console.error("[v0] Error updating points:", err)
+      toast({
+        title: "Gagal memperbarui poin",
+        description: "Terjadi kesalahan saat memperbarui poin",
         variant: "destructive",
       })
     }
@@ -274,7 +317,7 @@ export function LoyaltyDashboard() {
                             })}
                           </p>
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right space-x-2">
                           <Button
                             variant="outline"
                             size="sm"
@@ -282,6 +325,14 @@ export function LoyaltyDashboard() {
                             onClick={() => handleViewCustomerDetail(customer.id)}
                           >
                             Detail
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="bg-transparent"
+                            onClick={() => handleUpdatePoints(customer)}
+                          >
+                            Update
                           </Button>
                         </TableCell>
                       </TableRow>

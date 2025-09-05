@@ -127,7 +127,14 @@ export async function POST(request: NextRequest) {
     const now = new Date()
     const bookingCode = `BCW${now.getFullYear().toString().slice(-2)}${(now.getMonth() + 1).toString().padStart(2, "0")}${now.getDate().toString().padStart(2, "0")}${now.getHours().toString().padStart(2, "0")}${now.getMinutes().toString().padStart(2, "0")}`
 
-    const loyaltyPointsEarned = Math.floor(bookingData.total_price / 10000)
+    const { data: serviceRecord } = await supabase
+      .from("services")
+      .select("loyalty_points_reward")
+      .eq("id", bookingData.service_id)
+      .single()
+
+    const loyaltyPointsEarned =
+      serviceRecord?.loyalty_points_reward ?? Math.floor(bookingData.total_price / 10000)
 
     const insertData = {
       ...bookingData,
@@ -177,8 +184,10 @@ export async function POST(request: NextRequest) {
             email: bookingData.customer_email,
             vehicle_plate_numbers: updatedPlateNumbers,
             total_bookings: existingCustomer.total_bookings + 1,
-            total_loyalty_points:
-              existingCustomer.total_loyalty_points + loyaltyPointsEarned - (bookingData.loyalty_points_used || 0),
+      total_loyalty_points: Math.max(
+        0,
+        existingCustomer.total_loyalty_points - (bookingData.loyalty_points_used || 0),
+      ),
             updated_at: now.toISOString(),
           })
           .eq("id", existingCustomer.id)
@@ -192,7 +201,7 @@ export async function POST(request: NextRequest) {
           vehicle_plate_numbers: [bookingData.vehicle_plate_number],
           join_date: now.toISOString().split("T")[0],
           total_bookings: 1,
-          total_loyalty_points: loyaltyPointsEarned,
+          total_loyalty_points: 0,
           created_at: now.toISOString(),
           updated_at: now.toISOString(),
         })

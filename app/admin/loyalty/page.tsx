@@ -26,7 +26,11 @@ export default function LoyaltyPage() {
   }
 
   if (!isAuthenticated) {
-    return null
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        Mengarahkan ke halaman login...
+      </div>
+    )
   }
 
   return (
