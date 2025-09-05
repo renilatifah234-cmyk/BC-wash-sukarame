@@ -64,6 +64,16 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     const supabase = createClient()
 
+    const { data: existingBooking, error: fetchError } = await supabase
+      .from("bookings")
+      .select("*")
+      .eq("id", params.id)
+      .single()
+
+    if (fetchError || !existingBooking) {
+      return NextResponse.json({ error: "Booking not found" }, { status: 404 })
+    }
+
     const { data: booking, error } = await supabase
       .from("bookings")
       .update(filteredData)
@@ -82,6 +92,23 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     if (!booking) {
       return NextResponse.json({ error: "Booking not found" }, { status: 404 })
+    }
+
+    if (filteredData.status === "completed" && existingBooking.status !== "completed") {
+      const { data: customer } = await supabase
+        .from("customers")
+        .select("id, total_loyalty_points")
+        .eq("phone", existingBooking.customer_phone)
+        .single()
+
+      if (customer) {
+        await supabase
+          .from("customers")
+          .update({
+            total_loyalty_points: customer.total_loyalty_points + existingBooking.loyalty_points_earned,
+          })
+          .eq("id", customer.id)
+      }
     }
 
     return NextResponse.json({ booking })

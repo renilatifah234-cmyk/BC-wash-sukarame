@@ -36,7 +36,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       "supports_pickup",
       "duration",
       "features",
-      "is_active"
+      "is_active",
+      "loyalty_points_reward",
     ]
 
     const filteredData = Object.keys(updateData)
