@@ -26,7 +26,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Plus, Edit, Trash2, Car, Bike, Crown, Clock, MapPin, DollarSign } from "lucide-react"
+import { Plus, Edit, Trash2, Car, Bike, Crown, Clock, MapPin, DollarSign, Star } from "lucide-react"
 import { apiClient, type Service } from "@/lib/api-client"
 import { ErrorState } from "@/components/ui/error-state"
 import { showErrorToast, showSuccessToast } from "@/lib/error-utils"
@@ -261,6 +261,7 @@ export function ServiceManagement() {
                     <TableHead>Kategori</TableHead>
                     <TableHead>Harga</TableHead>
                     <TableHead>Durasi</TableHead>
+                    <TableHead>Poin</TableHead>
                     <TableHead>Pickup</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Aksi</TableHead>
@@ -302,6 +303,12 @@ export function ServiceManagement() {
                           <div className="flex items-center gap-1">
                             <Clock className="w-3 h-3 text-muted-foreground" />
                             {service.duration} menit
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Star className="w-3 h-3 text-yellow-500" />
+                            {service.loyalty_points_reward ?? 0}
                           </div>
                         </TableCell>
                         <TableCell>
@@ -390,6 +397,7 @@ export function ServiceManagement() {
               supports_pickup: editingService.supports_pickup || false,
               pickup_fee: editingService.pickup_fee || 0,
               is_active: editingService.is_active,
+              loyalty_points_reward: editingService.loyalty_points_reward ?? 0,
             } : undefined}
           />
           <DialogFooter>
