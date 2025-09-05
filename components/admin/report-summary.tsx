@@ -1,83 +1,34 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { TrendingUp, TrendingDown, DollarSign, Users, Car, Calendar } from "lucide-react"
-import { formatCurrency } from "@/lib/dummy-data"
+import { TrendingUp, DollarSign, Calendar } from "lucide-react"
+import { formatCurrency } from "@/lib/utils"
 
-export function ReportSummary() {
-  // Mock report data - in real app, this would come from API based on filters
+interface ReportSummaryProps {
+  summary: { totalRevenue: number; totalBookings: number; averageBookingValue: number } | null
+}
+
+export function ReportSummary({ summary }: ReportSummaryProps) {
   const summaryData = [
     {
       title: "Total Pendapatan",
-      value: formatCurrency(15750000),
-      change: "+12.5%",
-      changeType: "positive" as const,
+      value: formatCurrency(summary?.totalRevenue || 0),
       icon: DollarSign,
-      description: "dari periode sebelumnya",
+      description: "pendapatan keseluruhan",
     },
     {
       title: "Total Booking",
-      value: "342",
-      change: "+8.2%",
-      changeType: "positive" as const,
+      value: summary ? String(summary.totalBookings) : "0",
       icon: Calendar,
       description: "booking selesai",
     },
     {
-      title: "Pelanggan Unik",
-      value: "186",
-      change: "+15.3%",
-      changeType: "positive" as const,
-      icon: Users,
-      description: "pelanggan berbeda",
-    },
-    {
-      title: "Layanan Terpopuler",
-      value: "Cuci Mobil Hidrolik",
-      change: "45%",
-      changeType: "neutral" as const,
-      icon: Car,
-      description: "dari total booking",
-    },
-    {
       title: "Rata-rata per Booking",
-      value: formatCurrency(46053),
-      change: "+3.8%",
-      changeType: "positive" as const,
+      value: formatCurrency(summary?.averageBookingValue || 0),
       icon: TrendingUp,
       description: "nilai rata-rata",
     },
-    {
-      title: "Tingkat Pembatalan",
-      value: "2.1%",
-      change: "-0.5%",
-      changeType: "positive" as const,
-      icon: TrendingDown,
-      description: "dari total booking",
-    },
   ]
-
-  const getChangeColor = (type: "positive" | "negative" | "neutral") => {
-    switch (type) {
-      case "positive":
-        return "text-green-600"
-      case "negative":
-        return "text-red-600"
-      case "neutral":
-        return "text-muted-foreground"
-    }
-  }
-
-  const getChangeIcon = (type: "positive" | "negative" | "neutral") => {
-    switch (type) {
-      case "positive":
-        return <TrendingUp className="w-3 h-3" />
-      case "negative":
-        return <TrendingDown className="w-3 h-3" />
-      default:
-        return null
-    }
-  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -91,13 +42,7 @@ export function ReportSummary() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold mb-1">{item.value}</div>
-              <div className="flex items-center gap-1 text-xs">
-                <span className={`flex items-center gap-1 ${getChangeColor(item.changeType)}`}>
-                  {getChangeIcon(item.changeType)}
-                  {item.change}
-                </span>
-                <span className="text-muted-foreground">{item.description}</span>
-              </div>
+              <div className="text-xs text-muted-foreground">{item.description}</div>
             </CardContent>
           </Card>
         )

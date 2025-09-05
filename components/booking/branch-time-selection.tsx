@@ -34,29 +34,18 @@ export function BranchTimeSelection({
   const [branch, setBranch] = useState<Branch | undefined>(selectedBranch)
   const [date, setDate] = useState<Date | undefined>(selectedDate ? new Date(selectedDate) : undefined)
   const [time, setTime] = useState<string | undefined>(selectedTime)
+  const [timeSlots, setTimeSlots] = useState<string[]>([])
 
-  const timeSlots = [
-    "08:00",
-    "08:30",
-    "09:00",
-    "09:30",
-    "10:00",
-    "10:30",
-    "11:00",
-    "11:30",
-    "12:00",
-    "12:30",
-    "13:00",
-    "13:30",
-    "14:00",
-    "14:30",
-    "15:00",
-    "15:30",
-    "16:00",
-    "16:30",
-    "17:00",
-    "17:30",
-  ]
+  useEffect(() => {
+    if (branch) {
+      const slots = generateTimeSlots(branch.operating_hours_open, branch.operating_hours_close)
+      setTimeSlots(slots)
+      if (time && !slots.includes(time)) {
+        setTime(undefined)
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [branch])
 
   useEffect(() => {
     fetchBranches()
@@ -82,7 +71,18 @@ export function BranchTimeSelection({
 
   const handleBranchSelect = (selectedBranch: Branch) => {
     setBranch(selectedBranch)
-    if (date && time) {
+
+    const slots = generateTimeSlots(
+      selectedBranch.operating_hours_open,
+      selectedBranch.operating_hours_close,
+    )
+    setTimeSlots(slots)
+
+    if (time && !slots.includes(time)) {
+      setTime(undefined)
+    }
+
+    if (date && time && slots.includes(time)) {
       onSelect(selectedBranch, format(date, "yyyy-MM-dd"), time)
     }
   }
@@ -98,6 +98,28 @@ export function BranchTimeSelection({
     setTime(selectedTime)
     if (branch && date) {
       onSelect(branch, format(date, "yyyy-MM-dd"), selectedTime)
+    }
+  }
+
+  const generateTimeSlots = (open: string, close: string) => {
+    try {
+      const [openH, openM] = open.split(":").map(Number)
+      const [closeH, closeM] = close.split(":").map(Number)
+      const start = new Date()
+      start.setHours(openH, openM, 0, 0)
+      const end = new Date()
+      end.setHours(closeH, closeM, 0, 0)
+
+      const slots: string[] = []
+      const current = new Date(start)
+      while (current < end) {
+        slots.push(format(current, "HH:mm"))
+        current.setMinutes(current.getMinutes() + 30)
+      }
+      return slots
+    } catch (err) {
+      console.error("[v0] Failed to generate time slots:", err)
+      return []
     }
   }
 
