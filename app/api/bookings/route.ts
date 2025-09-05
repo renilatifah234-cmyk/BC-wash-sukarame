@@ -171,6 +171,8 @@ export async function POST(request: NextRequest) {
         .eq("phone", bookingData.customer_phone)
         .single()
 
+      let customerId: string
+
       if (existingCustomer) {
         // Update existing customer
         const updatedPlateNumbers = Array.from(
@@ -184,17 +186,19 @@ export async function POST(request: NextRequest) {
             email: bookingData.customer_email,
             vehicle_plate_numbers: updatedPlateNumbers,
             total_bookings: existingCustomer.total_bookings + 1,
-      total_loyalty_points: Math.max(
-        0,
-        existingCustomer.total_loyalty_points - (bookingData.loyalty_points_used || 0),
-      ),
+            total_loyalty_points: Math.max(
+              0,
+              existingCustomer.total_loyalty_points - (bookingData.loyalty_points_used || 0),
+            ),
             updated_at: now.toISOString(),
           })
           .eq("id", existingCustomer.id)
+        customerId = existingCustomer.id
       } else {
         // Create new customer
+        customerId = `customer-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
         await supabase.from("customers").insert({
-          id: `customer-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          id: customerId,
           name: bookingData.customer_name,
           phone: bookingData.customer_phone,
           email: bookingData.customer_email,
@@ -204,6 +208,15 @@ export async function POST(request: NextRequest) {
           total_loyalty_points: 0,
           created_at: now.toISOString(),
           updated_at: now.toISOString(),
+        })
+      }
+
+      if (bookingData.loyalty_points_used) {
+        await supabase.from("loyalty_transactions").insert({
+          customer_id: customerId,
+          booking_id: insertData.id,
+          points: bookingData.loyalty_points_used,
+          type: "redeem",
         })
       }
     } catch (customerError) {

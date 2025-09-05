@@ -9,6 +9,8 @@ CREATE TABLE IF NOT EXISTS services (
   features TEXT[],
   supports_pickup BOOLEAN DEFAULT false,
   pickup_fee INTEGER DEFAULT 0,
+  loyalty_points_reward INTEGER DEFAULT 0,
+  is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -97,6 +99,16 @@ CREATE INDEX IF NOT EXISTS idx_bookings_branch ON bookings(branch_id);
 CREATE INDEX IF NOT EXISTS idx_bookings_customer_phone ON bookings(customer_phone);
 CREATE INDEX IF NOT EXISTS idx_customers_phone ON customers(phone);
 CREATE INDEX IF NOT EXISTS idx_admins_username ON admins(username);
+
+-- Record each change in loyalty points
+CREATE TABLE IF NOT EXISTS loyalty_transactions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  customer_id TEXT NOT NULL,
+  booking_id TEXT,
+  points INTEGER NOT NULL,
+  type TEXT NOT NULL CHECK (type IN ('earn','redeem','adjust')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 
 -- Create updated_at trigger function
 CREATE OR REPLACE FUNCTION update_updated_at_column()

@@ -108,6 +108,13 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
             total_loyalty_points: customer.total_loyalty_points + existingBooking.loyalty_points_earned,
           })
           .eq("id", customer.id)
+
+        await supabase.from("loyalty_transactions").insert({
+          customer_id: customer.id,
+          booking_id: existingBooking.id,
+          points: existingBooking.loyalty_points_earned,
+          type: "earn",
+        })
       }
     }
 
