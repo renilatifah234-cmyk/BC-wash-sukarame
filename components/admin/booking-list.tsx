@@ -48,6 +48,10 @@ interface BookingWithDetails extends Booking {
   // Property for the modal, mapping totalPrice to amount
   amount: number;
   paymentProof?: string | null;
+  branchAddress: string;
+  branchPhone: string;
+  paymentMethod: string;
+  staff?: string;
 }
 
 export function BookingList() {
@@ -93,9 +97,15 @@ export function BookingList() {
 
         // Derived properties
         service: services.find((s) => s.id === booking.service_id)?.name || "Layanan tidak ditemukan", // Ensure non-nullable string
-        branch: branches.find((b) => b.id === booking.branch_id)?.name || "Cabang tidak ditemukan",   // Ensure non-nullable string
+        branch: branches.find((b) => b.id === booking.branch_id)?.name || "Cabang tidak ditemukan", // Ensure non-nullable string
         amount: booking.total_price,
         paymentProof: (booking as any).payment_proof || null,
+        branchAddress: booking.branches?.address ||
+          branches.find((b) => b.id === booking.branch_id)?.address || "",
+        branchPhone: booking.branches?.phone ||
+          branches.find((b) => b.id === booking.branch_id)?.phone || "",
+        paymentMethod: booking.payment_method,
+        staff: booking.admin_user_id || undefined,
       }))
 
       enrichedBookings.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -8,11 +8,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { CalendarIcon } from "lucide-react"
-import { format, subDays, subMonths, startOfMonth, endOfMonth } from "date-fns"
+import {
+  format,
+  subDays,
+  subMonths,
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  subWeeks,
+  startOfYear,
+  endOfYear,
+} from "date-fns"
 import { id } from "date-fns/locale"
 import { cn } from "@/lib/utils"
 
-export function ReportFilters() {
+interface ReportFiltersProps {
+  onChange?: (filters: { startDate?: string; endDate?: string; branchId?: string }) => void
+}
+
+export function ReportFilters({ onChange }: ReportFiltersProps) {
   const [dateRange, setDateRange] = useState("this-month")
   const [branchFilter, setBranchFilter] = useState("all")
   const [serviceFilter, setServiceFilter] = useState("all")
@@ -37,6 +52,19 @@ export function ReportFilters() {
         return format(today, "dd MMM yyyy", { locale: id })
       case "yesterday":
         return format(subDays(today, 1), "dd MMM yyyy", { locale: id })
+      case "this-week":
+        return (
+          format(startOfWeek(today, { weekStartsOn: 1 }), "dd MMM", { locale: id }) +
+          " - " +
+          format(endOfWeek(today, { weekStartsOn: 1 }), "dd MMM yyyy", { locale: id })
+        )
+      case "last-week":
+        const lastWeek = subWeeks(today, 1)
+        return (
+          format(startOfWeek(lastWeek, { weekStartsOn: 1 }), "dd MMM", { locale: id }) +
+          " - " +
+          format(endOfWeek(lastWeek, { weekStartsOn: 1 }), "dd MMM yyyy", { locale: id })
+        )
       case "this-month":
         return (
           format(startOfMonth(today), "dd MMM", { locale: id }) +
@@ -49,6 +77,12 @@ export function ReportFilters() {
           format(startOfMonth(lastMonth), "dd MMM", { locale: id }) +
           " - " +
           format(endOfMonth(lastMonth), "dd MMM yyyy", { locale: id })
+        )
+      case "this-year":
+        return (
+          format(startOfYear(today), "dd MMM yyyy", { locale: id }) +
+          " - " +
+          format(endOfYear(today), "dd MMM yyyy", { locale: id })
         )
       case "custom":
         if (customDateFrom && customDateTo) {
@@ -63,6 +97,56 @@ export function ReportFilters() {
         return "Pilih periode"
     }
   }
+
+  useEffect(() => {
+    const today = new Date()
+    let start: Date | undefined
+    let end: Date | undefined
+
+    switch (dateRange) {
+      case "today":
+        start = today
+        end = today
+        break
+      case "yesterday":
+        const y = subDays(today, 1)
+        start = y
+        end = y
+        break
+      case "this-week":
+        start = startOfWeek(today, { weekStartsOn: 1 })
+        end = endOfWeek(today, { weekStartsOn: 1 })
+        break
+      case "last-week":
+        const lw = subWeeks(today, 1)
+        start = startOfWeek(lw, { weekStartsOn: 1 })
+        end = endOfWeek(lw, { weekStartsOn: 1 })
+        break
+      case "this-month":
+        start = startOfMonth(today)
+        end = endOfMonth(today)
+        break
+      case "last-month":
+        const lm = subMonths(today, 1)
+        start = startOfMonth(lm)
+        end = endOfMonth(lm)
+        break
+      case "this-year":
+        start = startOfYear(today)
+        end = endOfYear(today)
+        break
+      case "custom":
+        start = customDateFrom
+        end = customDateTo
+        break
+    }
+
+    onChange?.({
+      startDate: start ? format(start, "yyyy-MM-dd") : undefined,
+      endDate: end ? format(end, "yyyy-MM-dd") : undefined,
+      branchId: branchFilter !== "all" ? branchFilter : undefined,
+    })
+  }, [dateRange, branchFilter, customDateFrom, customDateTo, onChange])
 
   return (
     <Card>

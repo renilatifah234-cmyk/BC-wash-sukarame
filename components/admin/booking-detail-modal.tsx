@@ -24,7 +24,7 @@ import {
   Car,
   Star,
 } from "lucide-react"
-import { formatCurrency, generateReceiptData } from "@/lib/dummy-data"
+import { formatCurrency } from "@/lib/utils"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
 import { sendWhatsAppNotification } from "@/lib/whatsapp-utils"
@@ -38,11 +38,16 @@ interface BookingDetailModalProps {
     customerEmail: string
     service: string
     branch: string
+    branchAddress: string
+    branchPhone: string
     date: string
     time: string
     amount: number
     status: "pending" | "confirmed" | "in-progress" | "completed" | "cancelled"
     createdAt: string
+    updatedAt: string
+    paymentMethod: string
+    staff?: string
     paymentProof?: string
     isPickupService?: boolean
     pickupAddress?: string
@@ -137,7 +142,20 @@ export function BookingDetailModal({ booking, isOpen, onClose, onStatusChange }:
   const statusOptions = getAvailableStatusOptions(booking.status)
 
   if (showReceipt) {
-    const receiptData = generateReceiptData(booking.id)
+    const receiptData = {
+      bookingCode: booking.bookingCode,
+      customerName: booking.customerName,
+      customerPhone: booking.customerPhone,
+      service: booking.service,
+      branch: booking.branch,
+      branchAddress: booking.branchAddress,
+      date: booking.date,
+      time: booking.time,
+      amount: booking.amount,
+      paymentMethod: booking.paymentMethod,
+      completedAt: booking.updatedAt,
+      staff: booking.staff || "BC Wash Staff",
+    }
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">

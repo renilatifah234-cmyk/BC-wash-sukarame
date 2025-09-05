@@ -11,6 +11,11 @@ import { ReportExport } from "@/components/admin/report-export"
 export default function AdminReportsPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [filters, setFilters] = useState<{ startDate?: string; endDate?: string; branchId?: string }>({})
+  const [summary, setSummary] = useState<{ totalRevenue: number; totalBookings: number; averageBookingValue: number } | null>(null)
+  const [serviceStats, setServiceStats] = useState<{ name: string; count: number; revenue: number }[]>([])
+  const [branchStats, setBranchStats] = useState<{ name: string; count: number; revenue: number }[]>([])
+  const [reportLoading, setReportLoading] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -31,6 +36,31 @@ export default function AdminReportsPage() {
     return null
   }
 
+  const fetchReport = async () => {
+    try {
+      setReportLoading(true)
+      const params = new URLSearchParams()
+      if (filters.startDate) params.append("startDate", filters.startDate)
+      if (filters.endDate) params.append("endDate", filters.endDate)
+      if (filters.branchId) params.append("branchId", filters.branchId)
+
+      const res = await fetch(`/api/reports?${params.toString()}`)
+      const data = await res.json()
+      setSummary(data.summary)
+      setServiceStats(data.serviceStats || [])
+      setBranchStats(data.branchStats || [])
+    } catch (error) {
+      console.error("Failed to fetch report:", error)
+    } finally {
+      setReportLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchReport()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters])
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -42,9 +72,15 @@ export default function AdminReportsPage() {
           <ReportExport />
         </div>
 
-        <ReportFilters />
-        <ReportSummary />
-        <ReportCharts />
+        <ReportFilters onChange={setFilters} />
+        {reportLoading ? (
+          <div className="text-center py-10">Memuat laporan...</div>
+        ) : (
+          <>
+            <ReportSummary summary={summary} />
+            <ReportCharts serviceStats={serviceStats} branchStats={branchStats} />
+          </>
+        )}
       </div>
     </AdminLayout>
   )
