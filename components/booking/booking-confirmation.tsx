@@ -45,8 +45,13 @@ export function BookingConfirmation({ bookingData, onNewBooking }: BookingConfir
   const bookingDate = new Date(bookingData.date)
   const formattedDate = format(bookingDate, "EEEE, dd MMMM yyyy", { locale: id })
 
-  const totalPrice = bookingData.service.price + (bookingData.isPickupService ? bookingData.service.pickup_fee || 0 : 0)
-  const loyaltyPointsEarned = Math.floor(totalPrice / 1000) // 1 point per 1000 IDR
+  const discount = (bookingData.loyaltyPointsUsed || 0) * 1000
+  const totalPrice =
+    bookingData.service.price +
+    (bookingData.isPickupService ? bookingData.service.pickup_fee || 0 : 0) -
+    discount
+  const loyaltyPointsEarned =
+    bookingData.service.loyalty_points_reward ?? Math.floor(totalPrice / 1000)
 
   return (
     <div className="space-y-6">
@@ -98,6 +103,11 @@ export function BookingConfirmation({ bookingData, onNewBooking }: BookingConfir
             </div>
             <div className="text-right">
               <p className="text-2xl font-bold text-primary">{formatCurrency(totalPrice)}</p>
+              {bookingData.loyaltyPointsUsed ? (
+                <p className="text-xs text-muted-foreground">
+                  Diskon poin: -{formatCurrency(discount)}
+                </p>
+              ) : null}
               <p className="text-sm text-muted-foreground">~{bookingData.service.duration} menit</p>
               {bookingData.isPickupService && <p className="text-xs text-muted-foreground">Termasuk biaya pickup</p>}
             </div>
@@ -156,6 +166,21 @@ export function BookingConfirmation({ bookingData, onNewBooking }: BookingConfir
               </div>
             </>
           )}
+
+          {bookingData.loyaltyPointsUsed ? (
+            <>
+              <Separator />
+              <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+                <Star className="w-5 h-5 text-blue-500" />
+                <div>
+                  <p className="font-semibold text-blue-800">Poin Digunakan</p>
+                  <p className="text-sm text-blue-700">
+                    Anda menggunakan {bookingData.loyaltyPointsUsed} poin untuk diskon {formatCurrency(discount)}
+                  </p>
+                </div>
+              </div>
+            </>
+          ) : null}
 
           {loyaltyPointsEarned > 0 && (
             <>

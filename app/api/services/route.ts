@@ -10,6 +10,7 @@ interface CreateServiceInput {
   supports_pickup: boolean
   duration: number
   features: string[]
+  loyalty_points_reward?: number
 }
 
 function validateServiceInput(data: any): CreateServiceInput {
@@ -24,6 +25,12 @@ function validateServiceInput(data: any): CreateServiceInput {
   if (typeof data.supports_pickup !== "boolean") errors.push("supports_pickup must be a boolean")
   if (typeof data.duration !== "number" || data.duration <= 0) errors.push("duration must be a positive number")
   if (!Array.isArray(data.features)) errors.push("features must be an array")
+  if (
+    typeof data.loyalty_points_reward !== "undefined" &&
+    (typeof data.loyalty_points_reward !== "number" || data.loyalty_points_reward < 0)
+  ) {
+    errors.push("loyalty_points_reward must be a non-negative number")
+  }
 
   if (errors.length > 0) {
     throw new Error(`Validation failed: ${errors.join(", ")}`)
@@ -67,6 +74,7 @@ export async function POST(request: NextRequest) {
       id: `service-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       created_at: now.toISOString(),
       updated_at: now.toISOString(),
+      loyalty_points_reward: serviceData.loyalty_points_reward ?? 0,
     }
 
     const { data: service, error } = await supabase.from("services").insert(insertData).select().single()

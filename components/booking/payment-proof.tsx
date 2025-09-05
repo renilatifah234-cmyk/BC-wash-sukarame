@@ -105,8 +105,11 @@ export function PaymentProof({ onNext, onPrev, onUpload, bookingData, updateBook
 
     try {
       // Calculate total price including pickup fee if applicable
+      const discount = (bookingData.loyaltyPointsUsed || 0) * 1000
       const totalPrice =
-        bookingData.service.price + (bookingData.isPickupService ? bookingData.service.pickup_fee || 0 : 0)
+        bookingData.service.price +
+        (bookingData.isPickupService ? bookingData.service.pickup_fee || 0 : 0) -
+        discount
 
       // Prepare booking payload
       const bookingPayload = {
@@ -124,6 +127,7 @@ export function PaymentProof({ onNext, onPrev, onUpload, bookingData, updateBook
         vehicle_plate_number: bookingData.vehiclePlateNumber,
         payment_method: method,
         booking_source: "online" as const,
+        loyalty_points_used: bookingData.loyaltyPointsUsed || 0,
       }
 
       // Create booking record

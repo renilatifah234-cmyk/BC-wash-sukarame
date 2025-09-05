@@ -81,6 +81,35 @@ export function LoyaltyDashboard() {
     }
   }
 
+  const handleUpdatePoints = async (customer: Customer) => {
+    const newPointsStr = prompt(
+      `Masukkan total poin baru untuk ${customer.name}`,
+      customer.totalLoyaltyPoints.toString(),
+    )
+    if (newPointsStr === null) return
+    const newPoints = Number.parseInt(newPointsStr, 10)
+    if (Number.isNaN(newPoints)) {
+      toast({
+        title: "Input tidak valid",
+        description: "Nilai poin harus berupa angka",
+        variant: "destructive",
+      })
+      return
+    }
+    try {
+      await apiClient.updateCustomer(customer.id, { total_loyalty_points: newPoints })
+      toast({ title: "Poin diperbarui" })
+      fetchCustomers()
+    } catch (err) {
+      console.error("[v0] Error updating points:", err)
+      toast({
+        title: "Gagal memperbarui poin",
+        description: "Terjadi kesalahan saat memperbarui poin",
+        variant: "destructive",
+      })
+    }
+  }
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -274,7 +303,7 @@ export function LoyaltyDashboard() {
                             })}
                           </p>
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right space-x-2">
                           <Button
                             variant="outline"
                             size="sm"
@@ -282,6 +311,14 @@ export function LoyaltyDashboard() {
                             onClick={() => handleViewCustomerDetail(customer.id)}
                           >
                             Detail
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="bg-transparent"
+                            onClick={() => handleUpdatePoints(customer)}
+                          >
+                            Update
                           </Button>
                         </TableCell>
                       </TableRow>
