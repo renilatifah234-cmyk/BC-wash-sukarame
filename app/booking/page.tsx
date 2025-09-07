@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { BookingSteps } from "@/components/booking/booking-steps"
 import { ServiceSelection } from "@/components/booking/service-selection"
 import { BranchTimeSelection } from "@/components/booking/branch-time-selection"
 import { CustomerInfo } from "@/components/booking/customer-info"
@@ -10,6 +9,7 @@ import { PaymentProof } from "@/components/booking/payment-proof"
 import { BookingConfirmation } from "@/components/booking/booking-confirmation"
 import { useSearchParams } from "next/navigation"
 import type { Service, Branch } from "@/lib/api-client"
+import { Stepper } from "@/components/Stepper"
 
 export interface BookingData {
   service?: Service
@@ -123,11 +123,13 @@ export default function BookingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4">
-      <div className="container mx-auto max-w-4xl">
-        <BookingSteps currentStep={currentStep} />
-        <div className="mt-8">{renderStep()}</div>
+    <div className="min-h-screen bg-background">
+      <div className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b">
+        <div className="container mx-auto max-w-4xl px-4">
+          <Stepper currentStep={currentStep} onStepChange={(step) => setCurrentStep(step)} />
+        </div>
       </div>
+      <div className="container mx-auto max-w-4xl px-4 py-8">{renderStep()}</div>
     </div>
   )
 }

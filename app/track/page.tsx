@@ -7,13 +7,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { apiClient } from "@/lib/api-client"
-import { Calendar, Car, CheckCircle, Clock, MapPin, Search, XCircle } from "lucide-react"
+import { Calendar, Car, CheckCircle, Clock, MapPin, Search, XCircle, ChevronLeft } from "lucide-react"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
+import { useRouter } from "next/navigation"
 
 type BookingStatus = "pending" | "confirmed" | "picked-up" | "in-progress" | "completed" | "cancelled"
 
 export default function TrackBookingPage() {
+  const router = useRouter()
   const [code, setCode] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -66,9 +68,29 @@ export default function TrackBookingPage() {
 
   const stepIndex = (s: BookingStatus) => steps.findIndex((st) => st.key === s)
 
+  const handleBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back()
+    } else {
+      router.push("/")
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-background py-8 px-4">
-      <div className="container mx-auto max-w-3xl space-y-6">
+    <div className="min-h-screen bg-background pb-8">
+      <div className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b">
+        <div className="container mx-auto max-w-3xl px-4">
+          <button
+            onClick={handleBack}
+            className="flex items-center gap-2 py-3 text-sm"
+            aria-label="Kembali"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Kembali
+          </button>
+        </div>
+      </div>
+      <div className="container mx-auto max-w-3xl space-y-6 px-4 pt-6">
         <div>
           <h1 className="font-serif text-2xl md:text-3xl font-bold text-foreground">Lacak Status Booking</h1>
           <p className="text-muted-foreground mt-1">Masukkan kode booking Anda untuk melihat progres.</p>

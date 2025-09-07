@@ -54,6 +54,8 @@ interface BookingDetailModalProps {
     pickupNotes?: string
     vehiclePlateNumber?: string
     loyaltyPointsEarned?: number
+    pickupLat?: number
+    pickupLng?: number
   } | null
   isOpen: boolean
   onClose: () => void
@@ -314,16 +316,47 @@ export function BookingDetailModal({ booking, isOpen, onClose, onStatusChange }:
                   Layanan Pickup
                 </h4>
                 <div className="p-4 bg-muted/50 rounded-lg space-y-2">
-                  <div>
-                    <p className="font-medium">Alamat Pickup:</p>
-                    <p className="text-sm text-muted-foreground">{booking.pickupAddress}</p>
-                  </div>
+                  {booking.pickupAddress && (
+                    <div>
+                      <p className="font-medium">Alamat Pickup:</p>
+                      <p className="text-sm text-muted-foreground">{booking.pickupAddress}</p>
+                    </div>
+                  )}
+                  {booking.pickupLat != null && booking.pickupLng != null && (
+                    <div className="rounded overflow-hidden aspect-video">
+                      <iframe
+                        src={`https://www.google.com/maps?q=${booking.pickupLat},${booking.pickupLng}&z=15&output=embed`}
+                        className="w-full h-full border-0"
+                        loading="lazy"
+                        allowFullScreen
+                      />
+                    </div>
+                  )}
                   {booking.pickupNotes && (
                     <div>
                       <p className="font-medium">Catatan:</p>
                       <p className="text-sm text-muted-foreground">{booking.pickupNotes}</p>
                     </div>
                   )}
+                  <Button
+                    variant="outline"
+                    className="w-full bg-transparent"
+                    asChild
+                  >
+                    <a
+                      href={
+                        booking.pickupLat != null && booking.pickupLng != null
+                          ? `https://www.google.com/maps/dir/?api=1&destination=${booking.pickupLat},${booking.pickupLng}`
+                          : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                              booking.pickupAddress || "",
+                            )}`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Buka di Google Maps
+                    </a>
+                  </Button>
                 </div>
               </div>
             </>

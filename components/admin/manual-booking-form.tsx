@@ -21,6 +21,7 @@ import { id } from "date-fns/locale"
 import { cn } from "@/lib/utils"
 import { apiClient } from "@/lib/api-client"
 import type { Service, Branch, CreateBookingData } from "@/lib/api-client"
+import { normalizePlate } from "@/lib/normalizePlate"
 
 interface ManualBookingFormProps {
   onSuccess: (bookingCode: string, loyaltyPoints: number) => void
@@ -333,7 +334,7 @@ export function ManualBookingForm({ onSuccess, onCancel }: ManualBookingFormProp
               <Input
                 id="vehiclePlateNumber"
                 value={formData.vehiclePlateNumber}
-                onChange={(e) => handleInputChange("vehiclePlateNumber", e.target.value.toUpperCase())}
+                onChange={(e) => handleInputChange("vehiclePlateNumber", normalizePlate(e.target.value))}
                 placeholder="B 1234 ABC"
                 className={errors.vehiclePlateNumber ? "border-destructive" : ""}
               />

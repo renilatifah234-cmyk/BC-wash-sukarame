@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { User, Phone, Mail, Car, MapPin, FileText, Clock, Info } from "lucide-react"
 import { getServiceById, type Service } from "@/lib/dummy-data"
+import { normalizePlate } from "@/lib/normalizePlate"
 import { PickupAddressInput } from "@/components/booking/pickup-address-input"
 
 interface CustomerInfoProps {
@@ -84,8 +85,6 @@ export function CustomerInfo({
 
     if (!formData.vehiclePlateNumber.trim()) {
       newErrors.vehiclePlateNumber = "Nomor plat kendaraan wajib diisi"
-    } else if (!/^[A-Z]{1,2}\s?\d{1,4}\s?[A-Z]{1,3}$/i.test(formData.vehiclePlateNumber.trim())) {
-      newErrors.vehiclePlateNumber = "Format plat nomor tidak valid (contoh: B 1234 ABC)"
     }
 
     if (formData.isPickupService && !formData.pickupAddress.trim()) {
@@ -182,7 +181,7 @@ export function CustomerInfo({
                 type="text"
                 placeholder="Contoh: B 1234 ABC"
                 value={formData.vehiclePlateNumber}
-                onChange={(e) => handleInputChange("vehiclePlateNumber", e.target.value.toUpperCase())}
+                onChange={(e) => handleInputChange("vehiclePlateNumber", normalizePlate(e.target.value))}
                 className={errors.vehiclePlateNumber ? "border-destructive" : ""}
               />
               {errors.vehiclePlateNumber && <p className="text-sm text-destructive">{errors.vehiclePlateNumber}</p>}

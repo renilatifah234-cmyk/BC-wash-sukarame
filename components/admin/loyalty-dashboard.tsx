@@ -304,105 +304,166 @@ export function LoyaltyDashboard() {
               {searchTerm ? "Tidak ada pelanggan yang sesuai dengan pencarian." : "Belum ada pelanggan terdaftar."}
             </div>
           ) : (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Pelanggan</TableHead>
-                    <TableHead>Kendaraan</TableHead>
-                    <TableHead>Total Booking</TableHead>
-                    <TableHead>Poin Loyalitas</TableHead>
-                    <TableHead>Tier</TableHead>
-                    <TableHead>Bergabung</TableHead>
-                    <TableHead className="text-right">Aksi</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {customers.map((customer) => {
-                    const tier = getCustomerTier(customer.totalLoyaltyPoints)
-                    return (
-                      <TableRow key={customer.id}>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">{customer.name}</p>
-                            <p className="text-sm text-muted-foreground">{customer.phone}</p>
-                            <p className="text-xs text-muted-foreground">{customer.email}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            {totalVehicles === 0 ? (
-                              <span className="text-xs text-muted-foreground">-</span>
-                            ) : (
-                              customer.vehiclePlateNumbers.map((plate, index) => (
-                                <Badge key={index} variant="outline" className="font-mono text-xs">
-                                  {plate}
-                                </Badge>
-                              ))
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-center">
-                            <p className="font-medium">{customer.totalBookings}</p>
-                            <p className="text-xs text-muted-foreground">kali</p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Star className="h-4 w-4 text-yellow-500" />
-                            <span className="font-medium">{customer.totalLoyaltyPoints}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={tier.color}>{tier.name}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <p className="text-sm">
-                            {new Date(customer.joinDate).toLocaleDateString("id-ID", {
-                              year: "numeric",
-                              month: "short",
-                              day: "numeric",
-                            })}
-                          </p>
-                        </TableCell>
-                        <TableCell className="text-right space-x-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="bg-transparent"
-                            onClick={() => handleViewCustomerDetail(customer.id)}
-                          >
-                            Detail
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="bg-transparent"
-                            onClick={() => handleEditCustomer(customer)}
-                          >
-                            Update
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })}
-                </TableBody>
-              </Table>
-            </div>
+            <>
+              <div className="rounded-md border overflow-x-auto hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Pelanggan</TableHead>
+                      <TableHead>Kendaraan</TableHead>
+                      <TableHead>Total Booking</TableHead>
+                      <TableHead>Poin Loyalitas</TableHead>
+                      <TableHead>Tier</TableHead>
+                      <TableHead>Bergabung</TableHead>
+                      <TableHead className="text-right">Aksi</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {customers.map((customer) => {
+                      const tier = getCustomerTier(customer.totalLoyaltyPoints)
+                      return (
+                        <TableRow key={customer.id}>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium">{customer.name}</p>
+                              <p className="text-sm text-muted-foreground">{customer.phone}</p>
+                              <p className="text-xs text-muted-foreground">{customer.email}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              {customer.vehiclePlateNumbers.length === 0 ? (
+                                <span className="text-xs text-muted-foreground">-</span>
+                              ) : (
+                                customer.vehiclePlateNumbers.map((plate, index) => (
+                                  <Badge key={index} variant="outline" className="font-mono text-xs">
+                                    {plate}
+                                  </Badge>
+                                ))
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-center">
+                              <p className="font-medium">{customer.totalBookings}</p>
+                              <p className="text-xs text-muted-foreground">kali</p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Star className="h-4 w-4 text-yellow-500" />
+                              <span className="font-medium">{customer.totalLoyaltyPoints}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={tier.color}>{tier.name}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <p className="text-sm">
+                              {new Date(customer.joinDate).toLocaleDateString("id-ID", {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                              })}
+                            </p>
+                          </TableCell>
+                          <TableCell className="text-right space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="bg-transparent"
+                              onClick={() => handleViewCustomerDetail(customer.id)}
+                            >
+                              Detail
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="bg-transparent"
+                              onClick={() => handleEditCustomer(customer)}
+                            >
+                              Update
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <div className="space-y-4 md:hidden">
+                {customers.map((customer) => {
+                  const tier = getCustomerTier(customer.totalLoyaltyPoints)
+                  return (
+                    <div key={customer.id} className="rounded-lg border p-4 shadow-sm space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">{customer.name}</p>
+                          <p className="text-sm text-muted-foreground">{customer.phone}</p>
+                          <p className="text-xs text-muted-foreground">{customer.email}</p>
+                        </div>
+                        <Badge className={tier.color}>{tier.name}</Badge>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {customer.vehiclePlateNumbers.length === 0 ? (
+                          <span className="text-xs text-muted-foreground">-</span>
+                        ) : (
+                          customer.vehiclePlateNumbers.map((plate, idx) => (
+                            <Badge key={idx} variant="outline" className="font-mono text-xs">
+                              {plate}
+                            </Badge>
+                          ))
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between text-sm text-muted-foreground">
+                        <span>Total {customer.totalBookings} kali</span>
+                        <span className="flex items-center gap-1 text-foreground">
+                          <Star className="h-4 w-4 text-yellow-500" />
+                          {customer.totalLoyaltyPoints}
+                        </span>
+                      </div>
+                      <p className="text-sm">
+                        Bergabung {new Date(customer.joinDate).toLocaleDateString("id-ID", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </p>
+                      <div className="flex gap-2 pt-2">
+                        <Button
+                          variant="outline"
+                          className="flex-1 h-11"
+                          onClick={() => handleViewCustomerDetail(customer.id)}
+                        >
+                          Detail
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="flex-1 h-11"
+                          onClick={() => handleEditCustomer(customer)}
+                        >
+                          Update
+                        </Button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </>
           )}
-          <div className="flex items-center justify-between py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-4 gap-4">
             <div className="text-sm text-muted-foreground">
               Menampilkan {customers.length ? (page - 1) * pageSize + 1 : 0}-
               {(page - 1) * pageSize + customers.length} dari {total} pelanggan
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 sm:justify-end">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setPage(page - 1)}
                 disabled={page === 1}
-                className="bg-transparent"
+                className="h-11"
               >
                 Sebelumnya
               </Button>
@@ -414,7 +475,7 @@ export function LoyaltyDashboard() {
                 size="sm"
                 onClick={() => setPage(page + 1)}
                 disabled={page >= Math.ceil(total / pageSize)}
-                className="bg-transparent"
+                className="h-11"
               >
                 Selanjutnya
               </Button>

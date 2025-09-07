@@ -79,7 +79,7 @@ export function BookingExport({ searchTerm }: BookingExportProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button disabled={isExporting} className="flex items-center gap-2">
+        <Button disabled={isExporting} className="flex items-center gap-2 h-11">
           <Download className="w-4 h-4" />
           {isExporting ? "Mengekspor..." : "Ekspor"}
         </Button>
