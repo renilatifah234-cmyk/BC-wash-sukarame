@@ -8,15 +8,9 @@ import { id } from "date-fns/locale"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { apiClient } from "@/lib/api-client"
-import type { Booking, Service, Branch } from "@/lib/dummy-data"
-
-interface BookingWithDetails extends Booking {
-  service?: Service
-  branch?: Branch
-}
 
 export function RecentBookings() {
-  const [recentBookings, setRecentBookings] = useState<BookingWithDetails[]>([])
+  const [recentBookings, setRecentBookings] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -24,25 +18,8 @@ export function RecentBookings() {
     const fetchRecentBookings = async () => {
       try {
         setLoading(true)
-        const [{ bookings }, { services }, { branches }] = await Promise.all([
-          apiClient.getBookings(),
-          apiClient.getServices(),
-          apiClient.getBranches(),
-        ])
-
-        // Get the 5 most recent bookings
-        const sortedBookings = bookings
-          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-          .slice(0, 5)
-
-        // Enrich bookings with service and branch details
-        const enrichedBookings: BookingWithDetails[] = sortedBookings.map((booking) => ({
-          ...booking,
-          service: services.find((s) => s.id === booking.serviceId),
-          branch: branches.find((b) => b.id === booking.branchId),
-        }))
-
-        setRecentBookings(enrichedBookings)
+        const { bookings } = await apiClient.getBookings({ limit: 5 })
+        setRecentBookings(bookings)
       } catch (err) {
         console.error("[v0] Error fetching recent bookings:", err)
         setError("Gagal memuat booking terbaru")
@@ -150,7 +127,11 @@ export function RecentBookings() {
                   <p className="text-sm text-muted-foreground">{booking.services?.name || "Layanan tidak ditemukan"}</p>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span>
-                      {format(booking.date ? new Date(booking.date + "T00:00:00") : new Date(), "dd MMM yyyy", { locale: id })}
+                      {format(
+                        booking.booking_date ? new Date(booking.booking_date + "T00:00:00") : new Date(),
+                        "dd MMM yyyy",
+                        { locale: id },
+                      )}
                     </span>
                     <span>•</span>
                     <span>{booking.branches?.name || "Cabang tidak ditemukan"}</span>

@@ -47,10 +47,32 @@ export function DashboardStats() {
 
         const dailyRevenue = completedTodayBookings.reduce((sum, booking) => sum + booking.total_price, 0)
 
-        // Calculate new customers (joined in last 7 days)
+        const yesterday = new Date()
+        yesterday.setDate(yesterday.getDate() - 1)
+        const yesterdayStr = yesterday.toISOString().split("T")[0]
+        const yesterdayBookings = bookings.filter((b) => b.booking_date === yesterdayStr)
+        const completedYesterdayBookings = yesterdayBookings.filter((b) => b.status === "completed")
+        const revenueYesterday = completedYesterdayBookings.reduce((sum, b) => sum + b.total_price, 0)
+
+        const bookingGrowth = yesterdayBookings.length
+          ? Math.round(((todayBookings.length - yesterdayBookings.length) / yesterdayBookings.length) * 100)
+          : 0
+        const revenueGrowth = revenueYesterday
+          ? Math.round(((dailyRevenue - revenueYesterday) / revenueYesterday) * 100)
+          : 0
+
+        // Calculate new customers (joined in last 7 days) and growth vs previous week
         const weekAgo = new Date()
         weekAgo.setDate(weekAgo.getDate() - 7)
-        const newCustomers = customers.filter((customer) => new Date(customer.join_date) >= weekAgo).length
+        const twoWeeksAgo = new Date()
+        twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14)
+        const newCustomers = customers.filter((c) => new Date(c.join_date) >= weekAgo).length
+        const prevWeekCustomers = customers.filter(
+          (c) => new Date(c.join_date) < weekAgo && new Date(c.join_date) >= twoWeeksAgo,
+        ).length
+        const newCustomerGrowth = prevWeekCustomers
+          ? Math.round(((newCustomers - prevWeekCustomers) / prevWeekCustomers) * 100)
+          : 0
 
         // Calculate average service time from services
         const avgServiceTime =
@@ -64,10 +86,10 @@ export function DashboardStats() {
           activeServices: services.length,
           newCustomers,
           averageServiceTime: avgServiceTime,
-          customerSatisfaction: 4.8, // This would come from a reviews/ratings system
-          bookingGrowth: 12, // This would be calculated from historical data
-          revenueGrowth: 8, // This would be calculated from historical data
-          newCustomerGrowth: 25, // This would be calculated from historical data
+          customerSatisfaction: 4.8, // Placeholder for actual ratings
+          bookingGrowth,
+          revenueGrowth,
+          newCustomerGrowth,
         }
 
         setStats(statsData)

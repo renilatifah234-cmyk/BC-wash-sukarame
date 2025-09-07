@@ -201,6 +201,8 @@ class ApiClient {
     branchId?: string
     status?: string
     date?: string
+    dateFrom?: string
+    dateTo?: string
     limit?: number
     page?: number
     search?: string
@@ -210,6 +212,8 @@ class ApiClient {
       if (params?.branchId) searchParams.set("branchId", params.branchId)
       if (params?.status) searchParams.set("status", params.status)
       if (params?.date) searchParams.set("date", params.date)
+      if (params?.dateFrom) searchParams.set("dateFrom", params.dateFrom)
+      if (params?.dateTo) searchParams.set("dateTo", params.dateTo)
       if (params?.limit) searchParams.set("limit", params.limit.toString())
       if (params?.page) searchParams.set("page", params.page.toString())
       if (params?.search) searchParams.set("search", params.search)
@@ -380,10 +384,20 @@ class ApiClient {
     }
   }
 
-  async getCustomers(phone?: string): Promise<{ customers: Customer[] }> {
-    const query = phone ? `?phone=${encodeURIComponent(phone)}` : ""
+  async getCustomers(params?: {
+    phone?: string
+    search?: string
+    page?: number
+    limit?: number
+  }): Promise<{ customers: Customer[]; total: number }> {
+    const searchParams = new URLSearchParams()
+    if (params?.phone) searchParams.set("phone", params.phone)
+    if (params?.search) searchParams.set("search", params.search)
+    if (params?.page) searchParams.set("page", params.page.toString())
+    if (params?.limit) searchParams.set("limit", params.limit.toString())
+    const query = searchParams.toString()
     try {
-      return await this.request(`/customers${query}`)
+      return await this.request(`/customers${query ? `?${query}` : ""}`)
     } catch (error) {
       console.error("[v0] Failed to fetch customers:", error)
       throw error

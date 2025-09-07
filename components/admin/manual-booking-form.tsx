@@ -23,7 +23,7 @@ import { apiClient } from "@/lib/api-client"
 import type { Service, Branch, CreateBookingData } from "@/lib/api-client"
 
 interface ManualBookingFormProps {
-  onSuccess: (bookingCode: string) => void
+  onSuccess: (bookingCode: string, loyaltyPoints: number) => void
   onCancel: () => void
 }
 
@@ -211,7 +211,7 @@ export function ManualBookingForm({ onSuccess, onCancel }: ManualBookingFormProp
       }
 
       const newBooking = await apiClient.createBooking(bookingData)
-      onSuccess(newBooking.booking.booking_code)
+      onSuccess(newBooking.booking.booking_code, newBooking.booking.loyalty_points_earned)
     } catch (error) {
       console.error("[v0] Error creating booking:", error)
       // You could add error handling/toast notification here

@@ -5,22 +5,38 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const phone = searchParams.get("phone")
+    const search = searchParams.get("search")
+    const limit = searchParams.get("limit")
+    const page = searchParams.get("page")
 
     const supabase = createClient()
 
-    let query = supabase.from("customers").select("*").order("join_date", { ascending: false })
+    let query = supabase
+      .from("customers")
+      .select("*", { count: "exact" })
+      .order("join_date", { ascending: false })
 
     if (phone) {
       query = query.eq("phone", phone)
     }
 
-    const { data: customers, error } = await query
+    if (search) {
+      query = query.or(`name.ilike.%${search}%,phone.ilike.%${search}%`)
+    }
+
+    const limitNum = limit ? Number.parseInt(limit) : 10
+    const pageNum = page ? Number.parseInt(page) : 1
+    const from = (pageNum - 1) * limitNum
+    const to = from + limitNum - 1
+    query = query.range(from, to)
+
+    const { data: customers, error, count } = await query
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json({ customers })
+    return NextResponse.json({ customers: customers || [], total: count || 0 })
   } catch (error) {
     console.error("Get customers error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

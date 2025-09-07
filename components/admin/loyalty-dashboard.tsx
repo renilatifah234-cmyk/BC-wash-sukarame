@@ -35,6 +35,9 @@ export function LoyaltyDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const pageSize = 10
   const [detailCustomer, setDetailCustomer] = useState<Customer | null>(null)
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false)
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null)
@@ -49,13 +52,17 @@ export function LoyaltyDashboard() {
 
   useEffect(() => {
     fetchCustomers()
-  }, [])
+  }, [page, searchTerm])
 
   const fetchCustomers = async () => {
     try {
       setLoading(true)
-      const customerData = await apiClient.getCustomers()
-      const mappedCustomers: Customer[] = customerData.customers.map((c) => ({
+      const { customers: customerData, total } = await apiClient.getCustomers({
+        page,
+        limit: pageSize,
+        search: searchTerm,
+      })
+      const mappedCustomers: Customer[] = customerData.map((c) => ({
         id: c.id,
         name: c.name,
         phone: c.phone,
@@ -66,6 +73,7 @@ export function LoyaltyDashboard() {
         joinDate: c.join_date,
       }))
       setCustomers(mappedCustomers)
+      setTotal(total)
     } catch (err) {
       console.error("[v0] Error fetching customers:", err)
       setError("Gagal memuat data pelanggan")
@@ -74,14 +82,7 @@ export function LoyaltyDashboard() {
     }
   }
 
-  const filteredCustomers = customers.filter(
-    (customer) =>
-      customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.phone.includes(searchTerm) ||
-      customer.vehiclePlateNumbers.some((plate) => plate.toLowerCase().includes(searchTerm.toLowerCase())),
-  )
-
-  const totalCustomers = customers.length
+  const totalCustomers = total
   const totalLoyaltyPoints = customers.reduce((sum, customer) => sum + customer.totalLoyaltyPoints, 0)
   const averagePointsPerCustomer = totalCustomers > 0 ? Math.round(totalLoyaltyPoints / totalCustomers) : 0
   const totalVehicles = customers.reduce(
@@ -288,14 +289,17 @@ export function LoyaltyDashboard() {
               <Input
                 placeholder="Cari nama, telepon, atau plat nomor..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value)
+                  setPage(1)
+                }}
                 className="pl-10"
               />
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          {filteredCustomers.length === 0 ? (
+          {customers.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               {searchTerm ? "Tidak ada pelanggan yang sesuai dengan pencarian." : "Belum ada pelanggan terdaftar."}
             </div>
@@ -314,7 +318,7 @@ export function LoyaltyDashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredCustomers.map((customer) => {
+                  {customers.map((customer) => {
                     const tier = getCustomerTier(customer.totalLoyaltyPoints)
                     return (
                       <TableRow key={customer.id}>
@@ -387,6 +391,35 @@ export function LoyaltyDashboard() {
               </Table>
             </div>
           )}
+          <div className="flex items-center justify-between py-4">
+            <div className="text-sm text-muted-foreground">
+              Menampilkan {customers.length ? (page - 1) * pageSize + 1 : 0}-
+              {(page - 1) * pageSize + customers.length} dari {total} pelanggan
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(page - 1)}
+                disabled={page === 1}
+                className="bg-transparent"
+              >
+                Sebelumnya
+              </Button>
+              <span className="text-sm">
+                Halaman {page} dari {Math.ceil(total / pageSize) || 1}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(page + 1)}
+                disabled={page >= Math.ceil(total / pageSize)}
+                className="bg-transparent"
+              >
+                Selanjutnya
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
       {/* Detail Dialog */}
