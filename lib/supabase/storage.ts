@@ -10,12 +10,12 @@ export async function uploadPaymentProof(file: File, bookingCode: string): Promi
   try {
     const supabase = createClient()
 
-    // Generate unique filename with booking code
+    // Buat nama file unik pakai kode booking
     const fileExt = file.name.split(".").pop()
     const fileName = `${bookingCode}-${Date.now()}.${fileExt}`
     const filePath = `payment-proofs/${fileName}`
 
-    // Upload file to Supabase Storage
+    // Unggah ke Supabase Storage
     const { data, error } = await supabase.storage.from("payment-proofs").upload(filePath, file, {
       cacheControl: "3600",
       upsert: false,
@@ -29,7 +29,7 @@ export async function uploadPaymentProof(file: File, bookingCode: string): Promi
       }
     }
 
-    // Get public URL
+    // Ambil URL publik
     const { data: urlData } = supabase.storage.from("payment-proofs").getPublicUrl(filePath)
 
     return {
@@ -49,7 +49,7 @@ export async function deletePaymentProof(url: string): Promise<boolean> {
   try {
     const supabase = createClient()
 
-    // Extract file path from URL
+    // Ambil path file dari URL
     const urlParts = url.split("/storage/v1/object/public/payment-proofs/")
     if (urlParts.length < 2) {
       return false
@@ -78,7 +78,7 @@ export function getPaymentProofUrl(fileName: string): string {
   return data.publicUrl
 }
 
-// Validate file before upload
+// Validasi file sebelum upload
 export function validatePaymentProofFile(file: File): { valid: boolean; error?: string } {
   const maxSize = 5 * 1024 * 1024 // 5MB
   const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"]

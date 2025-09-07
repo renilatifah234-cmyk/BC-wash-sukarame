@@ -376,7 +376,7 @@ export function BranchManagement() {
     fetchBranches()
   }, [])
 
-  // Normalize API branch payload to UI-friendly shape
+  // Normalisasi payload API cabang ke bentuk UI
   const mapBranch = (branch: any): Branch => {
     return {
       id: branch.id,
@@ -482,7 +482,7 @@ export function BranchManagement() {
       newErrors.pickupRadius = "Radius pickup harus antara 1-50 km"
     }
 
-    // Optional: simple numeric check for lat/lng when provided
+    // Opsional: cek numerik sederhana untuk lat/lng jika ada
     if (newBranchData.latitude && isNaN(Number(newBranchData.latitude))) {
       newErrors.latitude = "Latitude harus berupa angka"
     }

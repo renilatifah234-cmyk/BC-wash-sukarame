@@ -45,7 +45,7 @@ export function PickupAddressInput({
 
   useEffect(() => {
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
-    if (!apiKey) return // fallback to plain input
+    if (!apiKey) return // fallback ke input biasa
 
     const existing = document.querySelector<HTMLScriptElement>("script[data-google-maps]")
     if (existing) {
@@ -67,13 +67,13 @@ export function PickupAddressInput({
     if (!geocoderRef.current) geocoderRef.current = new window.google.maps.Geocoder()
     initMap()
     initAutocomplete()
-    // If there is an initial value, attempt to geocode and place pin
+    // jika ada nilai awal, geocode & pasang pin
     if (value?.trim()) {
       geocodeAddress(value)
     }
   }
 
-  // Ensure map initializes/updates when container is ready or props change
+  // pastikan map init/update saat container siap atau prop berubah
   useEffect(() => {
     if (hasGoogle) {
       initMap()
@@ -89,7 +89,7 @@ export function PickupAddressInput({
         : getBranchCoordinates(branchId)
     if (!branchCoord) return
 
-    // Create map once
+    // inisialisasi map sekali
     if (!mapRef.current) {
       mapRef.current = new window.google.maps.Map(mapContainerRef.current, {
         center: branchCoord,
@@ -102,7 +102,7 @@ export function PickupAddressInput({
       mapRef.current.setCenter(branchCoord)
     }
 
-    // Branch marker
+    // marker cabang
     if (!branchMarkerRef.current) {
       branchMarkerRef.current = new window.google.maps.Marker({
         position: branchCoord,
@@ -121,7 +121,7 @@ export function PickupAddressInput({
       branchMarkerRef.current.setPosition(branchCoord)
     }
 
-    // Coverage circle
+    // lingkaran jangkauan
     const radiusMeters = (radiusKm ?? 0) * 1000
     if (!circleRef.current) {
       circleRef.current = new window.google.maps.Circle({
@@ -139,7 +139,7 @@ export function PickupAddressInput({
       circleRef.current.setRadius(radiusMeters)
     }
 
-    // Pickup marker (draggable)
+    // marker pickup (bisa drag)
     if (!pickupMarkerRef.current) {
       pickupMarkerRef.current = new window.google.maps.Marker({
         map: mapRef.current,
@@ -235,12 +235,12 @@ export function PickupAddressInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onBlur={() => {
-          // Attempt to geocode free-typed input to validate distance
+          // geocode input manual untuk validasi jarak
           if (!window.google || !value?.trim()) return
           try {
             geocodeAddress(value)
           } catch {
-            // no-op: keep last known validation state
+            // tidak ada aksi: pakai status validasi terakhir
           }
         }}
         className={!valid ? "border-destructive" : ""}

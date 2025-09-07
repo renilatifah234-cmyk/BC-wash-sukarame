@@ -37,22 +37,22 @@ function validateBookingInput(data: any): CreateBookingInput {
   if (!data.vehicle_plate_number?.trim()) errors.push("vehicle_plate_number is required")
   if (!data.payment_method?.trim()) errors.push("payment_method is required")
 
-  // Validate date format (YYYY-MM-DD)
+  // Validasi format tanggal (YYYY-MM-DD)
   if (data.booking_date && !/^\d{4}-\d{2}-\d{2}$/.test(data.booking_date)) {
     errors.push("booking_date must be in YYYY-MM-DD format")
   }
 
-  // Validate time format (HH:MM)
+  // Validasi format jam (HH:MM)
   if (data.booking_time && !/^\d{2}:\d{2}$/.test(data.booking_time)) {
     errors.push("booking_time must be in HH:MM format")
   }
 
-  // Validate email format
+  // Validasi format email
   if (data.customer_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.customer_email)) {
     errors.push("customer_email must be a valid email address")
   }
 
-  // Validate phone format
+  // Validasi format telepon
   if (data.customer_phone && !/^(\+62|62|0)[0-9]{9,13}$/.test(data.customer_phone.replace(/\s/g, ""))) {
     errors.push("customer_phone must be a valid Indonesian phone number")
   }
@@ -191,7 +191,7 @@ export async function POST(request: NextRequest) {
       let customerId: string
 
       if (existingCustomer) {
-        // Update existing customer
+        // Update data customer lama
         const updatedPlateNumbers = Array.from(
           new Set([...existingCustomer.vehicle_plate_numbers, bookingData.vehicle_plate_number]),
         )
@@ -212,7 +212,7 @@ export async function POST(request: NextRequest) {
           .eq("id", existingCustomer.id)
         customerId = existingCustomer.id
       } else {
-        // Create new customer
+        // Buat customer baru
         customerId = `customer-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
         await supabase.from("customers").insert({
           id: customerId,
@@ -238,7 +238,7 @@ export async function POST(request: NextRequest) {
       }
     } catch (customerError) {
       console.error("[v0] Error updating customer:", customerError)
-      // Don't fail the booking creation if customer update fails
+      // Abaikan jika update customer gagal; booking tetap lanjut
     }
 
     return NextResponse.json({ booking }, { status: 201 })

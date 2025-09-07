@@ -82,7 +82,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   try {
     const supabase = createClient()
 
-    // Check if service is being used in any bookings
+    // Pastikan layanan belum dipakai di booking lain
     const { data: bookings, error: bookingError } = await supabase
       .from("bookings")
       .select("id")

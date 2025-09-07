@@ -24,16 +24,16 @@ import { ErrorState } from "@/components/ui/error-state"
 import { showErrorToast, showSuccessToast } from "@/lib/error-utils"
 
 interface BookingWithDetails extends Booking {
-  // Properties from original Booking type that are explicitly needed
+  // Field penting dari tipe Booking asli
   serviceId: string;
   branchId: string;
   date: string;
   time: string;
-  bookingSource: "online" | "offline"; // Make non-optional, handle default if needed
+  bookingSource: "online" | "offline"; // wajib; default ditangani
   vehiclePlateNumber: string;
   createdAt: string;
   updatedAt: string;
-  loyaltyPointsEarned?: number; // Corrected name based on error suggestion
+  loyaltyPointsEarned?: number; // nama field disesuaikan
   bookingCode: string;
   customerName: string;
   customerPhone: string;
@@ -42,11 +42,11 @@ interface BookingWithDetails extends Booking {
   status: "pending" | "confirmed" | "picked-up" | "in-progress" | "completed" | "cancelled";
   isPickupService: boolean;
 
-  // Derived properties for display in the table and for the modal
-  service: string; // Service name as string (non-nullable)
-  branch: string;  // Branch name as string (non-nullable)
+  // Properti turunan untuk tabel & modal
+  service: string; // nama layanan
+  branch: string;  // nama cabang
 
-  // Property for the modal, mapping totalPrice to amount
+  // Properti modal: map totalPrice -> amount
   amount: number;
   paymentProof?: string | null;
   branchAddress: string;

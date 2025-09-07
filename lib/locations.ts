@@ -1,9 +1,9 @@
-// Simple branch coordinates mapping for pickup radius calculations
-// TODO: Replace with real coordinates for each branch
+// Mapping koordinat cabang untuk hitung radius pickup
+// TODO: ganti dengan koordinat asli tiap cabang
 export type LatLng = { lat: number; lng: number }
 
 const branchCoordinates: Record<string, LatLng> = {
-  // Example placeholders — please update with real coordinates
+  // contoh placeholder — isi dengan koordinat nyata
   // "sukarame-main": { lat: -6.2385, lng: 106.9756 },
   // "sukarame-branch2": { lat: -6.2498, lng: 106.9921 },
 }

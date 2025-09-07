@@ -76,7 +76,7 @@ export function ManualBookingForm({ onSuccess, onCancel }: ManualBookingFormProp
         console.log("[v0] Fetched services:", servicesData)
         console.log("[v0] Fetched branches:", branchesData)
 
-        setServices(servicesData.services) // Access the services array from the response
+        setServices(servicesData.services) // ambil array layanan dari respons
         setBranches(branchesData.branches.filter((branch: Branch) => branch.status === "active"))
       } catch (err) {
         console.error("[v0] Error fetching form data:", err)
@@ -215,7 +215,7 @@ export function ManualBookingForm({ onSuccess, onCancel }: ManualBookingFormProp
       onSuccess(newBooking.booking.booking_code, newBooking.booking.loyalty_points_earned)
     } catch (error) {
       console.error("[v0] Error creating booking:", error)
-      // You could add error handling/toast notification here
+      // bisa tambahkan toast/error handling di sini
     } finally {
       setIsSubmitting(false)
     }

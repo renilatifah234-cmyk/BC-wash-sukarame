@@ -1,19 +1,19 @@
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 
-// Check if Supabase environment variables are available
+// Pastikan variabel env Supabase tersedia
 export const isSupabaseConfigured =
   typeof process.env.NEXT_PUBLIC_SUPABASE_URL === "string" &&
   process.env.NEXT_PUBLIC_SUPABASE_URL.length > 0 &&
   typeof process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY === "string" &&
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY.length > 0
 
-// Create a cached version of the Supabase client for Server Components
+// Cache Supabase client untuk Server Component
 export function createClient() {
   const cookieStore = cookies()
 
   if (!isSupabaseConfigured) {
-    console.warn("Supabase environment variables are not set. Using dummy client.")
+    console.warn("Variabel env Supabase belum di-set. Pakai dummy client.")
     return {
       from: () => ({
         select: () => Promise.resolve({ data: [], error: null }),
@@ -39,9 +39,8 @@ export function createClient() {
         try {
           cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
         } catch {
-          // The `setAll` method was called from a Server Component.
-          // This can be ignored if you have middleware refreshing
-          // user sessions.
+          // setAll dipanggil dari Server Component; aman diabaikan bila
+          // middleware sudah meng-refresh sesi pengguna
         }
       },
     },

@@ -22,8 +22,8 @@ interface Booking {
   customer_email: string
   service_id: string
   branch_id: string
-  booking_date: string // ISO date string
-  booking_time: string // HH:MM format
+  booking_date: string // format ISO
+  booking_time: string // format HH:MM
   total_price: number
   status: "pending" | "confirmed" | "picked-up" | "in-progress" | "completed" | "cancelled"
   is_pickup_service: boolean
@@ -127,7 +127,7 @@ class ApiClient {
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     try {
-      // Check network connectivity
+      // Cek koneksi jaringan
       if (typeof navigator !== "undefined" && !navigator.onLine) {
         throw new NetworkError("No internet connection")
       }
@@ -173,18 +173,18 @@ class ApiClient {
       const data = await response.json()
       return data
     } catch (error) {
-      // Log error for debugging
+      // Log error untuk debugging
       logError(error instanceof Error ? error : new Error(String(error)), {
         endpoint,
         options: { ...options, headers: options.headers },
       })
 
-      // Re-throw for component handling
+      // Lanjutkan error ke komponen
       throw error
     }
   }
 
-  // Auth methods
+  // Metode auth
   async login(username: string, password: string): Promise<{ success: boolean; admin: any }> {
     return this.request("/auth", {
       method: "POST",
@@ -290,11 +290,11 @@ class ApiClient {
     }
   }
 
-  // New method to fetch booking statistics
+  // Metode baru ambil statistik booking
   async getBookingStats(): Promise<ApiResponse<BookingStatsData>> {
     try {
-      // The request method is private, so we call it internally.
-      // The endpoint '/bookings/stats' is assumed to return BookingStatsData.
+      // request bersifat private, jadi dipanggil internal
+      // endpoint '/bookings/stats' diasumsikan mengembalikan BookingStatsData
       return await this.request<ApiResponse<BookingStatsData>>("/bookings/stats");
     } catch (error) {
       console.error("[v0] Failed to fetch booking stats:", error);
@@ -446,7 +446,7 @@ class ApiClient {
     }
   }
 
-  // Report methods
+  // Metode report
   async getReports(params?: {
     startDate?: string
     endDate?: string
@@ -468,26 +468,26 @@ class ApiClient {
 
   async uploadPaymentProof(bookingId: string, file: File): Promise<{ success: boolean; url?: string }> {
     try {
-      // Import the storage function dynamically to avoid circular dependencies
+      // Import fungsi storage secara dinamis agar tidak circular
       const { uploadPaymentProof, validatePaymentProofFile } = await import("@/lib/supabase/storage")
 
-      // Validate file first
+      // Validasi file dulu
       const validation = validatePaymentProofFile(file)
       if (!validation.valid) {
         throw new Error(validation.error || "Invalid file")
       }
 
-      // Get booking to get booking code for filename
+      // Ambil data booking untuk kode file
       const { booking } = await this.getBooking(bookingId)
 
-      // Upload to storage
+      // Upload ke storage
       const uploadResult = await uploadPaymentProof(file, booking.booking_code)
 
       if (!uploadResult.success || !uploadResult.url) {
         throw new Error(uploadResult.error || "Upload failed")
       }
 
-      // Update booking with payment proof URL
+      // Update booking dengan URL bukti bayar
       await this.updateBooking(bookingId, {
         payment_proof: uploadResult.url,
       })

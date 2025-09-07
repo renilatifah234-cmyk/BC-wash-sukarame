@@ -19,10 +19,10 @@ interface PaymentProofProps {
 }
 
 /**
- * Payment Proof Upload Component
+ * Komponen upload bukti bayar
  *
- * Handles payment proof file upload and booking creation.
- * Supports drag & drop, file validation, and progress tracking.
+ * Mengelola upload bukti pembayaran & pembuatan booking.
+ * Mendukung drag & drop, validasi, dan progress.
  */
 export function PaymentProof({ onNext, onPrev, onUpload, bookingData, updateBookingData }: PaymentProofProps) {
   const [uploadedFile, setUploadedFile] = useState<File | null>(bookingData.paymentProof || null)
@@ -35,13 +35,13 @@ export function PaymentProof({ onNext, onPrev, onUpload, bookingData, updateBook
    * @param file - Selected file to validate and process
    */
   const handleFileSelect = (file: File) => {
-    // Validate file type
+    // validasi tipe file
     if (!file.type.startsWith("image/")) {
       showErrorToast(new Error("Format file tidak didukung"), "Hanya file gambar yang diperbolehkan (JPG, PNG, dll)")
       return
     }
 
-    // Validate file size (5MB limit)
+    // validasi ukuran file (maks 5MB)
     if (file.size > 5 * 1024 * 1024) {
       showErrorToast(new Error("File terlalu besar"), "Ukuran file maksimal 5MB")
       return
@@ -89,7 +89,7 @@ export function PaymentProof({ onNext, onPrev, onUpload, bookingData, updateBook
    * Creates the booking record and uploads payment proof file
    */
   const handleSubmit = async () => {
-    // Validate required data
+    // validasi data wajib
     if (!bookingData.service || !bookingData.branch || !bookingData.date || !bookingData.time) {
       showErrorToast(new Error("Data tidak lengkap"), "Pastikan semua data booking sudah terisi")
       return
@@ -104,14 +104,14 @@ export function PaymentProof({ onNext, onPrev, onUpload, bookingData, updateBook
     setIsProcessing(true)
 
     try {
-      // Calculate total price including pickup fee if applicable
+      // hitung total harga termasuk biaya pickup bila ada
       const discount = (bookingData.loyaltyPointsUsed || 0) * 1000
       const totalPrice =
         bookingData.service.price +
         (bookingData.isPickupService ? bookingData.service.pickup_fee || 0 : 0) -
         discount
 
-      // Prepare booking payload
+      // siapkan payload booking
       const bookingPayload = {
         customer_name: bookingData.customerName!,
         customer_phone: bookingData.customerPhone!,
@@ -130,10 +130,10 @@ export function PaymentProof({ onNext, onPrev, onUpload, bookingData, updateBook
         loyalty_points_used: bookingData.loyaltyPointsUsed || 0,
       }
 
-      // Create booking record
+      // buat record booking
       const { booking } = await apiClient.createBooking(bookingPayload)
 
-      // Upload payment proof if file is provided
+      // upload bukti bayar jika ada file
       if (method === "transfer" && uploadedFile) {
         try {
           const uploadResult = await apiClient.uploadPaymentProof(booking.id, uploadedFile)
@@ -141,12 +141,12 @@ export function PaymentProof({ onNext, onPrev, onUpload, bookingData, updateBook
         } catch (uploadError) {
           console.error("[v0] Payment proof upload failed:", uploadError)
           showErrorToast(uploadError, "Gagal upload bukti pembayaran, namun booking tetap berhasil dibuat")
-          // Continue anyway - booking is created, just payment proof upload failed
-          // Admin can still process the booking manually
+          // lanjutkan walau upload gagal; booking sudah terbentuk
+          // admin tetap bisa proses manual
         }
       }
 
-      // Update booking data with generated booking code
+      // simpan kode booking yang dibuat
       updateBookingData({ bookingCode: booking.booking_code })
 
       showSuccessToast(

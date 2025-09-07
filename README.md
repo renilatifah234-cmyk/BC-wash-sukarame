@@ -1,130 +1,88 @@
-# BC Wash Sukarame – Web App
+# BC Wash Sukarame
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/abamakbar07s-projects/v0-bc-wash-sukarame-prototype)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/projects/Y7J21yi0aXA)
+## 1. Overview Singkat
+Aplikasi web untuk pemesanan layanan cuci kendaraan BC Wash Sukarame. Pelanggan memilih layanan, cabang, jadwal, lalu membayar dan mengunggah bukti. **Fitur penjemputan (PICKUP)** memungkinkan kendaraan dijemput dalam radius tertentu dan admin bisa membuka rute ke lokasi pelanggan via Google Maps.
 
-> Aplikasi web untuk layanan cuci kendaraan (mobil/motor) BC Wash Sukarame. Pelanggan dapat memilih layanan dan melakukan booking, upload bukti pembayaran, serta melacak status. Admin memiliki panel untuk mengelola layanan, cabang, booking, laporan, dan loyalti.
+## 2. Fitur Utama
+- **Alur booking 5 langkah**: pilih layanan → pilih cabang & jadwal → isi data pelanggan → pilih metode bayar → unggah bukti & dapat kode booking.
+- **Pickup**: radius km dapat dikonfigurasi per cabang, pelanggan pinpoint alamat pada peta, koordinat disimpan, admin dapat klik deep link `https://www.google.com/maps/dir/?api=1&destination={lat},{lng}` untuk navigasi.
+- **Normalisasi plat nomor**: hapus spasi & uppercase otomatis (tidak cek pola atau duplikat).
+- Upload bukti transfer ke Supabase Storage.
+- Tracking status via kode booking.
+- Panel admin: kelola layanan, cabang, booking, laporan, dan loyalti.
 
-## Fitur Utama
+## 3. Arsitektur & Stack
+- **Front-end**: Next.js App Router (React 19, TypeScript), Tailwind CSS v4, shadcn/ui, lucide icons.
+- **State/Data**: React Hook Form, React Query/Zustand (lihat penggunaan pada komponen), utilitas di `lib/`.
+- **Backend**: Next.js Route Handlers di `app/api/*`.
+- **Database**: Supabase (Postgres + Storage) melalui `@supabase/ssr`.
+- **Maps**: Google Maps JS API (Places & Geometry) + deep link rute.
+- **Auth**: login admin via JWT sederhana.
+- **Deployment**: Vercel (konfigurasi default Next.js).
 
-- Halaman promosi dan layanan untuk pelanggan
-- Alur booking multi-step: pilih layanan, cabang & waktu, data pelanggan, pembayaran, upload bukti, konfirmasi
-- Upload bukti pembayaran ke penyimpanan (Supabase Storage)
-- Notifikasi WhatsApp (buka chat dengan template pesan status)
-- Panel Admin: login demo, dashboard, booking, layanan, cabang, laporan, loyalti
-- Integrasi peta (Google Maps API) untuk cakupan penjemputan/penentuan lokasi cabang
+## 4. Struktur Folder
+- `app/` – App Router (halaman dan API).
+- `components/` – Komponen UI (booking, admin, customer, dll).
+- `lib/` – Helper: util, API client, Supabase client, normalisasi.
+- `database/` & `scripts/` – SQL schema dan seeding.
+- `public/`, `styles/` – aset statis & styling tambahan.
 
-## Teknologi yang Digunakan
+## 5. Model Data & Skema
+Tabel inti (nama mengikuti schema Supabase):
+- **services**: `id`, `name`, `category`, `price`, `duration`, `pickup_fee`, `supports_pickup`.
+- **branches**: `id`, `name`, `phone`, `address`, `pickup_coverage_radius`, `latitude`, `longitude`.
+- **bookings**: `id`, `booking_code`, `customer_*`, `service_id`, `branch_id`, `booking_date`, `booking_time`, `total_price`, `status`, `is_pickup_service`, `pickup_address`, `pickup_latitude`, `pickup_longitude`, `vehicle_plate_number`, `payment_method`, `payment_proof`.
+- **customers**: `id`, `name`, `phone`, `email`, `vehicle_plate_numbers`, `total_loyalty_points`, `total_bookings`, `join_date`.
 
-- Framework: Next.js 15 (App Router) + React 19 + TypeScript
-- UI & Styling: Tailwind CSS v4, shadcn/ui (Radix UI), Lucide Icons, Geist font
-- State & Forms: React Hook Form, Zod (validasi), Date-fns
-- Charts & Komponen: Recharts, Embla Carousel, Radix Primitives
-- Backend/API: Next.js Route Handlers (`app/api/*`)
-- Database & Storage: Supabase (Postgres + Storage) via `@supabase/ssr` dan `@supabase/supabase-js`
-- Deployment: Vercel
+Field pickup penting: `pickup_coverage_radius` pada cabang serta `pickup_latitude`, `pickup_longitude`, `pickup_address` pada booking.
 
-Catatan: Bila environment Supabase tidak diatur, klien server Supabase menggunakan fallback stub sehingga aplikasi tetap berjalan namun data bersifat kosong/mock.
+## 6. Endpoint/API & Alur Teknis
+Contoh route:
+- `POST /api/bookings` – buat booking baru; normalisasi plat nomor dan validasi radius pickup (client & server).
+- `GET /api/bookings?code=XXXX` – ambil detail booking untuk tracking.
+- `PATCH /api/bookings/:id/status` – ubah status booking.
+- `POST /api/services` dsb – CRUD layanan.
+- `POST /api/branches` – kelola cabang beserta radius pickup.
+Validasi utama: format tanggal, jam, email, telepon, serta geolokasi pickup.
+Status booking: `pending → confirmed → picked-up → in-progress → completed → cancelled`.
 
-## Prasyarat
+## 7. Konfigurasi & Environment
+Buat `.env.local` dengan variabel:
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`
+- `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`
+Tambahan opsional: `SUPABASE_SERVICE_ROLE_KEY`, `JWT_SECRET`.
+Pastikan Google Maps API diaktifkan dan dibatasi domain, billing aktif.
 
-- Node.js 18 atau 20 (LTS)
-- Paket manager: pnpm (disarankan) atau npm
-
-## Menjalankan Secara Lokal
-
-1. Instal dependensi
-   - pnpm: `pnpm install`
-   - atau npm: `npm install`
-2. Salin environment lokal
-   - Buat file `.env.local` di root project
-   - Isi variabel berikut (lihat bagian Environment):
-     - `NEXT_PUBLIC_SUPABASE_URL`
-     - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-     - `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`
-3. Jalankan dev server
-   - pnpm: `pnpm dev`
-   - atau npm: `npm run dev`
-4. Buka `http://localhost:3000`
-
-## Environment Variables
-
-Tambahkan variabel berikut ke `.env.local` (jangan commit file ini):
-
+## 8. Menjalankan Proyek
+Prasyarat: Node.js ≥18 dan pnpm.
+```bash
+pnpm install
+pnpm dev
 ```
-# Supabase (wajib untuk data persist)
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-
-# Google Maps (untuk peta & cakupan penjemputan)
-NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
-
-# Opsional (lanjutan, jika diperlukan di sisi server)
-# SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-# SUPABASE_JWT_SECRET=your_supabase_jwt_secret
+Build & lint:
+```bash
+pnpm lint
+pnpm build
 ```
 
-Tambahan (opsional, untuk koneksi Postgres tingkat lanjut) dapat ditambahkan sesuai kebutuhan: `POSTGRES_URL`, `POSTGRES_USER`, dll. Aplikasi ini pada dasarnya mengakses Supabase via URL & ANON KEY.
+## 9. UI/UX Catatan
+- Halaman `/booking` menampilkan seluruh langkah sekaligus (mobile-first) tanpa wizard berlapis.
+- Halaman `/track` memiliki tombol Back agar mudah kembali.
+- Admin Settings hanya berisi konfigurasi relevan; tab umum/pengguna/pembayaran sudah dihapus.
+- Pickup modal menampilkan pin lokasi dan tombol buka rute Google Maps.
 
-## Setup Supabase (Ringkas)
+## 10. Keamanan, Kinerja, Aksesibilitas
+- Sanitasi input, cek radius pickup di client & server.
+- Lazy load Google Maps & optimasi gambar.
+- Form multi-langkah menggunakan label & aria untuk aksesibilitas.
+- Rate limit dasar dapat ditambahkan pada route API bila dibutuhkan.
 
-- Buat project di Supabase, salin `Project URL` dan `anon public key` ke `.env.local`
-- Buat Storage Bucket bernama `payment-proofs` (public) untuk menampung bukti pembayaran
-- Buat tabel sesuai kebutuhan modul (mis. `services`, `bookings`, `branches`, `customers`). Endpoint di `app/api/*` mengasumsikan tabel tersebut tersedia.
+## 11. Roadmap & Changelog Ringkas
+Pengembangan berikutnya:
+- Optimasi rute penjemputan & estimasi waktu.
+- Notifikasi WhatsApp otomatis & email.
+- Dynamic pricing & kupon.
 
-> Pengembangan awal dapat dijalankan tanpa Supabase (fallback mock), namun data tidak persisten.
-
-## Deploy ke Vercel
-
-1. Push repository ini ke GitHub/GitLab/Bitbucket
-2. Import repository ke Vercel (Framework preset: Next.js)
-3. Di Vercel Project Settings → Environment Variables, tambahkan:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`
-   - (opsional) `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`
-4. Build settings (default Vercel untuk Next.js sudah sesuai):
-   - Install Command: `pnpm install`
-   - Build Command: `pnpm build`
-   - Output: (Next.js default)
-5. Deploy. Aplikasi akan otomatis terbuild setiap kali ada push ke branch yang dipilih
-
-URL Vercel Project: https://vercel.com/abamakbar07s-projects/v0-bc-wash-sukarame-prototype
-
-## Struktur Proyek (Ringkas)
-
-- `app/` — App Router (pages, layout, API routes)
-- `components/` — Komponen UI (shadcn/ui, admin, booking, customer)
-- `lib/` — Utilitas (Supabase client, utils, dummy data, WhatsApp helper)
-- `public/` — Aset publik
-- `styles/` — Styling tambahan
-
-## Scripts
-
-- `pnpm dev` — Jalankan dev server
-- `pnpm build` — Build untuk produksi
-- `pnpm start` — Jalankan build produksi
-- `pnpm lint` — Linting (non-blocking di build config)
-
-## Generate Admin Password Hash
-
-Gunakan endpoint berikut untuk membuat hash bcrypt untuk password admin baru:
-
-- **GET** `/api/generate-password?password=yourPlainPassword`
-  - Response: `{ "hash": "<bcrypt hash>" }`
-- **POST** `/api/generate-password`
-  - Body: `{ "password": "yourPlainPassword" }`
-  - Response: `{ "hash": "<bcrypt hash>" }`
-
-Salin nilai `hash` ke `ADMIN_PASSWORD_HASH` di `.env.local` Anda.
-
-## Catatan & Keamanan
-
-- Jangan commit kredensial rahasia (`.env.local`) ke repository publik
-- Pastikan Storage Bucket Supabase `payment-proofs` tersedia untuk fitur upload
-- Login Admin demo (local/dev): username `admin`, password `bcwash2024` (untuk produksi ganti ke mekanisme auth yang aman)
-
----
-
-Project ini awalnya dibuat dan disinkronkan via [v0.app](https://v0.app).
-
+Perubahan commit ini: naturalisasi komentar kode dan overhaul README dengan penekanan fitur pickup.

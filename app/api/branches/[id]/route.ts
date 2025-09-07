@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 
-// Update branch by id (partial update supported)
+// Update cabang berdasarkan id (boleh parsial)
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } },
@@ -12,7 +12,7 @@ export async function PUT(
 
     const supabase = createClient()
 
-    // Build update payload mapping UI fields -> DB columns
+    // Petakan field UI ke kolom DB
     const updatePayload: Record<string, any> = {}
 
     if (body.name !== undefined) updatePayload.name = body.name

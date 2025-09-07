@@ -24,9 +24,9 @@ export function BranchMapPicker({ lat, lng, onChange, height = 300 }: Props) {
 
   useEffect(() => {
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
-    if (!apiKey) return // no maps key; component renders only inputs
+    if (!apiKey) return // tanpa key maps: hanya tampilkan input
 
-    // load script once
+    // load script sekali saja
     const existing = document.querySelector<HTMLScriptElement>("script[data-google-maps]")
     if (existing) {
       initMap()
@@ -44,7 +44,7 @@ export function BranchMapPicker({ lat, lng, onChange, height = 300 }: Props) {
   }, [])
 
   useEffect(() => {
-    // keep marker position in sync when props change
+    // sinkronkan posisi marker saat prop berubah
     if (!window.google || !mapObj.current || !markerObj.current) return
     if (lat != null && lng != null) {
       const g = window.google

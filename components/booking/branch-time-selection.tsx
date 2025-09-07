@@ -175,7 +175,7 @@ export function BranchTimeSelection({
         <p className="text-muted-foreground mt-1">Tentukan cabang dan jadwal kunjungan Anda</p>
       </div>
 
-      {/* Branch Selection */}
+      {/* pilih cabang */}
       <div className="space-y-4">
         <h2 className="font-serif text-xl font-semibold">Pilih Cabang</h2>
         {branches.length === 0 ? (
@@ -228,7 +228,7 @@ export function BranchTimeSelection({
         )}
       </div>
 
-      {/* Date Selection */}
+      {/* pilih tanggal */}
       {branch && (
         <div className="space-y-4">
           <h2 className="font-serif text-xl font-semibold">Pilih Tanggal</h2>
@@ -246,7 +246,7 @@ export function BranchTimeSelection({
         </div>
       )}
 
-      {/* Time Selection */}
+      {/* pilih waktu */}
       {branch && date && (
         <div className="space-y-4">
           <h2 className="font-serif text-xl font-semibold">Pilih Waktu</h2>

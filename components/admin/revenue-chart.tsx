@@ -24,7 +24,7 @@ export function RevenueChart() {
         const bookingsResponse = await apiClient.getBookings()
         const bookings = bookingsResponse.bookings
 
-        // Get last 7 days
+        // Ambil data 7 hari terakhir
         const last7Days = Array.from({ length: 7 }, (_, i) => {
           const date = new Date()
           date.setDate(date.getDate() - (6 - i))

@@ -34,7 +34,7 @@ export default function PaymentProofUpload({
     const file = event.target.files?.[0]
     if (!file) return
 
-    // Validate file
+    // Validasi file
     const validation = validatePaymentProofFile(file)
     if (!validation.valid) {
       setError(validation.error || "Invalid file")
@@ -83,7 +83,7 @@ export default function PaymentProofUpload({
         <p className="text-sm text-gray-600 mt-1">Upload bukti transfer/pembayaran (JPEG, PNG, WebP, max 5MB)</p>
       </div>
 
-      {/* Hidden file input */}
+      {/* input file tersembunyi */}
       <Input
         ref={fileInputRef}
         type="file"
@@ -93,7 +93,7 @@ export default function PaymentProofUpload({
         disabled={disabled || uploading}
       />
 
-      {/* Upload area */}
+      {/* area upload */}
       {!uploadedUrl ? (
         <div
           onClick={triggerFileSelect}
@@ -124,7 +124,7 @@ export default function PaymentProofUpload({
               )}
             </div>
 
-            {/* Preview image */}
+            {/* pratinjau gambar */}
             <div className="mt-3">
               <Image
                 src={uploadedUrl || "/placeholder.svg"}
@@ -138,7 +138,7 @@ export default function PaymentProofUpload({
         </div>
       )}
 
-      {/* Error message */}
+      {/* pesan error */}
       {error && (
         <div className="flex items-center space-x-2 text-red-600 text-sm">
           <AlertCircle className="h-4 w-4" />
@@ -146,7 +146,7 @@ export default function PaymentProofUpload({
         </div>
       )}
 
-      {/* Upload button for mobile/alternative */}
+      {/* tombol upload untuk mobile/opsi lain */}
       {!uploadedUrl && !uploading && (
         <Button onClick={triggerFileSelect} variant="outline" disabled={disabled} className="w-full bg-transparent">
           <Upload className="h-4 w-4 mr-2" />

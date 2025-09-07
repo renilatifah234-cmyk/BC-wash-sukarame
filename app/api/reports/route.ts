@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
 
     const supabase = createClient()
 
-    // Base query for bookings with joins
+    // Query dasar booking + join layanan & cabang
     let query = supabase
       .from("bookings")
       .select(`
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // Calculate report metrics
+    // Hitung metrik laporan
     const totalRevenue = bookings.reduce((sum, booking) => sum + booking.total_price, 0)
     const totalBookings = bookings.length
 
