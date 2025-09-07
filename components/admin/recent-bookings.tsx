@@ -70,6 +70,8 @@ export function RecentBookings() {
         return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Menunggu</Badge>
       case "in-progress":
         return <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100">Berlangsung</Badge>
+      case "picked-up":
+        return <Badge className="bg-indigo-100 text-indigo-800 hover:bg-indigo-100">Dijemput</Badge>
       case "completed":
         return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Selesai</Badge>
       case "cancelled":

@@ -49,7 +49,7 @@ INSERT INTO bookings (id, booking_code, customer_name, customer_phone, customer_
 
 ('booking-007', 'BCW007', 'Budi Hartono', '08555666777', 'budi.hartono@email.com', 'glass-spot-removal', 'sukarame-main', '2024-01-17', '10:00', 75000, 'confirmed', false, NULL, NULL, 'B 9999 VWX', 75, 0, 'offline', true, 'cash', 'Regular customer, requested specific staff member', '2024-01-17T07:00:00Z', '2024-01-17T07:15:00Z'),
 
-('booking-008', 'BCW008', 'Siti Nurhaliza', '08333444555', 'siti.nurhaliza@email.com', 'car-steam-quick', 'sukarame-branch2', '2024-01-17', '13:00', 45000, 'pending', true, 'Jl. Diponegoro No. 123, Bandar Lampung', 'Kantor, gedung biru lantai 2', 'BE 4444 YZA', 45, 0, 'online', false, 'transfer', NULL, '2024-01-17T08:30:00Z', '2024-01-17T08:30:00Z'),
+('booking-008', 'BCW008', 'Siti Nurhaliza', '08333444555', 'siti.nurhaliza@email.com', 'car-steam-quick', 'sukarame-branch2', '2024-01-17', '13:00', 45000, 'picked-up', true, 'Jl. Diponegoro No. 123, Bandar Lampung', 'Kantor, gedung biru lantai 2', 'BE 4444 YZA', 45, 0, 'online', false, 'transfer', NULL, '2024-01-17T08:30:00Z', '2024-01-17T08:30:00Z'),
 
 ('booking-009', 'BCW009', 'Dedi Setiawan', '08666777888', 'dedi.setiawan@email.com', 'motorcycle-large', 'sukarame-main', '2024-01-17', '16:30', 30000, 'completed', true, 'Jl. Gatot Subroto No. 789, Bandar Lampung', 'Rumah sudut, cat kuning', 'BE 6666 BCD', 30, 0, 'offline', true, 'card', 'Customer paid with debit card, service completed on time', '2024-01-17T14:00:00Z', '2024-01-17T17:00:00Z'),
 

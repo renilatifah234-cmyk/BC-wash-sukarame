@@ -269,8 +269,8 @@ export const handleApiError = (error: unknown): string => {
 // Type Guards
 export const isValidBookingStatus = (
   status: string,
-): status is "pending" | "confirmed" | "in-progress" | "completed" | "cancelled" => {
-  return ["pending", "confirmed", "in-progress", "completed", "cancelled"].includes(status)
+): status is "pending" | "confirmed" | "picked-up" | "in-progress" | "completed" | "cancelled" => {
+  return ["pending", "confirmed", "picked-up", "in-progress", "completed", "cancelled"].includes(status)
 }
 
 export const isValidPaymentMethod = (method: string): method is "cash" | "transfer" | "qris" | "card" => {

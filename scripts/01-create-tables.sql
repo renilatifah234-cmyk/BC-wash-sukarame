@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS bookings (
   booking_date DATE NOT NULL,
   booking_time TIME NOT NULL,
   total_price INTEGER NOT NULL,
-  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'in-progress', 'completed', 'cancelled')),
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'picked-up', 'in-progress', 'completed', 'cancelled')),
   payment_proof TEXT,
   is_pickup_service BOOLEAN DEFAULT false,
   pickup_address TEXT,

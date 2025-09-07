@@ -80,6 +80,7 @@ export function BookingFilters({ onSearchChange }: { onSearchChange?: (term: str
                     <SelectItem value="all">Semua Status</SelectItem>
                     <SelectItem value="pending">Menunggu</SelectItem>
                     <SelectItem value="confirmed">Dikonfirmasi</SelectItem>
+                    <SelectItem value="picked-up">Dijemput</SelectItem>
                     <SelectItem value="in-progress">Berlangsung</SelectItem>
                     <SelectItem value="completed">Selesai</SelectItem>
                     <SelectItem value="cancelled">Dibatalkan</SelectItem>

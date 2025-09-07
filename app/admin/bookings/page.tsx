@@ -11,6 +11,7 @@ import { Plus } from "lucide-react"
 import Link from "next/link"
 import { apiClient } from "@/lib/api-client" // Import apiClient
 import { Booking, BookingApiResponse } from "@/lib/types" // Import Booking and BookingApiResponse types
+import { BookingExport } from "@/components/admin/booking-export"
 
 export default function AdminBookingsPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -24,9 +25,10 @@ export default function AdminBookingsPage() {
     if (authStatus === "true") {
       setIsAuthenticated(true)
       // Fetch bookings when authenticated
-      apiClient.getBookings() // Use apiClient.getBookings()
-        .then((data: BookingApiResponse) => { // Type the data parameter
-          setBookings(data.bookings); // Assuming the API returns data in the format { bookings: Booking[] }
+      apiClient
+        .getBookings({ limit: 1000 })
+        .then(({ bookings }: BookingApiResponse) => {
+          setBookings(bookings)
         })
         .catch((error: Error) => { // Type the error parameter
           console.error("Error fetching bookings:", error);
@@ -54,12 +56,15 @@ export default function AdminBookingsPage() {
             <h1 className="font-serif text-2xl md:text-3xl font-bold text-foreground">Kelola Booking</h1>
             <p className="text-muted-foreground mt-1">Kelola dan pantau semua booking pelanggan</p>
           </div>
-          <Button asChild>
-            <Link href="/admin/bookings/create" className="flex items-center gap-2">
-              <Plus className="w-4 h-4" />
-              Buat Booking Manual
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <BookingExport searchTerm={searchTerm} />
+            <Button asChild>
+              <Link href="/admin/bookings/create" className="flex items-center gap-2">
+                <Plus className="w-4 h-4" />
+                Buat Booking Manual
+              </Link>
+            </Button>
+          </div>
         </div>
 
         <BookingStats bookings={bookings} /> {/* Pass bookings to BookingStats */}

@@ -13,7 +13,7 @@ export function BookingStats({ bookings }: BookingStatsProps) {
     (booking) => booking.status === "confirmed"
   ).length;
   const inProgressBookings = bookings.filter(
-    (booking) => booking.status === "in-progress"
+    (booking) => booking.status === "in-progress" || booking.status === "picked-up"
   ).length;
   const completedBookings = bookings.filter(
     (booking) => booking.status === "completed"

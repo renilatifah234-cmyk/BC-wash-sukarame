@@ -71,15 +71,18 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status")
     const date = searchParams.get("date")
     const limit = searchParams.get("limit")
+    const page = searchParams.get("page")
+    const search = searchParams.get("search")
 
     const supabase = createClient()
     let query = supabase
       .from("bookings")
-      .select(`
-        *,
+      .select(
+        `*,
         services (name, category, price, duration, pickup_fee),
-        branches (name, address, phone)
-      `)
+        branches (name, address, phone)`,
+        { count: "exact" },
+      )
       .order("created_at", { ascending: false })
 
     if (branchId) {
@@ -94,21 +97,26 @@ export async function GET(request: NextRequest) {
       query = query.eq("booking_date", date)
     }
 
-    if (limit) {
-      const limitNum = Number.parseInt(limit)
-      if (limitNum > 0) {
-        query = query.limit(limitNum)
-      }
+    const limitNum = limit ? Number.parseInt(limit) : 10
+    const pageNum = page ? Number.parseInt(page) : 1
+    const from = (pageNum - 1) * limitNum
+    const to = from + limitNum - 1
+    query = query.range(from, to)
+
+    if (search) {
+      query = query.or(
+        `booking_code.ilike.%${search}%,customer_name.ilike.%${search}%,customer_phone.ilike.%${search}%`,
+      )
     }
 
-    const { data: bookings, error } = await query
+    const { data: bookings, error, count } = await query
 
     if (error) {
       console.error("[v0] Database error in GET /api/bookings:", error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json({ bookings: bookings || [] })
+    return NextResponse.json({ bookings: bookings || [], total: count || 0 })
   } catch (error) {
     console.error("[v0] Get bookings error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

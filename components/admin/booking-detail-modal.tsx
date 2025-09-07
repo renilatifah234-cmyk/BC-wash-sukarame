@@ -43,7 +43,7 @@ interface BookingDetailModalProps {
     date: string
     time: string
     amount: number
-    status: "pending" | "confirmed" | "in-progress" | "completed" | "cancelled"
+    status: "pending" | "confirmed" | "picked-up" | "in-progress" | "completed" | "cancelled"
     createdAt: string
     updatedAt: string
     paymentMethod: string
@@ -76,6 +76,8 @@ export function BookingDetailModal({ booking, isOpen, onClose, onStatusChange }:
         return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Menunggu</Badge>
       case "in-progress":
         return <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100">Berlangsung</Badge>
+      case "picked-up":
+        return <Badge className="bg-indigo-100 text-indigo-800 hover:bg-indigo-100">Dijemput</Badge>
       case "completed":
         return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Selesai</Badge>
       case "cancelled":
@@ -85,7 +87,7 @@ export function BookingDetailModal({ booking, isOpen, onClose, onStatusChange }:
     }
   }
 
-  const getAvailableStatusOptions = (currentStatus: string) => {
+  const getAvailableStatusOptions = (currentStatus: string, isPickup: boolean) => {
     switch (currentStatus) {
       case "pending":
         return [
@@ -94,9 +96,13 @@ export function BookingDetailModal({ booking, isOpen, onClose, onStatusChange }:
         ]
       case "confirmed":
         return [
-          { value: "in-progress", label: "Mulai Layanan" },
+          ...(isPickup
+            ? [{ value: "picked-up", label: "Jemput" }]
+            : [{ value: "in-progress", label: "Mulai Layanan" }]),
           { value: "cancelled", label: "Batalkan" },
         ]
+      case "picked-up":
+        return [{ value: "in-progress", label: "Mulai Layanan" }]
       case "in-progress":
         return [{ value: "completed", label: "Selesaikan" }]
       default:
@@ -139,7 +145,7 @@ export function BookingDetailModal({ booking, isOpen, onClose, onStatusChange }:
     setShowReceipt(true)
   }
 
-  const statusOptions = getAvailableStatusOptions(booking.status)
+  const statusOptions = getAvailableStatusOptions(booking.status, booking.isPickupService || false)
 
   if (showReceipt) {
     const receiptData = {
