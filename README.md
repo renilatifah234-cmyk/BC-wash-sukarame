@@ -106,6 +106,16 @@ URL Vercel Project: https://vercel.com/abamakbar07s-projects/v0-bc-wash-sukarame
 - `pnpm start` — Jalankan build produksi
 - `pnpm lint` — Linting (non-blocking di build config)
 
+## Generate Admin Password Hash
+
+Gunakan endpoint berikut untuk membuat hash bcrypt untuk password admin baru:
+
+- **POST** `/api/generate-password`
+  - Body: `{ "password": "yourPlainPassword" }`
+  - Response: `{ "hash": "<bcrypt hash>" }`
+
+Salin nilai `hash` ke `ADMIN_PASSWORD_HASH` di `.env.local` Anda.
+
 ## Catatan & Keamanan
 
 - Jangan commit kredensial rahasia (`.env.local`) ke repository publik
