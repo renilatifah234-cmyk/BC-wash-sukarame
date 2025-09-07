@@ -4,9 +4,8 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { AdminLayout } from "@/components/admin/admin-layout"
 import { BranchManagement } from "@/components/admin/branch-management"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Building, Settings, Users, CreditCard, Bell } from "lucide-react"
+import { Building, Bell } from "lucide-react"
 import { NotificationTemplates } from "@/components/admin/notification-templates"
 
 export default function AdminSettingsPage() {
@@ -41,24 +40,12 @@ export default function AdminSettingsPage() {
         </div>
 
         <Tabs defaultValue="branches" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="branches" className="flex items-center gap-2">
               <Building className="w-4 h-4" />
               Cabang
             </TabsTrigger>
-            <TabsTrigger value="general" className="flex items-center gap-2">
-              <Settings className="w-4 h-4" />
-              Umum
-            </TabsTrigger>
-            <TabsTrigger value="users" className="flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              Pengguna
-            </TabsTrigger>
-            <TabsTrigger value="payment" className="flex items-center gap-2">
-              <CreditCard className="w-4 h-4" />
-              Pembayaran
-            </TabsTrigger>
-                        <TabsTrigger value="notifications" className="flex items-center gap-2">
+            <TabsTrigger value="notifications" className="flex items-center gap-2">
               <Bell className="w-4 h-4" />
               Notifikasi
             </TabsTrigger>
@@ -68,48 +55,7 @@ export default function AdminSettingsPage() {
             <BranchManagement />
           </TabsContent>
 
-          <TabsContent value="general">
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-serif text-xl">Pengaturan Umum</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8 text-muted-foreground">
-                  <Settings className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Pengaturan umum sistem akan tersedia di versi mendatang</p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="users">
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-serif text-xl">Manajemen Pengguna</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8 text-muted-foreground">
-                  <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Manajemen pengguna dan admin akan tersedia di versi mendatang</p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="payment">
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-serif text-xl">Pengaturan Pembayaran</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8 text-muted-foreground">
-                  <CreditCard className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Pengaturan metode pembayaran akan tersedia di versi mendatang</p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-                  <TabsContent value="notifications">
+          <TabsContent value="notifications">
             <NotificationTemplates />
           </TabsContent>
         </Tabs>

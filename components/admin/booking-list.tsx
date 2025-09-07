@@ -54,6 +54,8 @@ interface BookingWithDetails extends Booking {
   paymentMethod: string;
   pickupAddress?: string;
   pickupNotes?: string;
+  pickupLat?: number;
+  pickupLng?: number;
 }
 
 interface BookingListProps {
@@ -130,6 +132,8 @@ export function BookingList({ filters }: BookingListProps) {
         paymentMethod: booking.payment_method,
         pickupAddress: booking.pickup_address || undefined,
         pickupNotes: booking.pickup_notes || undefined,
+        pickupLat: booking.pickup_latitude ?? booking.pickup_lat ?? undefined,
+        pickupLng: booking.pickup_longitude ?? booking.pickup_lng ?? undefined,
       }))
 
       setBookings(enrichedBookings)
