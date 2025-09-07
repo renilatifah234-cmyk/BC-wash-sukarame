@@ -20,7 +20,6 @@ export interface Booking {
   loyalty_points_used: number;
   booking_source: string;
   created_by_admin: boolean;
-  admin_user_id: string | null;
   payment_method: string;
   notes: string | null;
   created_at: string;

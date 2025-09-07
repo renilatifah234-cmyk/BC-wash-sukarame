@@ -47,22 +47,6 @@ CREATE TABLE IF NOT EXISTS customers (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-
--- Create admins table
-CREATE TABLE IF NOT EXISTS admins (
-  id TEXT PRIMARY KEY,
-  username TEXT UNIQUE NOT NULL,
-  name TEXT NOT NULL,
-  email TEXT UNIQUE NOT NULL,
-  password_hash TEXT NOT NULL,
-  role TEXT NOT NULL CHECK (role IN ('super-admin', 'branch-admin', 'staff')),
-  branch_id TEXT REFERENCES branches(id),
-  is_active BOOLEAN DEFAULT true,
-  last_login TIMESTAMP WITH TIME ZONE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
 -- Create bookings table
 CREATE TABLE IF NOT EXISTS bookings (
   id TEXT PRIMARY KEY,
@@ -85,7 +69,6 @@ CREATE TABLE IF NOT EXISTS bookings (
   loyalty_points_used INTEGER DEFAULT 0,
   booking_source TEXT NOT NULL DEFAULT 'online' CHECK (booking_source IN ('online', 'offline')),
   created_by_admin BOOLEAN DEFAULT false,
-  admin_user_id TEXT REFERENCES admins(id),
   payment_method TEXT CHECK (payment_method IN ('cash', 'transfer', 'qris', 'card')),
   notes TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -98,7 +81,6 @@ CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);
 CREATE INDEX IF NOT EXISTS idx_bookings_branch ON bookings(branch_id);
 CREATE INDEX IF NOT EXISTS idx_bookings_customer_phone ON bookings(customer_phone);
 CREATE INDEX IF NOT EXISTS idx_customers_phone ON customers(phone);
-CREATE INDEX IF NOT EXISTS idx_admins_username ON admins(username);
 
 -- Record each change in loyalty points
 CREATE TABLE IF NOT EXISTS loyalty_transactions (
@@ -123,5 +105,4 @@ $$ language 'plpgsql';
 CREATE TRIGGER update_services_updated_at BEFORE UPDATE ON services FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_branches_updated_at BEFORE UPDATE ON branches FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_customers_updated_at BEFORE UPDATE ON customers FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_admins_updated_at BEFORE UPDATE ON admins FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_bookings_updated_at BEFORE UPDATE ON bookings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

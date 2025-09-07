@@ -16,6 +16,7 @@ export default function AdminBookingsPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [bookings, setBookings] = useState<Booking[]>([]) // State for bookings
+  const [searchTerm, setSearchTerm] = useState("")
   const router = useRouter()
 
   useEffect(() => {
@@ -62,8 +63,8 @@ export default function AdminBookingsPage() {
         </div>
 
         <BookingStats bookings={bookings} /> {/* Pass bookings to BookingStats */}
-        <BookingFilters />
-        <BookingList />
+        <BookingFilters onSearchChange={setSearchTerm} />
+        <BookingList searchTerm={searchTerm} />
       </div>
     </AdminLayout>
   )

@@ -51,16 +51,24 @@ interface BookingWithDetails extends Booking {
   branchAddress: string;
   branchPhone: string;
   paymentMethod: string;
-  staff?: string;
 }
 
-export function BookingList() {
+export function BookingList({ searchTerm = "" }: { searchTerm?: string }) {
   const [bookings, setBookings] = useState<BookingWithDetails[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedBooking, setSelectedBooking] = useState<BookingWithDetails | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
+
+  const filteredBookings = bookings.filter((booking) => {
+    const term = searchTerm.toLowerCase()
+    return (
+      booking.customerName.toLowerCase().includes(term) ||
+      booking.customerPhone.includes(term) ||
+      booking.bookingCode.toLowerCase().includes(term)
+    )
+  })
 
   useEffect(() => {
     fetchBookings()
@@ -105,7 +113,6 @@ export function BookingList() {
         branchPhone: booking.branches?.phone ||
           branches.find((b) => b.id === booking.branch_id)?.phone || "",
         paymentMethod: booking.payment_method,
-        staff: booking.admin_user_id || undefined,
       }))
 
       enrichedBookings.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
@@ -225,14 +232,14 @@ export function BookingList() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {bookings.length === 0 ? (
+                {filteredBookings.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       Belum ada booking yang tersedia
                     </TableCell>
                   </TableRow>
                 ) : (
-                  bookings.map((booking) => (
+                  filteredBookings.map((booking) => (
                     <TableRow key={booking.id}>
                       <TableCell className="font-medium font-mono">
                         <div className="flex items-center gap-2">

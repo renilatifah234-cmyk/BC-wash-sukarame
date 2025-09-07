@@ -19,7 +19,6 @@ interface CreateBookingInput {
   notes?: string
   booking_source?: string
   created_by_admin?: boolean
-  admin_user_id?: string
 }
 
 function validateBookingInput(data: any): CreateBookingInput {

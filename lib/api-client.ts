@@ -37,7 +37,6 @@ interface Booking {
   notes?: string
   booking_source: string
   created_by_admin: boolean
-  admin_user_id: string | null;
   created_at: string
   updated_at: string
   services: {
@@ -121,7 +120,6 @@ interface CreateBookingData {
   notes?: string
   booking_source?: string
   created_by_admin?: boolean
-  admin_user_id?: string
 }
 
 class ApiClient {
