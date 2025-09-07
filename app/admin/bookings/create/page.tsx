@@ -1,26 +1,16 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useAdminAuth } from "@/hooks/use-admin-auth"
 import { AdminLayout } from "@/components/admin/admin-layout"
 import { ManualBookingForm } from "@/components/admin/manual-booking-form"
 import { ManualBookingSuccess } from "@/components/admin/manual-booking-success"
 
 export default function CreateBookingPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
+  const { isAuthenticated, isLoading } = useAdminAuth()
   const [bookingResult, setBookingResult] = useState<{ code: string; points: number } | null>(null)
   const router = useRouter()
-
-  useEffect(() => {
-    const authStatus = localStorage.getItem("admin_authenticated")
-    if (authStatus === "true") {
-      setIsAuthenticated(true)
-    } else {
-      router.push("/admin/login")
-    }
-    setIsLoading(false)
-  }, [router])
 
   if (isLoading) {
     return <div className="min-h-screen bg-background flex items-center justify-center">Loading...</div>

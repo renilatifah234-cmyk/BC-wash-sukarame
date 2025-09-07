@@ -1,22 +1,15 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useAdminAuth } from "@/hooks/use-admin-auth"
 import { AdminLayout } from "@/components/admin/admin-layout"
 import { ServiceManagement } from "@/components/admin/service-management"
 
 export default function AdminServicesPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const router = useRouter()
+  const { isAuthenticated, isLoading } = useAdminAuth()
 
-  useEffect(() => {
-    const authStatus = localStorage.getItem("admin_authenticated")
-    if (authStatus === "true") {
-      setIsAuthenticated(true)
-    } else {
-      router.push("/admin/login")
-    }
-  }, [router])
+  if (isLoading) {
+    return <div className="min-h-screen bg-background flex items-center justify-center">Loading...</div>
+  }
 
   if (!isAuthenticated) {
     return null

@@ -42,6 +42,21 @@ export async function POST(request: NextRequest) {
   }
 }
 
+export async function GET(request: NextRequest) {
+  try {
+    const token = request.cookies.get("auth-token")?.value
+
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    jwt.verify(token, JWT_SECRET)
+    return NextResponse.json({ authenticated: true })
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+}
+
 export async function DELETE() {
   const response = NextResponse.json({ success: true })
   response.cookies.delete("auth-token")

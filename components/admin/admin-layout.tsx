@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { LayoutDashboard, Calendar, BarChart3, Settings, LogOut, Car, Star } from "lucide-react"
 import Link from "next/link"
+import { apiClient } from "@/lib/api-client"
 
 interface AdminLayoutProps {
   children: React.ReactNode
@@ -31,9 +32,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const router = useRouter()
   const pathname = usePathname()
 
-  const handleLogout = () => {
-    localStorage.removeItem("admin_authenticated")
-    router.push("/admin/login")
+  const handleLogout = async () => {
+    try {
+      await apiClient.logout()
+    } catch (error) {
+      console.error("Logout failed", error)
+    } finally {
+      router.push("/admin/login")
+    }
   }
 
   const menuItems = [
@@ -131,6 +137,15 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             <span className="text-muted-foreground">•</span>
             <span className="text-muted-foreground">Panel Administrasi</span>
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleLogout}
+            className="ml-auto md:hidden"
+          >
+            <LogOut className="w-4 h-4" />
+            <span className="sr-only">Keluar</span>
+          </Button>
         </header>
 
         <main className="flex-1 p-4 md:p-6">{children}</main>
