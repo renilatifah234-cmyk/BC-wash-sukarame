@@ -51,7 +51,7 @@ export class UnauthorizedError extends AppError {
   }
 }
 
-// Error parsing utilities
+// Util parsing error
 export function parseApiError(error: unknown): ApiError {
   if (error instanceof AppError) {
     return {
@@ -92,7 +92,7 @@ export function parseApiError(error: unknown): ApiError {
   }
 }
 
-// User-friendly error messages
+// Pesan error untuk pengguna
 export function getUserFriendlyMessage(error: ApiError): string {
   switch (error.code) {
     case "NETWORK_ERROR":
@@ -113,7 +113,7 @@ export function getUserFriendlyMessage(error: ApiError): string {
   }
 }
 
-// Toast error handler
+// Handler toast error
 export function showErrorToast(error: unknown, title = "Terjadi Kesalahan") {
   const apiError = parseApiError(error)
   const message = getUserFriendlyMessage(apiError)
@@ -127,7 +127,7 @@ export function showErrorToast(error: unknown, title = "Terjadi Kesalahan") {
   console.error("[v0] Error shown to user:", apiError)
 }
 
-// Success toast helper
+// Helper toast sukses
 export function showSuccessToast(title: string, description?: string) {
   toast({
     title,
@@ -135,7 +135,7 @@ export function showSuccessToast(title: string, description?: string) {
   })
 }
 
-// Retry mechanism
+// Mekanisme retry
 export async function withRetry<T>(fn: () => Promise<T>, maxRetries = 3, delay = 1000): Promise<T> {
   let lastError: Error
 
@@ -151,7 +151,7 @@ export async function withRetry<T>(fn: () => Promise<T>, maxRetries = 3, delay =
         break
       }
 
-      // Exponential backoff
+      // backoff eksponensial
       await new Promise((resolve) => setTimeout(resolve, delay * Math.pow(2, attempt - 1)))
     }
   }
@@ -159,7 +159,7 @@ export async function withRetry<T>(fn: () => Promise<T>, maxRetries = 3, delay =
   throw lastError!
 }
 
-// Error logging utility
+// Util logging error
 export function logError(error: Error, context?: Record<string, any>) {
   const errorInfo = {
     message: error.message,
@@ -173,13 +173,13 @@ export function logError(error: Error, context?: Record<string, any>) {
 
   console.error("[v0] Error logged:", errorInfo)
 
-  // In production, send to error tracking service
+  // Di production: kirim ke layanan pelacak error
   if (process.env.NODE_ENV === "production") {
-    // Example: sendToErrorTrackingService(errorInfo)
+    // contoh: sendToErrorTrackingService(errorInfo)
   }
 }
 
-// Form validation error handler
+// Handler error validasi form
 export function handleFormErrors(errors: Record<string, string[]>) {
   const firstError = Object.values(errors)[0]?.[0]
   if (firstError) {
@@ -187,7 +187,7 @@ export function handleFormErrors(errors: Record<string, string[]>) {
   }
 }
 
-// Network status utilities
+// Util status jaringan
 export function isOnline(): boolean {
   return typeof navigator !== "undefined" ? navigator.onLine : true
 }

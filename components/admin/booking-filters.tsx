@@ -62,7 +62,7 @@ export function BookingFilters({ onChange }: { onChange?: (filters: BookingFilte
     <Card>
       <CardContent className="pt-6">
         <div className="space-y-4">
-          {/* Search and Filter Toggle */}
+          {/* pencarian & toggle filter */}
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -95,7 +95,7 @@ export function BookingFilters({ onChange }: { onChange?: (filters: BookingFilte
             </div>
           </div>
 
-          {/* Advanced Filters */}
+          {/* filter lanjutan */}
           {showFilters && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t">
               <div className="space-y-2">

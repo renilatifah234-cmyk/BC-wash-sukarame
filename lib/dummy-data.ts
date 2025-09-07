@@ -4,7 +4,7 @@ export interface Service {
   category: "car-regular" | "car-premium" | "motorcycle"
   price: number
   description: string
-  duration: number // in minutes
+  duration: number // menit
   features?: string[]
   supportsPickup?: boolean
   pickupFee?: number
@@ -24,12 +24,12 @@ export interface Branch {
     open: string
     close: string
   }
-  pickupCoverageRadius?: number // in km
-  status: "active" | "inactive" // New field for branch management
-  manager?: string // Branch manager name
-  staffCount?: number // Number of staff members
-  createdAt: string // When branch was added
-  updatedAt: string // Last update timestamp
+  pickupCoverageRadius?: number // km
+  status: "active" | "inactive" // status cabang
+  manager?: string // nama penanggung jawab
+  staffCount?: number // jumlah staf
+  createdAt: string // waktu cabang ditambahkan
+  updatedAt: string // update terakhir
 }
 
 export interface Booking {
@@ -53,11 +53,11 @@ export interface Booking {
   vehiclePlateNumber?: string
   loyaltyPointsEarned?: number
   loyaltyPointsUsed?: number
-  bookingSource: "online" | "offline" // Track booking origin
-  createdByAdmin?: boolean // Flag for admin-created bookings
-  adminUserId?: string // Admin who created the booking
-  paymentMethod?: "cash" | "transfer" | "qris" | "card" // Payment method for offline bookings
-  notes?: string // Additional notes for the booking
+  bookingSource: "online" | "offline" // asal booking
+  createdByAdmin?: boolean // tanda dibuat admin
+  adminUserId?: string // id admin pembuat
+  paymentMethod?: "cash" | "transfer" | "qris" | "card" // metode bayar offline
+  notes?: string // catatan tambahan
 }
 
 export interface Customer {
@@ -77,7 +77,7 @@ export interface Admin {
   name: string
   email: string
   role: "super-admin" | "branch-admin" | "staff"
-  branchId?: string // For branch-specific admins
+  branchId?: string // id cabang bila admin cabang
   createdAt: string
   lastLogin?: string
   isActive: boolean
@@ -99,7 +99,7 @@ export interface ReceiptData {
 }
 
 export const services: Service[] = [
-  // Car Regular Services
+// Layanan Mobil Reguler
   {
     id: "car-small-regular",
     name: "Cuci Mobil Kecil Non-Hidrolik",
@@ -130,7 +130,7 @@ export const services: Service[] = [
     supportsPickup: true,
     pickupFee: 15000,
   },
-  // Car Premium Services
+  // Layanan Mobil Premium
   {
     id: "car-small-premium",
     name: "Cuci Mobil Kecil Hidrolik",
@@ -173,7 +173,7 @@ export const services: Service[] = [
     supportsPickup: true,
     pickupFee: 25000,
   },
-  // Motorcycle Services
+  // Layanan Motor
   {
     id: "motorcycle-small",
     name: "Cuci Motor Kecil Steam",
@@ -832,7 +832,7 @@ export const generateReceiptData = (bookingId: string): ReceiptData => {
 }
 
 export const calculateLoyaltyPoints = (amount: number): number => {
-  // 1 point for every 1000 IDR spent
+// 1 poin tiap 1000 Rupiah
   return Math.floor(amount / 1000)
 }
 

@@ -26,7 +26,7 @@ export default function AdminLoginPage() {
     setError("")
     setIsLoading(true)
 
-    // Simulate authentication delay
+    // Simulasi delay autentikasi
     await new Promise((resolve) => setTimeout(resolve, 1000))
 
     try {

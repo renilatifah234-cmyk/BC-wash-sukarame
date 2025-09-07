@@ -18,7 +18,7 @@ export function ContactInfo() {
       try {
         setLoading(true)
         const { branches: branchData } = await apiClient.getBranches()
-        // Only show active branches to customers
+        // Hanya tampilkan cabang aktif ke pelanggan
         const activeBranches = branchData.filter((branch) => branch.status === "active")
         setBranches(activeBranches)
       } catch (err) {

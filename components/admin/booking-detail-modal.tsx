@@ -130,7 +130,7 @@ export function BookingDetailModal({ booking, isOpen, onClose, onStatusChange }:
   }
 
   const handleWhatsAppCustomer = () => {
-    // Build an object compatible with the WA util expectations
+    // Bangun objek sesuai util WhatsApp
     sendWhatsAppNotification({
       ...(booking as any),
       booking_code: booking.bookingCode,
@@ -183,7 +183,7 @@ export function BookingDetailModal({ booking, isOpen, onClose, onStatusChange }:
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Status and Basic Info */}
+          {/* status & info dasar */}
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-semibold text-lg">{booking.service}</h3>
@@ -199,7 +199,7 @@ export function BookingDetailModal({ booking, isOpen, onClose, onStatusChange }:
 
           <Separator />
 
-          {/* Customer Information */}
+          {/* informasi pelanggan */}
           <div className="space-y-4">
             <h4 className="font-semibold flex items-center gap-2">
               <User className="w-4 h-4" />
@@ -272,7 +272,7 @@ export function BookingDetailModal({ booking, isOpen, onClose, onStatusChange }:
 
           <Separator />
 
-          {/* Booking Details */}
+          {/* detail booking */}
           <div className="space-y-4">
             <h4 className="font-semibold flex items-center gap-2">
               <Calendar className="w-4 h-4" />
@@ -362,7 +362,7 @@ export function BookingDetailModal({ booking, isOpen, onClose, onStatusChange }:
             </>
           )}
 
-          {/* Payment Proof */}
+          {/* bukti pembayaran */}
           {booking.paymentProof && (
             <>
               <Separator />
@@ -385,7 +385,7 @@ export function BookingDetailModal({ booking, isOpen, onClose, onStatusChange }:
             </>
           )}
 
-          {/* Status Update */}
+          {/* update status */}
           {statusOptions.length > 0 && (
             <>
               <Separator />
@@ -433,7 +433,7 @@ export function BookingDetailModal({ booking, isOpen, onClose, onStatusChange }:
         </div>
       </DialogContent>
     </Dialog>
-    {/* Image preview for payment proof */}
+    {/* pratinjau gambar bukti bayar */}
     {booking?.paymentProof && (
       <Dialog open={showPaymentPreview} onOpenChange={setShowPaymentPreview}>
         <DialogContent className="max-w-2xl">

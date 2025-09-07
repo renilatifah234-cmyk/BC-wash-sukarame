@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Booking } from "@/lib/types"; // Assuming Booking type is defined in lib/types
-import { formatCurrency } from "@/lib/utils"; // Assuming formatCurrency utility exists
+import { Booking } from "@/lib/types";
+import { formatCurrency } from "@/lib/utils";
 
 interface BookingStatsProps {
   bookings: Booking[];

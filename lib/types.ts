@@ -1,4 +1,4 @@
-// Define the structure of a single booking based on the provided API response
+// Struktur data booking tunggal sesuai respons API
 export interface Booking {
   id: string;
   booking_code: string;
@@ -10,7 +10,7 @@ export interface Booking {
   booking_date: string;
   booking_time: string;
   total_price: number;
-  status: "confirmed" | "picked-up" | "in-progress" | "completed" | "cancelled" | "pending"; // Added "pending" status
+  status: "confirmed" | "picked-up" | "in-progress" | "completed" | "cancelled" | "pending"; // tambah status "pending"
   payment_proof: string | null;
   is_pickup_service: boolean;
   pickup_address: string | null;
@@ -38,13 +38,13 @@ export interface Booking {
   };
 }
 
-// Define the structure for the API response
+// Struktur untuk respons API
 export interface BookingApiResponse {
   bookings: Booking[];
   total?: number;
 }
 
-// Define the structure for booking statistics
+// Struktur data statistik booking
 export interface BookingStatsData {
   totalBookings: number;
   totalRevenue: number;

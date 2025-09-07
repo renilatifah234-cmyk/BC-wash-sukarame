@@ -44,14 +44,14 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
       errorInfo,
     })
 
-    // Call optional error handler
+    // Panggil handler error opsional
     if (this.props.onError) {
       this.props.onError(error, errorInfo)
     }
 
-    // Log to external service in production
+    // Production: kirim ke layanan eksternal
     if (process.env.NODE_ENV === "production") {
-      // Example: logErrorToService(error, errorInfo)
+      // contoh: logErrorToService(error, errorInfo)
     }
   }
 
@@ -124,19 +124,19 @@ function DefaultErrorFallback({ error, reset }: ErrorFallbackProps) {
   )
 }
 
-// Hook for handling async errors in components
+// Hook untuk menangani error async di komponen
 export function useErrorHandler() {
   return React.useCallback((error: Error) => {
     console.error("[v0] Async error:", error)
 
-    // Trigger error boundary by throwing in next tick
+    // Lempar ulang di tick berikut agar ditangkap boundary
     setTimeout(() => {
       throw error
     }, 0)
   }, [])
 }
 
-// Higher-order component for wrapping components with error boundary
+// HOC untuk membungkus komponen dengan error boundary
 export function withErrorBoundary<P extends object>(
   Component: React.ComponentType<P>,
   fallback?: React.ComponentType<ErrorFallbackProps>,

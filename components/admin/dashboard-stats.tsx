@@ -61,7 +61,7 @@ export function DashboardStats() {
           ? Math.round(((dailyRevenue - revenueYesterday) / revenueYesterday) * 100)
           : 0
 
-        // Calculate new customers (joined in last 7 days) and growth vs previous week
+        // Hitung pelanggan baru (7 hari terakhir) dan pertumbuhan vs minggu sebelumnya
         const weekAgo = new Date()
         weekAgo.setDate(weekAgo.getDate() - 7)
         const twoWeeksAgo = new Date()
@@ -74,7 +74,7 @@ export function DashboardStats() {
           ? Math.round(((newCustomers - prevWeekCustomers) / prevWeekCustomers) * 100)
           : 0
 
-        // Calculate average service time from services
+        // Hitung rata-rata durasi layanan dari data
         const avgServiceTime =
           services.length > 0
             ? Math.round(services.reduce((sum, service) => sum + service.duration, 0) / services.length)
@@ -86,7 +86,7 @@ export function DashboardStats() {
           activeServices: services.length,
           newCustomers,
           averageServiceTime: avgServiceTime,
-          customerSatisfaction: 4.8, // Placeholder for actual ratings
+          customerSatisfaction: 4.8, // placeholder rating
           bookingGrowth,
           revenueGrowth,
           newCustomerGrowth,

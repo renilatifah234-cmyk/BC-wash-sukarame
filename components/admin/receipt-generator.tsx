@@ -30,26 +30,26 @@ interface ReceiptGeneratorProps {
 }
 
 /**
- * Receipt Generator Component
+ * Komponen generator struk
  *
- * Generates and displays a printable receipt for completed car wash bookings.
- * Supports PDF download, printing, and sharing functionality.
+ * Menampilkan struk selesai cuci kendaraan, bisa diunduh PDF,
+ * dicetak, atau dibagikan.
  */
 export function ReceiptGenerator({ receiptData, onClose }: ReceiptGeneratorProps) {
   const [isGenerating, setIsGenerating] = useState(false)
 
   /**
-   * Handles PDF generation and download
-   * In production, this would integrate with a PDF generation service
+   * Proses buat & unduh PDF
+   * Production: integrasi dengan layanan PDF
    */
   const handleDownload = async () => {
     setIsGenerating(true)
     try {
-      // Simulate PDF generation - replace with actual PDF service integration
+      // simulasi pembuatan PDF; ganti dengan layanan PDF nyata
       await new Promise((resolve) => setTimeout(resolve, 2000))
 
-      // TODO: Integrate with actual PDF generation service
-      // Example: const pdfBlob = await generateReceiptPDF(receiptData)
+      // TODO: integrasi dengan layanan PDF sungguhan
+      // contoh: const pdfBlob = await generateReceiptPDF(receiptData)
       // downloadFile(pdfBlob, `receipt-${receiptData.bookingCode}.pdf`)
     } catch (error) {
       console.error("Failed to generate PDF:", error)
@@ -59,14 +59,14 @@ export function ReceiptGenerator({ receiptData, onClose }: ReceiptGeneratorProps
   }
 
   /**
-   * Handles receipt printing using browser's print functionality
+   * Cetak struk via fitur print browser
    */
   const handlePrint = () => {
     window.print()
   }
 
   /**
-   * Handles receipt sharing via Web Share API or clipboard fallback
+   * Bagikan struk via Web Share API atau salin ke clipboard
    */
   const handleShare = async () => {
     if (navigator.share) {
@@ -77,11 +77,11 @@ export function ReceiptGenerator({ receiptData, onClose }: ReceiptGeneratorProps
           url: window.location.href,
         })
       } catch (error) {
-        // User cancelled sharing or sharing failed
+        // user batal berbagi atau gagal
         console.error("Sharing failed:", error)
       }
     } else {
-      // Fallback: copy receipt text to clipboard
+      // fallback: salin teks struk ke clipboard
       const receiptText = `
 BC WASH SUKARAME
 Struk Pembayaran
@@ -103,14 +103,14 @@ Terima kasih telah menggunakan layanan kami!
 
   return (
     <div className="max-w-md mx-auto bg-white">
-      {/* Receipt Header */}
+      {/* header struk */}
       <div className="text-center p-6 border-b">
         <h1 className="font-serif text-2xl font-bold text-primary mb-2">BC WASH SUKARAME</h1>
         <p className="text-sm text-muted-foreground">Layanan Cuci Kendaraan Profesional</p>
         <p className="text-xs text-muted-foreground mt-1">{receiptData.branchAddress}</p>
       </div>
 
-      {/* Receipt Content */}
+      {/* isi struk */}
       <div className="p-6 space-y-4">
         <div className="text-center">
           <h2 className="font-semibold text-lg mb-2">STRUK PEMBAYARAN</h2>
@@ -183,7 +183,7 @@ Terima kasih telah menggunakan layanan kami!
         </div>
       </div>
 
-      {/* Action Buttons */}
+      {/* tombol aksi */}
       <div className="flex gap-2 p-4 border-t bg-muted/30">
         <Button onClick={handleDownload} disabled={isGenerating} className="flex-1" size="sm">
           <Download className="w-4 h-4 mr-2" />

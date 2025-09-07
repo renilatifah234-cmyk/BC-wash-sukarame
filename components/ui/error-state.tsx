@@ -95,7 +95,7 @@ export function ErrorState({
   )
 }
 
-// Specialized error components
+// Komponen error spesifik
 export function NetworkErrorState({ onRetry, className }: { onRetry?: () => void; className?: string }) {
   return <ErrorState variant="network" onRetry={onRetry} className={className} />
 }
