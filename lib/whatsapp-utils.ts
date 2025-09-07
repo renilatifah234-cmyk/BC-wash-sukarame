@@ -42,13 +42,16 @@ const generateWhatsAppMessage = (booking: BookingWithDetails): string => {
         confirmed: `Booking Anda sudah *Terkonfirmasi*. ✅  
     Mohon datang ke cabang sesuai jadwal yang dipilih. Terima kasih! 🙌`,
 
-        "in-progress": `Booking Anda sedang dalam proses *Pengerjaan*. 🧽  
+        "in-progress": `Booking Anda sedang dalam proses *Pengerjaan*. 🧽
     Tim kami saat ini sedang membersihkan kendaraan Anda.`,
+
+        "picked-up": `Booking Anda sedang dalam proses *Penjemputan*. 🚗
+    Tim kami sedang menuju lokasi Anda.`,
 
         completed: `Proses pembersihan kendaraan Anda sudah *Selesai*! 🎉  
     Terima kasih telah mempercayakan layanan kami. Semoga puas dan sampai jumpa lagi! 🙏`,
 
-        cancelled: `Mohon maaf, booking Anda telah *Dibatalkan*. ❌  
+        cancelled: `Mohon maaf, booking Anda telah *Dibatalkan*. ❌
     Jika pembatalan ini tidak sesuai, silakan hubungi admin kami untuk bantuan lebih lanjut.`,
     }
 

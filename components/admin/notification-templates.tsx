@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 
-type StatusKey = "pending" | "confirmed" | "in-progress" | "completed" | "cancelled"
+type StatusKey = "pending" | "confirmed" | "picked-up" | "in-progress" | "completed" | "cancelled"
 
 const defaultTemplates: Record<StatusKey, string> = {
   pending:
@@ -15,6 +15,8 @@ const defaultTemplates: Record<StatusKey, string> = {
     "Halo {customerName},\n\nBooking Anda sudah dikonfirmasi.\n📌 Kode: {bookingCode}\n🛠 Layanan: {service}\n📅 Jadwal: {date} {time}\n🏢 Cabang: {branch}\n\nSampai jumpa tepat waktu!",
   "in-progress":
     "Halo {customerName},\n\nKendaraan Anda sedang dalam proses pengerjaan.\n📌 Kode: {bookingCode}\n🛠 Layanan: {service}",
+  "picked-up":
+    "Halo {customerName},\n\nKendaraan Anda sedang dijemput oleh tim kami.\n📌 Kode: {bookingCode}\n🛠 Layanan: {service}",
   completed:
     "Halo {customerName},\n\nLayanan telah selesai. Terima kasih!\n📌 Kode: {bookingCode}\n🛠 Layanan: {service}",
   cancelled:

@@ -13,7 +13,7 @@ import { format } from "date-fns"
 import { id } from "date-fns/locale"
 import { cn } from "@/lib/utils"
 
-export function BookingFilters() {
+export function BookingFilters({ onSearchChange }: { onSearchChange?: (term: string) => void }) {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [branchFilter, setBranchFilter] = useState("all")
@@ -42,7 +42,10 @@ export function BookingFilters() {
               <Input
                 placeholder="Cari berdasarkan nama, kode booking, atau telepon..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value)
+                  onSearchChange?.(e.target.value)
+                }}
                 className="pl-10"
               />
             </div>
@@ -77,6 +80,7 @@ export function BookingFilters() {
                     <SelectItem value="all">Semua Status</SelectItem>
                     <SelectItem value="pending">Menunggu</SelectItem>
                     <SelectItem value="confirmed">Dikonfirmasi</SelectItem>
+                    <SelectItem value="picked-up">Dijemput</SelectItem>
                     <SelectItem value="in-progress">Berlangsung</SelectItem>
                     <SelectItem value="completed">Selesai</SelectItem>
                     <SelectItem value="cancelled">Dibatalkan</SelectItem>

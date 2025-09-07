@@ -70,7 +70,7 @@ export default function AdminReportsPage() {
             <h1 className="font-serif text-2xl md:text-3xl font-bold text-foreground">Laporan & Analisis</h1>
             <p className="text-muted-foreground mt-1">Analisis performa bisnis dan laporan keuangan</p>
           </div>
-          <ReportExport />
+          <ReportExport filters={filters} />
         </div>
 
         <ReportFilters onChange={setFilters} />

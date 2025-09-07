@@ -25,7 +25,7 @@ interface Booking {
   booking_date: string // ISO date string
   booking_time: string // HH:MM format
   total_price: number
-  status: "pending" | "confirmed" | "in-progress" | "completed" | "cancelled"
+  status: "pending" | "confirmed" | "picked-up" | "in-progress" | "completed" | "cancelled"
   is_pickup_service: boolean
   pickup_address: string | null;
   pickup_notes: string | null;
@@ -37,7 +37,6 @@ interface Booking {
   notes?: string
   booking_source: string
   created_by_admin: boolean
-  admin_user_id: string | null;
   created_at: string
   updated_at: string
   services: {
@@ -121,7 +120,6 @@ interface CreateBookingData {
   notes?: string
   booking_source?: string
   created_by_admin?: boolean
-  admin_user_id?: string
 }
 
 class ApiClient {
@@ -204,16 +202,22 @@ class ApiClient {
     status?: string
     date?: string
     limit?: number
-  }): Promise<{ bookings: Booking[] }> {
+    page?: number
+    search?: string
+  }): Promise<{ bookings: Booking[]; total: number }> {
     try {
       const searchParams = new URLSearchParams()
       if (params?.branchId) searchParams.set("branchId", params.branchId)
       if (params?.status) searchParams.set("status", params.status)
       if (params?.date) searchParams.set("date", params.date)
       if (params?.limit) searchParams.set("limit", params.limit.toString())
+      if (params?.page) searchParams.set("page", params.page.toString())
+      if (params?.search) searchParams.set("search", params.search)
 
       const query = searchParams.toString()
-      const result = await this.request<{ bookings: Booking[] }>(`/bookings${query ? `?${query}` : ""}`)
+      const result = await this.request<{ bookings: Booking[]; total: number }>(
+        `/bookings${query ? `?${query}` : ""}`,
+      )
 
       return result
     } catch (error) {

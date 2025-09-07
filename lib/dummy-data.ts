@@ -43,7 +43,7 @@ export interface Booking {
   date: string
   time: string
   totalPrice: number
-  status: "pending" | "confirmed" | "in-progress" | "completed" | "cancelled"
+  status: "pending" | "confirmed" | "picked-up" | "in-progress" | "completed" | "cancelled"
   paymentProof?: string
   createdAt: string
   updatedAt: string

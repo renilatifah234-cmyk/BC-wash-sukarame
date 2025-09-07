@@ -24,7 +24,6 @@ INSERT INTO branches (id, name, address, phone, bank_name, bank_account_number, 
 ('sukarame-branch3', 'BC Wash Sukarame Cabang 3', 'Jl. Cut Mutia No. 50, Margahayu, Bekasi Timur', '021-111222', 'BRI', '1122334455', 'BC Wash Sukarame Cab 3', '08:00', '18:00', 12, 'inactive', 'Akbar', 4)
 ON CONFLICT (id) DO NOTHING;
 
--- Seed customers data
 INSERT INTO customers (id, name, phone, email, vehicle_plate_numbers, total_loyalty_points, total_bookings, join_date) VALUES
 ('customer-001', 'Ahmad Rizki', '08123456789', 'ahmad.rizki@email.com', ARRAY['B 1234 ABC', 'B 5678 DEF'], 150, 8, '2023-06-15'),
 ('customer-002', 'Sari Dewi', '08987654321', 'sari.dewi@email.com', ARRAY['BE 9876 XYZ'], 75, 4, '2023-08-20'),
@@ -34,38 +33,27 @@ INSERT INTO customers (id, name, phone, email, vehicle_plate_numbers, total_loya
 ('customer-006', 'Rina Sari', '08222333444', 'rina.sari@email.com', ARRAY['BE 8888 STU'], 95, 5, '2023-09-18')
 ON CONFLICT (id) DO NOTHING;
 
--- Seed admins data (with hashed passwords)
--- Note: Password for all admins is 'password123' (hashed with bcrypt)
-INSERT INTO admins (id, username, name, email, password_hash, role, branch_id, is_active, last_login) VALUES
-('admin-001', 'superadmin', 'Admin Utama', 'admin@bcwash.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'super-admin', NULL, true, '2024-01-17T08:00:00Z'),
-('admin-002', 'branch1admin', 'Budi Santoso', 'budi@bcwash.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'branch-admin', 'sukarame-main', true, '2024-01-17T07:30:00Z'),
-('admin-003', 'branch2admin', 'Sari Indah', 'sari@bcwash.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'branch-admin', 'sukarame-branch2', true, '2024-01-16T16:45:00Z'),
-('admin-004', 'staff001', 'Rudi Hartono', 'rudi@bcwash.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'staff', 'sukarame-main', true, '2024-01-16T14:20:00Z'),
-('admin-005', 'staff002', 'Dewi Sartika', 'dewi@bcwash.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'staff', 'sukarame-branch2', true, '2024-01-15T16:30:00Z'),
-('admin-006', 'branch3admin', 'Andi Wijaya', 'andi.admin@bcwash.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'branch-admin', 'sukarame-branch3', false, '2024-01-05T15:00:00Z')
-ON CONFLICT (id) DO NOTHING;
-
 -- Seed bookings data
-INSERT INTO bookings (id, booking_code, customer_name, customer_phone, customer_email, service_id, branch_id, booking_date, booking_time, total_price, status, is_pickup_service, pickup_address, pickup_notes, vehicle_plate_number, loyalty_points_earned, loyalty_points_used, booking_source, created_by_admin, admin_user_id, payment_method, notes, created_at, updated_at) VALUES
-('booking-001', 'BCW001', 'Ahmad Rizki', '08123456789', 'ahmad.rizki@email.com', 'car-small-premium', 'sukarame-main', '2024-01-15', '10:00', 45000, 'confirmed', false, NULL, NULL, 'B 1234 ABC', 45, 0, 'online', false, NULL, 'transfer', NULL, '2024-01-14T10:00:00Z', '2024-01-14T10:30:00Z'),
+INSERT INTO bookings (id, booking_code, customer_name, customer_phone, customer_email, service_id, branch_id, booking_date, booking_time, total_price, status, is_pickup_service, pickup_address, pickup_notes, vehicle_plate_number, loyalty_points_earned, loyalty_points_used, booking_source, created_by_admin, payment_method, notes, created_at, updated_at) VALUES
+('booking-001', 'BCW001', 'Ahmad Rizki', '08123456789', 'ahmad.rizki@email.com', 'car-small-premium', 'sukarame-main', '2024-01-15', '10:00', 45000, 'confirmed', false, NULL, NULL, 'B 1234 ABC', 45, 0, 'online', false, 'transfer', NULL, '2024-01-14T10:00:00Z', '2024-01-14T10:30:00Z'),
 
-('booking-002', 'BCW002', 'Sari Dewi', '08987654321', 'sari.dewi@email.com', 'motorcycle-medium', 'sukarame-branch2', '2024-01-15', '14:00', 25000, 'pending', true, 'Jl. Raden Intan No. 789, Bandar Lampung', 'Rumah cat hijau, pagar putih', 'BE 9876 XYZ', 25, 0, 'online', false, NULL, 'transfer', NULL, '2024-01-14T14:00:00Z', '2024-01-14T14:00:00Z'),
+('booking-002', 'BCW002', 'Sari Dewi', '08987654321', 'sari.dewi@email.com', 'motorcycle-medium', 'sukarame-branch2', '2024-01-15', '14:00', 25000, 'pending', true, 'Jl. Raden Intan No. 789, Bandar Lampung', 'Rumah cat hijau, pagar putih', 'BE 9876 XYZ', 25, 0, 'online', false, 'transfer', NULL, '2024-01-14T14:00:00Z', '2024-01-14T14:00:00Z'),
 
-('booking-003', 'BCW003', 'Joko Susilo', '08111222333', 'joko.susilo@email.com', 'car-large-regular', 'sukarame-main', '2024-01-16', '09:00', 40000, 'completed', false, NULL, NULL, 'BE 5555 GHI', 40, 0, 'offline', true, 'admin-001', 'cash', 'Walk-in customer, paid cash', '2024-01-16T08:30:00Z', '2024-01-16T10:15:00Z'),
+('booking-003', 'BCW003', 'Joko Susilo', '08111222333', 'joko.susilo@email.com', 'car-large-regular', 'sukarame-main', '2024-01-16', '09:00', 40000, 'completed', false, NULL, NULL, 'BE 5555 GHI', 40, 0, 'offline', true, 'cash', 'Walk-in customer, paid cash', '2024-01-16T08:30:00Z', '2024-01-16T10:15:00Z'),
 
-('booking-004', 'BCW004', 'Maya Putri', '08444555666', 'maya.putri@email.com', 'anti-bacterial', 'sukarame-main', '2024-01-16', '11:30', 75000, 'in-progress', false, NULL, NULL, 'BE 1111 MNO', 75, 0, 'online', false, NULL, 'qris', NULL, '2024-01-16T09:00:00Z', '2024-01-16T11:30:00Z'),
+('booking-004', 'BCW004', 'Maya Putri', '08444555666', 'maya.putri@email.com', 'anti-bacterial', 'sukarame-main', '2024-01-16', '11:30', 75000, 'in-progress', false, NULL, NULL, 'BE 1111 MNO', 75, 0, 'online', false, 'qris', NULL, '2024-01-16T09:00:00Z', '2024-01-16T11:30:00Z'),
 
-('booking-005', 'BCW005', 'Andi Wijaya', '08777888999', 'andi.wijaya@email.com', 'motorcycle-small', 'sukarame-branch2', '2024-01-16', '15:00', 23000, 'cancelled', true, 'Jl. Ahmad Yani No. 456, Bandar Lampung', 'Komplek perumahan, blok C no. 12', 'B 3333 PQR', 0, 0, 'online', false, NULL, 'transfer', 'Customer cancelled due to rain', '2024-01-15T12:00:00Z', '2024-01-16T08:00:00Z'),
+('booking-005', 'BCW005', 'Andi Wijaya', '08777888999', 'andi.wijaya@email.com', 'motorcycle-small', 'sukarame-branch2', '2024-01-16', '15:00', 23000, 'cancelled', true, 'Jl. Ahmad Yani No. 456, Bandar Lampung', 'Komplek perumahan, blok C no. 12', 'B 3333 PQR', 0, 0, 'online', false, 'transfer', 'Customer cancelled due to rain', '2024-01-15T12:00:00Z', '2024-01-16T08:00:00Z'),
 
-('booking-006', 'BCW006', 'Rina Sari', '08222333444', 'rina.sari@email.com', 'car-large-premium', 'sukarame-branch2', '2024-01-17', '08:30', 50000, 'confirmed', false, NULL, NULL, 'BE 8888 STU', 50, 0, 'online', false, NULL, 'transfer', NULL, '2024-01-16T15:30:00Z', '2024-01-16T16:00:00Z'),
+('booking-006', 'BCW006', 'Rina Sari', '08222333444', 'rina.sari@email.com', 'car-large-premium', 'sukarame-branch2', '2024-01-17', '08:30', 50000, 'confirmed', false, NULL, NULL, 'BE 8888 STU', 50, 0, 'online', false, 'transfer', NULL, '2024-01-16T15:30:00Z', '2024-01-16T16:00:00Z'),
 
-('booking-007', 'BCW007', 'Budi Hartono', '08555666777', 'budi.hartono@email.com', 'glass-spot-removal', 'sukarame-main', '2024-01-17', '10:00', 75000, 'confirmed', false, NULL, NULL, 'B 9999 VWX', 75, 0, 'offline', true, 'admin-002', 'cash', 'Regular customer, requested specific staff member', '2024-01-17T07:00:00Z', '2024-01-17T07:15:00Z'),
+('booking-007', 'BCW007', 'Budi Hartono', '08555666777', 'budi.hartono@email.com', 'glass-spot-removal', 'sukarame-main', '2024-01-17', '10:00', 75000, 'confirmed', false, NULL, NULL, 'B 9999 VWX', 75, 0, 'offline', true, 'cash', 'Regular customer, requested specific staff member', '2024-01-17T07:00:00Z', '2024-01-17T07:15:00Z'),
 
-('booking-008', 'BCW008', 'Siti Nurhaliza', '08333444555', 'siti.nurhaliza@email.com', 'car-steam-quick', 'sukarame-branch2', '2024-01-17', '13:00', 45000, 'pending', true, 'Jl. Diponegoro No. 123, Bandar Lampung', 'Kantor, gedung biru lantai 2', 'BE 4444 YZA', 45, 0, 'online', false, NULL, 'transfer', NULL, '2024-01-17T08:30:00Z', '2024-01-17T08:30:00Z'),
+('booking-008', 'BCW008', 'Siti Nurhaliza', '08333444555', 'siti.nurhaliza@email.com', 'car-steam-quick', 'sukarame-branch2', '2024-01-17', '13:00', 45000, 'picked-up', true, 'Jl. Diponegoro No. 123, Bandar Lampung', 'Kantor, gedung biru lantai 2', 'BE 4444 YZA', 45, 0, 'online', false, 'transfer', NULL, '2024-01-17T08:30:00Z', '2024-01-17T08:30:00Z'),
 
-('booking-009', 'BCW009', 'Dedi Setiawan', '08666777888', 'dedi.setiawan@email.com', 'motorcycle-large', 'sukarame-main', '2024-01-17', '16:30', 30000, 'completed', true, 'Jl. Gatot Subroto No. 789, Bandar Lampung', 'Rumah sudut, cat kuning', 'BE 6666 BCD', 30, 0, 'offline', true, 'admin-002', 'card', 'Customer paid with debit card, service completed on time', '2024-01-17T14:00:00Z', '2024-01-17T17:00:00Z'),
+('booking-009', 'BCW009', 'Dedi Setiawan', '08666777888', 'dedi.setiawan@email.com', 'motorcycle-large', 'sukarame-main', '2024-01-17', '16:30', 30000, 'completed', true, 'Jl. Gatot Subroto No. 789, Bandar Lampung', 'Rumah sudut, cat kuning', 'BE 6666 BCD', 30, 0, 'offline', true, 'card', 'Customer paid with debit card, service completed on time', '2024-01-17T14:00:00Z', '2024-01-17T17:00:00Z'),
 
-('booking-010', 'BCW010', 'Lina Marlina', '08999000111', 'lina.marlina@email.com', 'car-small-regular', 'sukarame-branch2', '2024-01-18', '09:30', 35000, 'confirmed', false, NULL, NULL, 'B 2222 EFG', 35, 0, 'online', false, NULL, 'transfer', NULL, '2024-01-17T18:00:00Z', '2024-01-17T18:15:00Z')
+('booking-010', 'BCW010', 'Lina Marlina', '08999000111', 'lina.marlina@email.com', 'car-small-regular', 'sukarame-branch2', '2024-01-18', '09:30', 35000, 'confirmed', false, NULL, NULL, 'B 2222 EFG', 35, 0, 'online', false, 'transfer', NULL, '2024-01-17T18:00:00Z', '2024-01-17T18:15:00Z')
 ON CONFLICT (id) DO NOTHING;
 
 -- Removed sequence update commands since tables use TEXT primary keys, not auto-incrementing sequences

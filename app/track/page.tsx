@@ -11,7 +11,7 @@ import { Calendar, Car, CheckCircle, Clock, MapPin, Search, XCircle } from "luci
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
 
-type BookingStatus = "pending" | "confirmed" | "in-progress" | "completed" | "cancelled"
+type BookingStatus = "pending" | "confirmed" | "picked-up" | "in-progress" | "completed" | "cancelled"
 
 export default function TrackBookingPage() {
   const [code, setCode] = useState("")
@@ -43,6 +43,8 @@ export default function TrackBookingPage() {
         return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Dikonfirmasi</Badge>
       case "in-progress":
         return <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100">Berlangsung</Badge>
+      case "picked-up":
+        return <Badge className="bg-indigo-100 text-indigo-800 hover:bg-indigo-100">Dijemput</Badge>
       case "completed":
         return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Selesai</Badge>
       case "cancelled":
@@ -52,12 +54,15 @@ export default function TrackBookingPage() {
     }
   }
 
-  const steps: { key: BookingStatus; label: string; desc: string }[] = [
+  const baseSteps: { key: BookingStatus; label: string; desc: string }[] = [
     { key: "pending", label: "Menunggu Pembayaran/Konfirmasi", desc: "Booking dibuat" },
     { key: "confirmed", label: "Dikonfirmasi", desc: "Jadwal sudah dikonfirmasi" },
+    { key: "picked-up", label: "Dijemput", desc: "Kendaraan sedang dijemput" },
     { key: "in-progress", label: "Sedang Dikerjakan", desc: "Layanan sedang berlangsung" },
     { key: "completed", label: "Selesai", desc: "Layanan selesai" },
   ]
+
+  const steps = booking?.is_pickup_service ? baseSteps : baseSteps.filter((s) => s.key !== "picked-up")
 
   const stepIndex = (s: BookingStatus) => steps.findIndex((st) => st.key === s)
 

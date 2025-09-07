@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import jsPDF from "jspdf"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,8 +19,45 @@ import { Download, FileText, FileSpreadsheet, Printer } from "lucide-react"
  * Provides export functionality for admin reports in multiple formats.
  * Supports PDF, Excel export, and direct printing.
  */
-export function ReportExport() {
+interface ReportExportProps {
+  filters?: { startDate?: string; endDate?: string; branchId?: string }
+}
+
+export function ReportExport({ filters }: ReportExportProps) {
   const [isExporting, setIsExporting] = useState(false)
+
+  const fetchReportData = async () => {
+    const params = new URLSearchParams()
+    if (filters?.startDate) params.append("startDate", filters.startDate)
+    if (filters?.endDate) params.append("endDate", filters.endDate)
+    if (filters?.branchId) params.append("branchId", filters.branchId)
+
+    const res = await fetch(`/api/reports?${params.toString()}`)
+    return res.json()
+  }
+
+  const exportCSV = (data: any) => {
+    const rows = [
+      ["Total Revenue", data.summary.totalRevenue],
+      ["Total Bookings", data.summary.totalBookings],
+      ["Average Booking Value", data.summary.averageBookingValue],
+      [],
+      ["Service", "Count", "Revenue"],
+      ...data.serviceStats.map((s: any) => [s.name, s.count, s.revenue]),
+      [],
+      ["Branch", "Count", "Revenue"],
+      ...data.branchStats.map((b: any) => [b.name, b.count, b.revenue]),
+    ]
+
+    const csvContent = rows.map((r) => r.join(",")).join("\n")
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `report-${Date.now()}.csv`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
 
   /**
    * Handles report export in the specified format
@@ -27,16 +65,18 @@ export function ReportExport() {
    */
   const handleExport = async (format: string) => {
     setIsExporting(true)
-
     try {
-      // Simulate export process - replace with actual export service integration
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-
-      // TODO: Integrate with actual export service
-      // Example implementations:
-      // - PDF: const pdfBlob = await generateReportPDF(reportData)
-      // - Excel: const excelBlob = await generateReportExcel(reportData)
-      // downloadFile(blob, `report-${Date.now()}.${format}`)
+      const data = await fetchReportData()
+      if (format === "excel") {
+        exportCSV(data)
+      } else if (format === "pdf") {
+        const doc = new jsPDF()
+        doc.text("Laporan BC Wash", 10, 10)
+        doc.text(`Total Revenue: ${data.summary.totalRevenue}`, 10, 20)
+        doc.text(`Total Bookings: ${data.summary.totalBookings}`, 10, 30)
+        doc.text(`Average Booking Value: ${data.summary.averageBookingValue}`, 10, 40)
+        doc.save(`report-${Date.now()}.pdf`)
+      }
     } catch (error) {
       console.error(`Failed to export report in ${format} format:`, error)
     } finally {
