@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,7 +13,15 @@ import { format } from "date-fns"
 import { id } from "date-fns/locale"
 import { cn } from "@/lib/utils"
 
-export function BookingFilters({ onSearchChange }: { onSearchChange?: (term: string) => void }) {
+interface BookingFilterValues {
+  search: string
+  status: string
+  branch: string
+  dateFrom?: Date
+  dateTo?: Date
+}
+
+export function BookingFilters({ onChange }: { onChange?: (filters: BookingFilterValues) => void }) {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [branchFilter, setBranchFilter] = useState("all")
@@ -27,9 +35,28 @@ export function BookingFilters({ onSearchChange }: { onSearchChange?: (term: str
     setBranchFilter("all")
     setDateFrom(undefined)
     setDateTo(undefined)
+    emitChange({ search: "", status: "all", branch: "all", dateFrom: undefined, dateTo: undefined })
   }
 
   const hasActiveFilters = searchTerm || statusFilter !== "all" || branchFilter !== "all" || dateFrom || dateTo
+
+  const emitChange = (
+    next: Partial<BookingFilterValues> = {},
+  ) => {
+    const filters: BookingFilterValues = {
+      search: next.search ?? searchTerm,
+      status: next.status ?? statusFilter,
+      branch: next.branch ?? branchFilter,
+      dateFrom: next.dateFrom ?? dateFrom,
+      dateTo: next.dateTo ?? dateTo,
+    }
+    onChange?.(filters)
+  }
+
+  useEffect(() => {
+    emitChange()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <Card>
@@ -43,8 +70,9 @@ export function BookingFilters({ onSearchChange }: { onSearchChange?: (term: str
                 placeholder="Cari berdasarkan nama, kode booking, atau telepon..."
                 value={searchTerm}
                 onChange={(e) => {
-                  setSearchTerm(e.target.value)
-                  onSearchChange?.(e.target.value)
+                  const value = e.target.value
+                  setSearchTerm(value)
+                  emitChange({ search: value })
                 }}
                 className="pl-10"
               />
@@ -72,7 +100,13 @@ export function BookingFilters({ onSearchChange }: { onSearchChange?: (term: str
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t">
               <div className="space-y-2">
                 <Label>Status</Label>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <Select
+                  value={statusFilter}
+                  onValueChange={(value) => {
+                    setStatusFilter(value)
+                    emitChange({ status: value })
+                  }}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Pilih status" />
                   </SelectTrigger>
@@ -90,7 +124,13 @@ export function BookingFilters({ onSearchChange }: { onSearchChange?: (term: str
 
               <div className="space-y-2">
                 <Label>Cabang</Label>
-                <Select value={branchFilter} onValueChange={setBranchFilter}>
+                <Select
+                  value={branchFilter}
+                  onValueChange={(value) => {
+                    setBranchFilter(value)
+                    emitChange({ branch: value })
+                  }}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Pilih cabang" />
                   </SelectTrigger>
@@ -115,7 +155,15 @@ export function BookingFilters({ onSearchChange }: { onSearchChange?: (term: str
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
-                    <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} initialFocus />
+                    <Calendar
+                      mode="single"
+                      selected={dateFrom}
+                      onSelect={(date) => {
+                        setDateFrom(date)
+                        emitChange({ dateFrom: date })
+                      }}
+                      initialFocus
+                    />
                   </PopoverContent>
                 </Popover>
               </div>
@@ -133,7 +181,15 @@ export function BookingFilters({ onSearchChange }: { onSearchChange?: (term: str
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
-                    <Calendar mode="single" selected={dateTo} onSelect={setDateTo} initialFocus />
+                    <Calendar
+                      mode="single"
+                      selected={dateTo}
+                      onSelect={(date) => {
+                        setDateTo(date)
+                        emitChange({ dateTo: date })
+                      }}
+                      initialFocus
+                    />
                   </PopoverContent>
                 </Popover>
               </div>

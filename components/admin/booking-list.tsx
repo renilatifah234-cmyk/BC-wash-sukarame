@@ -52,9 +52,21 @@ interface BookingWithDetails extends Booking {
   branchAddress: string;
   branchPhone: string;
   paymentMethod: string;
+  pickupAddress?: string;
+  pickupNotes?: string;
 }
 
-export function BookingList({ searchTerm = "" }: { searchTerm?: string }) {
+interface BookingListProps {
+  filters: {
+    search: string
+    status: string
+    branch: string
+    dateFrom?: Date
+    dateTo?: Date
+  }
+}
+
+export function BookingList({ filters }: BookingListProps) {
   const [bookings, setBookings] = useState<BookingWithDetails[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -67,11 +79,11 @@ export function BookingList({ searchTerm = "" }: { searchTerm?: string }) {
 
   useEffect(() => {
     setPage(1)
-  }, [searchTerm])
+  }, [filters])
 
   useEffect(() => {
     fetchBookings()
-  }, [page, searchTerm])
+  }, [page, filters])
 
   const fetchBookings = async () => {
     try {
@@ -80,7 +92,11 @@ export function BookingList({ searchTerm = "" }: { searchTerm?: string }) {
       const { bookings: bookingsData, total } = await apiClient.getBookings({
         page,
         limit: pageSize,
-        search: searchTerm,
+        search: filters.search,
+        status: filters.status !== "all" ? filters.status : undefined,
+        branchId: filters.branch !== "all" ? filters.branch : undefined,
+        dateFrom: filters.dateFrom ? format(filters.dateFrom, "yyyy-MM-dd") : undefined,
+        dateTo: filters.dateTo ? format(filters.dateTo, "yyyy-MM-dd") : undefined,
       })
 
       const enrichedBookings: BookingWithDetails[] = bookingsData.map((booking) => ({
@@ -112,6 +128,8 @@ export function BookingList({ searchTerm = "" }: { searchTerm?: string }) {
         branchAddress: booking.branches?.address || "",
         branchPhone: booking.branches?.phone || "",
         paymentMethod: booking.payment_method,
+        pickupAddress: booking.pickup_address || undefined,
+        pickupNotes: booking.pickup_notes || undefined,
       }))
 
       setBookings(enrichedBookings)

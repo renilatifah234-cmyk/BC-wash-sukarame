@@ -70,6 +70,8 @@ export async function GET(request: NextRequest) {
     const branchId = searchParams.get("branchId")
     const status = searchParams.get("status")
     const date = searchParams.get("date")
+    const dateFrom = searchParams.get("dateFrom")
+    const dateTo = searchParams.get("dateTo")
     const limit = searchParams.get("limit")
     const page = searchParams.get("page")
     const search = searchParams.get("search")
@@ -95,6 +97,14 @@ export async function GET(request: NextRequest) {
 
     if (date) {
       query = query.eq("booking_date", date)
+    }
+
+    if (dateFrom) {
+      query = query.gte("booking_date", dateFrom)
+    }
+
+    if (dateTo) {
+      query = query.lte("booking_date", dateTo)
     }
 
     const limitNum = limit ? Number.parseInt(limit) : 10

@@ -7,11 +7,12 @@ import { useState } from "react"
 
 interface ManualBookingSuccessProps {
   bookingCode: string
+  loyaltyPoints: number
   onNewBooking: () => void
   onBackToList: () => void
 }
 
-export function ManualBookingSuccess({ bookingCode, onNewBooking, onBackToList }: ManualBookingSuccessProps) {
+export function ManualBookingSuccess({ bookingCode, loyaltyPoints, onNewBooking, onBackToList }: ManualBookingSuccessProps) {
   const [copied, setCopied] = useState(false)
 
   const copyBookingCode = async () => {
@@ -47,6 +48,7 @@ export function ManualBookingSuccess({ bookingCode, onNewBooking, onBackToList }
               </Button>
             </div>
             <p className="text-sm text-green-700">Kode booking telah disimpan dan dapat digunakan untuk tracking</p>
+            <p className="text-sm text-green-700 mt-2">Poin loyalitas didapat: {loyaltyPoints}</p>
           </div>
         </CardContent>
       </Card>

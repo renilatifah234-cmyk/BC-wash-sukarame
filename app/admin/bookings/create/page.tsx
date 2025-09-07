@@ -9,7 +9,7 @@ import { ManualBookingSuccess } from "@/components/admin/manual-booking-success"
 export default function CreateBookingPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-  const [bookingCode, setBookingCode] = useState<string | null>(null)
+  const [bookingResult, setBookingResult] = useState<{ code: string; points: number } | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -30,12 +30,12 @@ export default function CreateBookingPage() {
     return null
   }
 
-  const handleSuccess = (code: string) => {
-    setBookingCode(code)
+  const handleSuccess = (code: string, points: number) => {
+    setBookingResult({ code, points })
   }
 
   const handleNewBooking = () => {
-    setBookingCode(null)
+    setBookingResult(null)
   }
 
   const handleBackToList = () => {
@@ -49,9 +49,10 @@ export default function CreateBookingPage() {
   return (
     <AdminLayout>
       <div className="max-w-4xl mx-auto">
-        {bookingCode ? (
+        {bookingResult ? (
           <ManualBookingSuccess
-            bookingCode={bookingCode}
+            bookingCode={bookingResult.code}
+            loyaltyPoints={bookingResult.points}
             onNewBooking={handleNewBooking}
             onBackToList={handleBackToList}
           />

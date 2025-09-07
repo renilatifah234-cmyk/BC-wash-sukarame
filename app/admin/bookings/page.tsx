@@ -9,15 +9,28 @@ import { BookingStats } from "@/components/admin/booking-stats"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 import Link from "next/link"
-import { apiClient } from "@/lib/api-client" // Import apiClient
-import { Booking, BookingApiResponse } from "@/lib/types" // Import Booking and BookingApiResponse types
+import { apiClient, type Booking } from "@/lib/api-client" // Import apiClient and Booking type
 import { BookingExport } from "@/components/admin/booking-export"
 
 export default function AdminBookingsPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [bookings, setBookings] = useState<Booking[]>([]) // State for bookings
-  const [searchTerm, setSearchTerm] = useState("")
+  interface BookingFilterState {
+    search: string
+    status: string
+    branch: string
+    dateFrom?: Date
+    dateTo?: Date
+  }
+
+  const [filters, setFilters] = useState<BookingFilterState>({
+    search: "",
+    status: "all",
+    branch: "all",
+    dateFrom: undefined,
+    dateTo: undefined,
+  })
   const router = useRouter()
 
   useEffect(() => {
@@ -27,10 +40,10 @@ export default function AdminBookingsPage() {
       // Fetch bookings when authenticated
       apiClient
         .getBookings({ limit: 1000 })
-        .then(({ bookings }: BookingApiResponse) => {
-          setBookings(bookings)
+        .then(({ bookings }) => {
+          setBookings(bookings as Booking[])
         })
-        .catch((error: Error) => { // Type the error parameter
+        .catch((error: Error) => {
           console.error("Error fetching bookings:", error);
           // Handle error appropriately, e.g., show a message to the user
         });
@@ -56,8 +69,8 @@ export default function AdminBookingsPage() {
             <h1 className="font-serif text-2xl md:text-3xl font-bold text-foreground">Kelola Booking</h1>
             <p className="text-muted-foreground mt-1">Kelola dan pantau semua booking pelanggan</p>
           </div>
-          <div className="flex items-center gap-2">
-            <BookingExport searchTerm={searchTerm} />
+        <div className="flex items-center gap-2">
+            <BookingExport searchTerm={filters.search} />
             <Button asChild>
               <Link href="/admin/bookings/create" className="flex items-center gap-2">
                 <Plus className="w-4 h-4" />
@@ -68,8 +81,8 @@ export default function AdminBookingsPage() {
         </div>
 
         <BookingStats bookings={bookings} /> {/* Pass bookings to BookingStats */}
-        <BookingFilters onSearchChange={setSearchTerm} />
-        <BookingList searchTerm={searchTerm} />
+        <BookingFilters onChange={(f) => setFilters(f)} />
+        <BookingList filters={filters} />
       </div>
     </AdminLayout>
   )

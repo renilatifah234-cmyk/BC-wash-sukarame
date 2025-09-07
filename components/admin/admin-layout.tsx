@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { LayoutDashboard, Calendar, BarChart3, Settings, LogOut, Car, Users, Star } from "lucide-react"
+import { LayoutDashboard, Calendar, BarChart3, Settings, LogOut, Car, Star } from "lucide-react"
 import Link from "next/link"
 
 interface AdminLayoutProps {
@@ -51,12 +51,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       title: "Layanan",
       url: "/admin/services",
       icon: Car,
-    },
-    {
-      title: "Pelanggan",
-      url: "/admin/customers",
-      icon: Users,
-      disabled: true,
     },
     {
       title: "Program Loyalitas",
@@ -97,23 +91,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               <SidebarMenu>
                 {menuItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild={!item.disabled}
-                      isActive={pathname === item.url}
-                      disabled={item.disabled}
-                      className={item.disabled ? "opacity-50 cursor-not-allowed" : ""}
-                    >
-                      {item.disabled ? (
-                        <div className="flex items-center gap-2">
-                          <item.icon className="w-4 h-4" />
-                          <span>{item.title}</span>
-                        </div>
-                      ) : (
-                        <Link href={item.url} className="flex items-center gap-2">
-                          <item.icon className="w-4 h-4" />
-                          <span>{item.title}</span>
-                        </Link>
-                      )}
+                    <SidebarMenuButton asChild isActive={pathname === item.url}>
+                      <Link href={item.url} className="flex items-center gap-2">
+                        <item.icon className="w-4 h-4" />
+                        <span>{item.title}</span>
+                      </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
