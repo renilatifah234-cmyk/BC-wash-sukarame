@@ -28,6 +28,32 @@ export default function AdminReportsPage() {
     setIsLoading(false)
   }, [router])
 
+  useEffect(() => {
+    const fetchReport = async () => {
+      try {
+        setReportLoading(true)
+        const params = new URLSearchParams()
+        if (filters.startDate) params.append("startDate", filters.startDate)
+        if (filters.endDate) params.append("endDate", filters.endDate)
+        if (filters.branchId) params.append("branchId", filters.branchId)
+
+        const res = await fetch(`/api/reports?${params.toString()}`)
+        const data = await res.json()
+        setSummary(data.summary)
+        setServiceStats(data.serviceStats || [])
+        setBranchStats(data.branchStats || [])
+      } catch (error) {
+        console.error("Failed to fetch report:", error)
+      } finally {
+        setReportLoading(false)
+      }
+    }
+
+    if (isAuthenticated) {
+      fetchReport()
+    }
+  }, [filters, isAuthenticated])
+
   if (isLoading) {
     return <div className="min-h-screen bg-background flex items-center justify-center">Loading...</div>
   }
@@ -35,31 +61,6 @@ export default function AdminReportsPage() {
   if (!isAuthenticated) {
     return null
   }
-
-  const fetchReport = async () => {
-    try {
-      setReportLoading(true)
-      const params = new URLSearchParams()
-      if (filters.startDate) params.append("startDate", filters.startDate)
-      if (filters.endDate) params.append("endDate", filters.endDate)
-      if (filters.branchId) params.append("branchId", filters.branchId)
-
-      const res = await fetch(`/api/reports?${params.toString()}`)
-      const data = await res.json()
-      setSummary(data.summary)
-      setServiceStats(data.serviceStats || [])
-      setBranchStats(data.branchStats || [])
-    } catch (error) {
-      console.error("Failed to fetch report:", error)
-    } finally {
-      setReportLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    fetchReport()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters])
 
   return (
     <AdminLayout>
