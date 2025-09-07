@@ -235,7 +235,7 @@ export function BookingList({ filters }: BookingListProps) {
           <CardTitle className="font-serif text-xl">Daftar Booking</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
+          <div className="rounded-md border overflow-x-auto hidden md:block">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -297,20 +297,20 @@ export function BookingList({ filters }: BookingListProps) {
                         <div className="flex items-center justify-end gap-2">
                           <Button
                             variant="ghost"
-                            size="sm"
+                            size="icon"
                             onClick={() => handleCallCustomer(booking)}
-                            className="h-8 w-8 p-0"
+                            className="h-11 w-11"
                           >
-                            <Phone className="h-4 w-4" />
+                            <Phone className="h-5 w-5" />
                           </Button>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-8 w-8 p-0" disabled={updatingStatus === booking.id}>
+                              <Button variant="ghost" className="h-11 w-11" disabled={updatingStatus === booking.id}>
                                 <span className="sr-only">Open menu</span>
                                 {updatingStatus === booking.id ? (
-                                  <Clock className="h-4 w-4 animate-spin" />
+                                  <Clock className="h-5 w-5 animate-spin" />
                                 ) : (
-                                  <MoreHorizontal className="h-4 w-4" />
+                                  <MoreHorizontal className="h-5 w-5" />
                                 )}
                               </Button>
                             </DropdownMenuTrigger>
@@ -376,17 +376,121 @@ export function BookingList({ filters }: BookingListProps) {
               </TableBody>
             </Table>
           </div>
-          <div className="flex items-center justify-between py-4">
+          <div className="space-y-4 md:hidden">
+            {bookings.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">Belum ada booking yang tersedia</div>
+            ) : (
+              bookings.map((booking) => (
+                <div key={booking.id} className="rounded-lg border p-4 shadow-sm space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 font-mono font-medium">
+                      <span>{booking.bookingCode}</span>
+                      {booking.paymentProof && <FileImage className="h-4 w-4 text-primary" />}
+                    </div>
+                    {getStatusBadge(booking.status)}
+                  </div>
+                  <div>
+                    <p className="font-medium">{booking.customerName}</p>
+                    <p className="text-sm text-muted-foreground">{booking.customerPhone}</p>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    <p>{booking.service}</p>
+                    <p>{booking.branch}</p>
+                    <p>
+                      {format(booking.date ? new Date(booking.date + "T00:00:00") : new Date(), "dd MMM yyyy", { locale: id })} • {booking.time} WIB
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="font-medium">{formatCurrency(booking.totalPrice)}</span>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleCallCustomer(booking)}
+                        className="h-11 w-11"
+                      >
+                        <Phone className="h-5 w-5" />
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-11 w-11" disabled={updatingStatus === booking.id}>
+                            <span className="sr-only">Open menu</span>
+                            {updatingStatus === booking.id ? (
+                              <Clock className="h-5 w-5 animate-spin" />
+                            ) : (
+                              <MoreHorizontal className="h-5 w-5" />
+                            )}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Aksi</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => handleViewDetails(booking)}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            Lihat Detail
+                          </DropdownMenuItem>
+                          {booking.paymentProof && (
+                            <DropdownMenuItem onClick={() => handleViewDetails(booking)}>
+                              <FileImage className="mr-2 h-4 w-4" />
+                              Lihat Bukti Pembayaran
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuSeparator />
+                          {booking.status === "pending" && (
+                            <DropdownMenuItem onClick={() => handleStatusChange(booking.id, "confirmed")}>
+                              <CheckCircle className="mr-2 h-4 w-4" />
+                              Konfirmasi
+                            </DropdownMenuItem>
+                          )}
+                          {booking.status === "confirmed" && booking.isPickupService && (
+                            <DropdownMenuItem onClick={() => handleStatusChange(booking.id, "picked-up")}>
+                              <Car className="mr-2 h-4 w-4" />
+                              Jemput
+                            </DropdownMenuItem>
+                          )}
+                          {booking.status === "confirmed" && !booking.isPickupService && (
+                            <DropdownMenuItem onClick={() => handleStatusChange(booking.id, "in-progress")}>
+                              <Clock className="mr-2 h-4 w-4" />
+                              Mulai Layanan
+                            </DropdownMenuItem>
+                          )}
+                          {booking.status === "picked-up" && (
+                            <DropdownMenuItem onClick={() => handleStatusChange(booking.id, "in-progress")}>
+                              <Clock className="mr-2 h-4 w-4" />
+                              Mulai Layanan
+                            </DropdownMenuItem>
+                          )}
+                          {booking.status === "in-progress" && (
+                            <DropdownMenuItem onClick={() => handleStatusChange(booking.id, "completed")}>
+                              <CheckCircle className="mr-2 h-4 w-4" />
+                              Selesaikan
+                            </DropdownMenuItem>
+                          )}
+                          {(booking.status === "pending" || booking.status === "confirmed" || booking.status === "picked-up") && (
+                            <DropdownMenuItem onClick={() => handleStatusChange(booking.id, "cancelled")} className="text-red-600">
+                              <XCircle className="mr-2 h-4 w-4" />
+                              Batalkan
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-4 gap-4">
             <div className="text-sm text-muted-foreground">
               Menampilkan {bookings.length ? (page - 1) * pageSize + 1 : 0}-
               {(page - 1) * pageSize + bookings.length} dari {total} booking
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 sm:justify-end">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setPage(page - 1)}
                 disabled={page === 1}
+                className="h-11"
               >
                 Sebelumnya
               </Button>
@@ -398,6 +502,7 @@ export function BookingList({ filters }: BookingListProps) {
                 size="sm"
                 onClick={() => setPage(page + 1)}
                 disabled={page >= Math.ceil(total / pageSize)}
+                className="h-11"
               >
                 Selanjutnya
               </Button>

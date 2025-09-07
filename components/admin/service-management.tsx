@@ -164,7 +164,7 @@ export function ServiceManagement() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="font-serif text-2xl md:text-3xl font-bold text-foreground">Kelola Layanan</h1>
             <p className="text-muted-foreground mt-1">Memuat data layanan...</p>
@@ -188,7 +188,7 @@ export function ServiceManagement() {
   if (error) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="font-serif text-2xl md:text-3xl font-bold text-foreground">Kelola Layanan</h1>
             <p className="text-muted-foreground mt-1">Kelola semua layanan yang tersedia di seluruh cabang</p>
@@ -205,7 +205,7 @@ export function ServiceManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="font-serif text-2xl md:text-3xl font-bold text-foreground">Kelola Layanan</h1>
           <p className="text-muted-foreground mt-1">Kelola semua layanan yang tersedia di seluruh cabang</p>
@@ -213,7 +213,7 @@ export function ServiceManagement() {
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
             {/* <Button onClick={resetForm}> */}
-            <Button>
+            <Button className="h-11">
               <Plus className="w-4 h-4 mr-2" />
               Tambah Layanan
             </Button>
@@ -254,8 +254,10 @@ export function ServiceManagement() {
                 Belum ada layanan yang tersedia. Tambahkan layanan pertama Anda.
               </div>
             ) : (
-              <Table>
-                <TableHeader>
+              <>
+                <div className="hidden md:block overflow-x-auto">
+                  <Table>
+                    <TableHeader>
                   <TableRow>
                     <TableHead>Layanan</TableHead>
                     <TableHead>Kategori</TableHead>
@@ -267,8 +269,8 @@ export function ServiceManagement() {
                     <TableHead className="text-right">Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody>
-                  {serviceList.filter(service => service.is_active).map((service) => {
+                    <TableBody>
+                      {serviceList.filter(service => service.is_active).map((service) => {
                     const IconComponent = getCategoryIcon(service.category)
                     return (
                       <TableRow key={service.id}>
@@ -336,13 +338,18 @@ export function ServiceManagement() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <Button variant="ghost" size="sm" onClick={() => handleEditService(service)}>
-                              <Edit className="w-4 h-4" />
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEditService(service)}
+                              className="h-11 w-11"
+                            >
+                              <Edit className="w-5 h-5" />
                             </Button>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="sm">
-                                  <Trash2 className="w-4 h-4 text-red-500" />
+                                <Button variant="ghost" size="icon" className="h-11 w-11">
+                                  <Trash2 className="w-5 h-5 text-red-500" />
                                 </Button>
                               </AlertDialogTrigger>
                               <AlertDialogContent>
@@ -368,9 +375,107 @@ export function ServiceManagement() {
                         </TableCell>
                       </TableRow>
                     )
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+                <div className="space-y-4 md:hidden">
+                  {serviceList.filter(service => service.is_active).map((service) => {
+                    const IconComponent = getCategoryIcon(service.category)
+                    return (
+                      <div key={service.id} className="rounded-lg border p-4 shadow-sm space-y-2">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="font-medium">{service.name}</p>
+                            <p className="text-sm text-muted-foreground">{service.description}</p>
+                            {service.features && service.features.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {service.features.map((feature, index) => (
+                                  <Badge key={index} variant="secondary" className="text-xs">
+                                    {feature}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <Badge className={getCategoryColor(service.category)}>
+                            <IconComponent className="w-3 h-3 mr-1" />
+                            {getCategoryName(service.category)}
+                          </Badge>
+                        </div>
+                        <div className="text-sm text-muted-foreground space-y-1">
+                          <div className="flex items-center gap-1">
+                            <DollarSign className="w-3 h-3 text-muted-foreground" />
+                            {formatCurrency(service.price)}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-muted-foreground" />
+                            {service.duration} menit
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Star className="w-3 h-3 text-yellow-500" />
+                            {service.loyalty_points_reward ?? 0}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3 text-muted-foreground" />
+                            {service.supports_pickup ? (
+                              <span className="text-green-600">Ya ({formatCurrency(service.pickup_fee || 0)})</span>
+                            ) : (
+                              <span className="text-muted-foreground">Tidak</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between pt-2">
+                          {service.is_active ? (
+                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                              Aktif
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                              Non-Aktif
+                            </Badge>
+                          )}
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEditService(service)}
+                              className="h-11 w-11"
+                            >
+                              <Edit className="w-5 h-5" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-11 w-11">
+                                  <Trash2 className="w-5 h-5 text-red-500" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Hapus Layanan</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Apakah Anda yakin ingin menghapus layanan "{service.name}"? Tindakan ini tidak dapat
+                                    dibatalkan dan akan mempengaruhi semua cabang.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Batal</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDeleteService(service)}
+                                    className="bg-red-600 hover:bg-red-700"
+                                  >
+                                    Hapus
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </div>
+                      </div>
+                    )
                   })}
-                </TableBody>
-              </Table>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>
