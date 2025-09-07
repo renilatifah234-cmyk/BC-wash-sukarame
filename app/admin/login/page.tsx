@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Lock, User, AlertCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { apiClient } from "@/lib/api-client"
 
 export default function AdminLoginPage() {
   const [formData, setFormData] = useState({
@@ -28,16 +29,14 @@ export default function AdminLoginPage() {
     // Simulate authentication delay
     await new Promise((resolve) => setTimeout(resolve, 1000))
 
-    // Simple authentication check (in real app, this would be server-side)
-    if (formData.username === "admin" && formData.password === "bcwash2024") {
-      // Set authentication flag in localStorage (in real app, use proper session management)
-      localStorage.setItem("admin_authenticated", "true")
+    try {
+      await apiClient.login(formData.username, formData.password)
       router.push("/admin/dashboard")
-    } else {
-      setError("Username atau password salah")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Login gagal")
+    } finally {
+      setIsLoading(false)
     }
-
-    setIsLoading(false)
   }
 
   const handleInputChange = (field: string, value: string) => {
@@ -101,11 +100,6 @@ export default function AdminLoginPage() {
               </Button>
             </form>
 
-            <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-              <p className="text-sm text-muted-foreground text-center mb-2">Demo Credentials:</p>
-              <p className="text-sm font-mono text-center">Username: admin</p>
-              <p className="text-sm font-mono text-center">Password: bcwash2024</p>
-            </div>
           </CardContent>
         </Card>
       </div>

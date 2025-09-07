@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useAdminAuth } from "@/hooks/use-admin-auth"
 import { AdminLayout } from "@/components/admin/admin-layout"
 import { ReportFilters } from "@/components/admin/report-filters"
 import { ReportCharts } from "@/components/admin/report-charts"
@@ -9,24 +9,12 @@ import { ReportSummary } from "@/components/admin/report-summary"
 import { ReportExport } from "@/components/admin/report-export"
 
 export default function AdminReportsPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
+  const { isAuthenticated, isLoading } = useAdminAuth()
   const [filters, setFilters] = useState<{ startDate?: string; endDate?: string; branchId?: string }>({})
   const [summary, setSummary] = useState<{ totalRevenue: number; totalBookings: number; averageBookingValue: number } | null>(null)
   const [serviceStats, setServiceStats] = useState<{ name: string; count: number; revenue: number }[]>([])
   const [branchStats, setBranchStats] = useState<{ name: string; count: number; revenue: number }[]>([])
   const [reportLoading, setReportLoading] = useState(false)
-  const router = useRouter()
-
-  useEffect(() => {
-    const authStatus = localStorage.getItem("admin_authenticated")
-    if (authStatus === "true") {
-      setIsAuthenticated(true)
-    } else {
-      router.push("/admin/login")
-    }
-    setIsLoading(false)
-  }, [router])
 
   useEffect(() => {
     const fetchReport = async () => {

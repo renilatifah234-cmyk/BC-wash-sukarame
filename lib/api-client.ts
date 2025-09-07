@@ -139,6 +139,7 @@ class ApiClient {
               "Content-Type": "application/json",
               ...options.headers,
             },
+            credentials: "include",
             ...options,
           })
 
@@ -194,6 +195,12 @@ class ApiClient {
   async logout(): Promise<{ success: boolean }> {
     return this.request("/auth", {
       method: "DELETE",
+    })
+  }
+
+  async checkAuth(): Promise<{ authenticated: boolean }> {
+    return this.request("/auth", {
+      method: "GET",
     })
   }
 

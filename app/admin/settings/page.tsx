@@ -1,7 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useAdminAuth } from "@/hooks/use-admin-auth"
 import { AdminLayout } from "@/components/admin/admin-layout"
 import { BranchManagement } from "@/components/admin/branch-management"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -9,19 +8,7 @@ import { Building, Bell } from "lucide-react"
 import { NotificationTemplates } from "@/components/admin/notification-templates"
 
 export default function AdminSettingsPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-  const router = useRouter()
-
-  useEffect(() => {
-    const authStatus = localStorage.getItem("admin_authenticated")
-    if (authStatus === "true") {
-      setIsAuthenticated(true)
-    } else {
-      router.push("/admin/login")
-    }
-    setIsLoading(false)
-  }, [router])
+  const { isAuthenticated, isLoading } = useAdminAuth()
 
   if (isLoading) {
     return <div className="min-h-screen bg-background flex items-center justify-center">Loading...</div>
