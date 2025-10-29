@@ -59,13 +59,17 @@ export function PaymentInfo({ onNext, onPrev, bookingData, updateBookingData }: 
     const fetchPoints = async () => {
       if (bookingData.customerPhone) {
         try {
-          const res = await apiClient.getCustomers(bookingData.customerPhone)
+          const res = await apiClient.getCustomers({ phone: bookingData.customerPhone })
           if (res.customers && res.customers.length > 0) {
             setAvailablePoints(res.customers[0].total_loyalty_points)
+          } else {
+            setAvailablePoints(0)
           }
         } catch (err) {
           console.error("[v0] Failed to fetch customer points:", err)
         }
+      } else {
+        setAvailablePoints(0)
       }
     }
     fetchPoints()
